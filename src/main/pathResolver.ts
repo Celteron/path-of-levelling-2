@@ -13,7 +13,7 @@ export function getPreloadPath() {
 	return path.join(
 		app.getAppPath(),
 		isDev() ? "." : "..", // Need to escape app.asar in production for any files listed in electron-builder.json
-		"/dist-electron/ipc/preload.cjs" // Needs to be cjs so that it is compiled separately and can be accessed after compilation.
+		"/dist-electron/ipc/preload.cjs", // Needs to be cjs so that it is compiled separately and can be accessed after compilation.
 	);
 }
 
@@ -25,7 +25,7 @@ export function getDesktopIconPath() {
 	return path.join(
 		app.getAppPath(),
 		isDev() ? "assets" : "dist-react",
-		process.platform === "win32" ? "icon.ico" : "icon.png"
+		process.platform === "win32" ? "icon.ico" : "icon.png",
 	);
 }
 
@@ -43,11 +43,7 @@ export function getZoneReferenceDataPath(profileId: ProfileId): string {
 }
 
 export function getZoneLayoutImagesAbsolutePath() {
-	return path.join(
-		app.getAppPath(),
-		isDev() ? "assets/Layout Images" : "dist-react/Layout Images",
-		getProfile().Id
-	);
+	return path.join(app.getAppPath(), isDev() ? "assets/Layout Images" : "dist-react/Layout Images", getProfile().Id);
 }
 
 export function getBuildPath(profileId: ProfileId, buildName: string) {

@@ -1,14 +1,4 @@
-import {
-	app,
-	BrowserWindow,
-	globalShortcut,
-	shell,
-	Menu,
-	screen,
-	Tray,
-	nativeImage,
-	net,
-} from "electron";
+import { app, BrowserWindow, globalShortcut, shell, Menu, screen, Tray, nativeImage, net } from "electron";
 import log from "electron-log";
 import { OVERLAY_WINDOW_OPTS, OverlayController } from "electron-overlay-window";
 import electronUpdater, { type AppUpdater } from "electron-updater";
@@ -38,8 +28,7 @@ export function getAutoUpdater(): AppUpdater {
 }
 
 getAutoUpdater().logger = log;
-//@ts-ignore
-getAutoUpdater().logger.transports.file.level = "info";
+log.transports.file.level = "info";
 log.info("App starting...");
 
 // Basically remove the scale factor people use on windows - we only need to scale font size
@@ -52,7 +41,7 @@ app.whenReady().then(async () => {
 
 	setTimeout(
 		createWindow,
-		process.platform === "linux" ? 1000 : 0 // https://github.com/electron/electron/issues/16809
+		process.platform === "linux" ? 1000 : 0, // https://github.com/electron/electron/issues/16809
 	);
 
 	// Auto updates
@@ -91,7 +80,7 @@ async function createWindow() {
 					app.quit();
 				},
 			},
-		])
+		]),
 	);
 
 	// Set up main window
@@ -143,16 +132,16 @@ async function createWindow() {
 	});
 
 	// Uh still unfamiliar with this package so just logging all events
-	if (isDev()) LogOverlayEventCalls(mainWindow);
+	if (isDev()) LogOverlayEventCalls();
 }
 
 function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatcherService) {
-	ipcMainHandle("getFontScalingFactor", async (_) => {
-		const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+	ipcMainHandle("getFontScalingFactor", async () => {
+		const { height } = screen.getPrimaryDisplay().workAreaSize;
 		return height / 1080; // return a scaling factor to scale up text with resolution
 	});
 
-	ipcMainHandle("getFontSize", async (_) => {
+	ipcMainHandle("getFontSize", async () => {
 		return objectFactory.getSettingsService().getFontSize();
 	});
 
@@ -171,27 +160,24 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 	});
 
 	// Handle events from the General Settings overlay
-	ipcMainHandle("getClientPath", async (_) => {
+	ipcMainHandle("getClientPath", async () => {
 		return objectFactory.getSettingsService().getClientTxtPath();
 	});
 
 	ipcMainHandle("saveClientPath", async (_, clientTxtPath) => {
-		var result = objectFactory
-			.getSettingsService()
-			.saveClientTxtPath(clientTxtPath, mainWindow, logWatcher);
-		return result;
+		return objectFactory.getSettingsService().saveClientTxtPath(clientTxtPath, mainWindow, logWatcher);
 	});
 
-	ipcMainHandle("getIsClientWatcherActive", async (_) => {
+	ipcMainHandle("getIsClientWatcherActive", async () => {
 		return objectFactory.getStateTracker().getIsClientWatcherActive();
 	});
 
 	// Handle events from the Zone Tracker
-	ipcMainHandle("getZoneState", async (_, args) => {
+	ipcMainHandle("getZoneState", async () => {
 		ipcWebContentsSend(
 			"zoneLayoutImageUpdates",
 			mainWindow.webContents,
-			objectFactory.getZoneTracker().zoneImageFilePaths
+			objectFactory.getZoneTracker().zoneImageFilePaths,
 		);
 
 		return objectFactory.getZoneTracker().getZoneDataDto();
@@ -202,33 +188,30 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 		ipcWebContentsSend(
 			"zoneLayoutImageUpdates",
 			mainWindow.webContents,
-			objectFactory.getZoneTracker().zoneImageFilePaths
+			objectFactory.getZoneTracker().zoneImageFilePaths,
 		);
 		return objectFactory.getZoneTracker().getZoneDataDto();
 	});
 
 	ipcMainHandle("postZoneSelected", async (event, zoneSelectedRequest) => {
-		console.log("Updating zone from zoneSelectedRequest:", zoneSelectedRequest);
+		log.info("Updating zone from zoneSelectedRequest:", zoneSelectedRequest);
 		// Update zone based on zone and act selected
 		objectFactory
 			.getZoneTracker()
-			.saveZoneFromZoneNameAndActName(
-				zoneSelectedRequest.zoneSelected,
-				zoneSelectedRequest.actSelected
-			);
+			.saveZoneFromZoneNameAndActName(zoneSelectedRequest.zoneSelected, zoneSelectedRequest.actSelected);
 
 		// Send updated layout images
 		ipcWebContentsSend(
 			"zoneLayoutImageUpdates",
 			mainWindow.webContents,
-			objectFactory.getZoneTracker().zoneImageFilePaths
+			objectFactory.getZoneTracker().zoneImageFilePaths,
 		);
 
 		// Return updated zone data
 		return objectFactory.getZoneTracker().getZoneDataDto();
 	});
 
-	ipcMainHandle("getLayoutImagePaths", async (_) => {
+	ipcMainHandle("getLayoutImagePaths", async () => {
 		return objectFactory.getZoneTracker().zoneImageFilePaths;
 	});
 
@@ -254,12 +237,12 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 	});
 
 	// Handle events from the level tracker
-	ipcMainHandle("getLevelState", async (_, args) => {
+	ipcMainHandle("getLevelState", async () => {
 		return objectFactory.getLevelTracker().getLevelDataDto();
 	});
 
 	// Handle events from the gem tracker
-	ipcMainHandle("getGemState", async (_) => {
+	ipcMainHandle("getGemState", async () => {
 		return objectFactory.getGemTracker().getGemDataDto();
 	});
 
@@ -269,21 +252,20 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 	});
 
 	// --- Handle events from the gem SETTINGS --- //
-	ipcMainHandle("getGemSettingsState", async (_, args) => {
+	ipcMainHandle("getGemSettingsState", async () => {
 		return objectFactory.getGemTracker().getGemSettingsDto();
 	});
 
 	ipcMainHandle("postBuildSelected", async (_, buildName) => {
 		objectFactory.getSettingsService().saveBuildName(buildName);
 		objectFactory.getGemTracker().loadGemSetup(buildName);
-		objectFactory.getGemTracker()
-			.setGemSetupFromPlayerLevel(objectFactory.getLevelTracker().playerLevel);
+		objectFactory.getGemTracker().setGemSetupFromPlayerLevel(objectFactory.getLevelTracker().playerLevel);
 
 		// Send the updated state to the Gem Tracker component
 		ipcWebContentsSend(
 			"subscribeToGemUpdates",
 			mainWindow.webContents,
-			objectFactory.getGemTracker().getGemDataDto()
+			objectFactory.getGemTracker().getGemDataDto(),
 		);
 
 		// Send the updated state to the Zone Tracker component (zone tracker also cares about
@@ -291,7 +273,7 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 		ipcWebContentsSend(
 			"zoneUpdatesFromLog",
 			mainWindow.webContents,
-			objectFactory.getZoneTracker().getZoneDataDto()
+			objectFactory.getZoneTracker().getZoneDataDto(),
 		);
 
 		// Return the updated state to Gem Tracker Settings component
@@ -305,14 +287,13 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 		// Save the new build & load it
 		objectFactory.getGemTracker().saveNewBuild(buildName);
 		objectFactory.getGemTracker().loadGemSetup(buildName);
-		objectFactory.getGemTracker()
-			.setGemSetupFromPlayerLevel(objectFactory.getLevelTracker().playerLevel);
+		objectFactory.getGemTracker().setGemSetupFromPlayerLevel(objectFactory.getLevelTracker().playerLevel);
 
 		// Send the updated state to the Gem Tracker component
 		ipcWebContentsSend(
 			"subscribeToGemUpdates",
 			mainWindow.webContents,
-			objectFactory.getGemTracker().getGemDataDto()
+			objectFactory.getGemTracker().getGemDataDto(),
 		);
 
 		// Return the updated state to Gem Tracker Settings component
@@ -326,14 +307,13 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 		// Delete the build & load Default
 		objectFactory.getGemTracker().deleteBuild(buildName);
 		objectFactory.getGemTracker().loadGemSetup("Default");
-		objectFactory.getGemTracker()
-			.setGemSetupFromPlayerLevel(objectFactory.getLevelTracker().playerLevel);
+		objectFactory.getGemTracker().setGemSetupFromPlayerLevel(objectFactory.getLevelTracker().playerLevel);
 
 		// Send the updated state to the Gem Tracker component
 		ipcWebContentsSend(
 			"subscribeToGemUpdates",
 			mainWindow.webContents,
-			objectFactory.getGemTracker().getGemDataDto()
+			objectFactory.getGemTracker().getGemDataDto(),
 		);
 
 		// Return the updated state to Gem Tracker Settings component
@@ -350,14 +330,13 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 		// Save the new build
 		objectFactory.getGemTracker().saveGemBuild(request.buildName, request.allGemSetups);
 		objectFactory.getGemTracker().loadGemSetup(request.buildName);
-		objectFactory.getGemTracker()
-			.setGemSetupFromPlayerLevel(objectFactory.getLevelTracker().playerLevel);
+		objectFactory.getGemTracker().setGemSetupFromPlayerLevel(objectFactory.getLevelTracker().playerLevel);
 
 		// Send the updated state to the Gem Tracker component
 		ipcWebContentsSend(
 			"subscribeToGemUpdates",
 			mainWindow.webContents,
-			objectFactory.getGemTracker().getGemDataDto()
+			objectFactory.getGemTracker().getGemDataDto(),
 		);
 
 		// Return the updated state to Gem Tracker Settings component
@@ -365,15 +344,14 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 	});
 
 	// --- Handle events from the Act Notes SETTINGS --- //
-	ipcMainHandle("getActNotesSettingsState", async (_, args) => {
+	ipcMainHandle("getActNotesSettingsState", async () => {
 		return objectFactory.getZoneTracker().getActNotesSettingsDto();
 	});
 
 	ipcMainHandle("postBuildSelectedFromActNotes", async (_, buildName) => {
 		objectFactory.getSettingsService().saveBuildName(buildName);
 		objectFactory.getGemTracker().loadGemSetup(buildName);
-		objectFactory.getGemTracker()
-			.setGemSetupFromPlayerLevel(objectFactory.getLevelTracker().playerLevel);
+		objectFactory.getGemTracker().setGemSetupFromPlayerLevel(objectFactory.getLevelTracker().playerLevel);
 		objectFactory.getZoneTracker().loadActNotes();
 		objectFactory.getZoneTracker().loadZoneNotes();
 
@@ -382,14 +360,14 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 		ipcWebContentsSend(
 			"subscribeToGemUpdates",
 			mainWindow.webContents,
-			objectFactory.getGemTracker().getGemDataDto()
+			objectFactory.getGemTracker().getGemDataDto(),
 		);
 
 		// Send the updated state to the Zone Tracker component
 		ipcWebContentsSend(
 			"zoneUpdatesFromLog",
 			mainWindow.webContents,
-			objectFactory.getZoneTracker().getZoneDataDto()
+			objectFactory.getZoneTracker().getZoneDataDto(),
 		);
 
 		// Return the updated state to Act Notes Settings component
@@ -403,8 +381,7 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 		// Save the new build & load it
 		objectFactory.getGemTracker().saveNewBuild(buildName);
 		objectFactory.getGemTracker().loadGemSetup(buildName);
-		objectFactory.getGemTracker()
-			.setGemSetupFromPlayerLevel(objectFactory.getLevelTracker().playerLevel);
+		objectFactory.getGemTracker().setGemSetupFromPlayerLevel(objectFactory.getLevelTracker().playerLevel);
 		objectFactory.getZoneTracker().loadActNotes();
 		objectFactory.getZoneTracker().loadZoneNotes();
 
@@ -413,14 +390,14 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 		ipcWebContentsSend(
 			"subscribeToGemUpdates",
 			mainWindow.webContents,
-			objectFactory.getGemTracker().getGemDataDto()
+			objectFactory.getGemTracker().getGemDataDto(),
 		);
 
 		// Send the updated state to the Zone Tracker component
 		ipcWebContentsSend(
 			"zoneUpdatesFromLog",
 			mainWindow.webContents,
-			objectFactory.getZoneTracker().getZoneDataDto()
+			objectFactory.getZoneTracker().getZoneDataDto(),
 		);
 
 		// Return the updated state to Act Notes Settings component
@@ -434,8 +411,7 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 		// Delete the build & load Default
 		objectFactory.getGemTracker().deleteBuild(buildName);
 		objectFactory.getGemTracker().loadGemSetup("Default");
-		objectFactory.getGemTracker()
-			.setGemSetupFromPlayerLevel(objectFactory.getLevelTracker().playerLevel);
+		objectFactory.getGemTracker().setGemSetupFromPlayerLevel(objectFactory.getLevelTracker().playerLevel);
 		objectFactory.getZoneTracker().loadActNotes();
 		objectFactory.getZoneTracker().loadZoneNotes();
 
@@ -444,14 +420,14 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 		ipcWebContentsSend(
 			"subscribeToGemUpdates",
 			mainWindow.webContents,
-			objectFactory.getGemTracker().getGemDataDto()
+			objectFactory.getGemTracker().getGemDataDto(),
 		);
 
 		// Send the updated state to the Zone Tracker component
 		ipcWebContentsSend(
 			"zoneUpdatesFromLog",
 			mainWindow.webContents,
-			objectFactory.getZoneTracker().getZoneDataDto()
+			objectFactory.getZoneTracker().getZoneDataDto(),
 		);
 
 		// Return the updated state to Act Notes Settings component
@@ -470,14 +446,14 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 		ipcWebContentsSend(
 			"subscribeToGemUpdates",
 			mainWindow.webContents,
-			objectFactory.getGemTracker().getGemDataDto()
+			objectFactory.getGemTracker().getGemDataDto(),
 		);
 
 		// Send the updated state to the Zone Tracker component
 		ipcWebContentsSend(
 			"zoneUpdatesFromLog",
 			mainWindow.webContents,
-			objectFactory.getZoneTracker().getZoneDataDto()
+			objectFactory.getZoneTracker().getZoneDataDto(),
 		);
 
 		// Return the updated state to Act Notes Settings component
@@ -496,14 +472,14 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 		ipcWebContentsSend(
 			"subscribeToGemUpdates",
 			mainWindow.webContents,
-			objectFactory.getGemTracker().getGemDataDto()
+			objectFactory.getGemTracker().getGemDataDto(),
 		);
 
 		// Send the updated state to the Zone Tracker component
 		ipcWebContentsSend(
 			"zoneUpdatesFromLog",
 			mainWindow.webContents,
-			objectFactory.getZoneTracker().getZoneDataDto()
+			objectFactory.getZoneTracker().getZoneDataDto(),
 		);
 
 		// Return the updated state to Zone Notes Settings component
@@ -515,15 +491,14 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 	});
 
 	// --- Handle events from the Zone Notes SETTINGS --- //
-	ipcMainHandle("getZoneNotesSettingsState", async (_, args) => {
+	ipcMainHandle("getZoneNotesSettingsState", async () => {
 		return objectFactory.getZoneTracker().getZoneNotesSettingsDto();
 	});
 
 	ipcMainHandle("postBuildSelectedFromZoneNotes", async (_, buildName) => {
 		objectFactory.getSettingsService().saveBuildName(buildName);
 		objectFactory.getGemTracker().loadGemSetup(buildName);
-		objectFactory.getGemTracker()
-			.setGemSetupFromPlayerLevel(objectFactory.getLevelTracker().playerLevel);
+		objectFactory.getGemTracker().setGemSetupFromPlayerLevel(objectFactory.getLevelTracker().playerLevel);
 		objectFactory.getZoneTracker().loadActNotes();
 		objectFactory.getZoneTracker().loadZoneNotes();
 
@@ -532,14 +507,14 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 		ipcWebContentsSend(
 			"subscribeToGemUpdates",
 			mainWindow.webContents,
-			objectFactory.getGemTracker().getGemDataDto()
+			objectFactory.getGemTracker().getGemDataDto(),
 		);
 
 		// Send the updated state to the Zone Tracker component
 		ipcWebContentsSend(
 			"zoneUpdatesFromLog",
 			mainWindow.webContents,
-			objectFactory.getZoneTracker().getZoneDataDto()
+			objectFactory.getZoneTracker().getZoneDataDto(),
 		);
 
 		// Return the updated state to Zone Notes Settings component
@@ -553,8 +528,7 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 		// Save the new build & load it
 		objectFactory.getGemTracker().saveNewBuild(buildName);
 		objectFactory.getGemTracker().loadGemSetup(buildName);
-		objectFactory.getGemTracker()
-			.setGemSetupFromPlayerLevel(objectFactory.getLevelTracker().playerLevel);
+		objectFactory.getGemTracker().setGemSetupFromPlayerLevel(objectFactory.getLevelTracker().playerLevel);
 		objectFactory.getZoneTracker().loadActNotes();
 		objectFactory.getZoneTracker().loadZoneNotes();
 
@@ -563,14 +537,14 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 		ipcWebContentsSend(
 			"subscribeToGemUpdates",
 			mainWindow.webContents,
-			objectFactory.getGemTracker().getGemDataDto()
+			objectFactory.getGemTracker().getGemDataDto(),
 		);
 
 		// Send the updated state to the Zone Tracker component
 		ipcWebContentsSend(
 			"zoneUpdatesFromLog",
 			mainWindow.webContents,
-			objectFactory.getZoneTracker().getZoneDataDto()
+			objectFactory.getZoneTracker().getZoneDataDto(),
 		);
 
 		// Return the updated state to Zone Notes Settings component
@@ -584,8 +558,7 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 		// Delete the build & load Default
 		objectFactory.getGemTracker().deleteBuild(buildName);
 		objectFactory.getGemTracker().loadGemSetup("Default");
-		objectFactory.getGemTracker()
-			.setGemSetupFromPlayerLevel(objectFactory.getLevelTracker().playerLevel);
+		objectFactory.getGemTracker().setGemSetupFromPlayerLevel(objectFactory.getLevelTracker().playerLevel);
 		objectFactory.getZoneTracker().loadActNotes();
 		objectFactory.getZoneTracker().loadZoneNotes();
 
@@ -594,14 +567,14 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 		ipcWebContentsSend(
 			"subscribeToGemUpdates",
 			mainWindow.webContents,
-			objectFactory.getGemTracker().getGemDataDto()
+			objectFactory.getGemTracker().getGemDataDto(),
 		);
 
 		// Send the updated state to the Zone Tracker component
 		ipcWebContentsSend(
 			"zoneUpdatesFromLog",
 			mainWindow.webContents,
-			objectFactory.getZoneTracker().getZoneDataDto()
+			objectFactory.getZoneTracker().getZoneDataDto(),
 		);
 
 		// Return the updated state to Zone Notes Settings component
@@ -620,14 +593,14 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 		ipcWebContentsSend(
 			"subscribeToGemUpdates",
 			mainWindow.webContents,
-			objectFactory.getGemTracker().getGemDataDto()
+			objectFactory.getGemTracker().getGemDataDto(),
 		);
 
 		// Send the updated state to the Zone Tracker component
 		ipcWebContentsSend(
 			"zoneUpdatesFromLog",
 			mainWindow.webContents,
-			objectFactory.getZoneTracker().getZoneDataDto()
+			objectFactory.getZoneTracker().getZoneDataDto(),
 		);
 
 		// Return the updated state to Zone Notes Settings component
@@ -646,14 +619,14 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 		ipcWebContentsSend(
 			"subscribeToGemUpdates",
 			mainWindow.webContents,
-			objectFactory.getGemTracker().getGemDataDto()
+			objectFactory.getGemTracker().getGemDataDto(),
 		);
 
 		// Send the updated state to the Zone Tracker component
 		ipcWebContentsSend(
 			"zoneUpdatesFromLog",
 			mainWindow.webContents,
-			objectFactory.getZoneTracker().getZoneDataDto()
+			objectFactory.getZoneTracker().getZoneDataDto(),
 		);
 
 		// Return the updated state to Zone Notes Settings component
@@ -665,17 +638,15 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 	});
 
 	// Handle UI window position events
-	ipcMainHandle("getSettingsOverlayPositionSettings", async (_, args) => {
+	ipcMainHandle("getSettingsOverlayPositionSettings", async () => {
 		return objectFactory.getSettingsService().getSettingsOverlayPositionSettings();
 	});
 
 	ipcMainHandle("saveSettingsOverlayPositionSettings", async (event, settingsOverlaySettings) => {
-		objectFactory
-			.getSettingsService()
-			.saveSettingsOverlayPositionSettings(settingsOverlaySettings);
+		objectFactory.getSettingsService().saveSettingsOverlayPositionSettings(settingsOverlaySettings);
 	});
 
-	ipcMainHandle("getZoneOverlayPositionSettings", async (_, args) => {
+	ipcMainHandle("getZoneOverlayPositionSettings", async () => {
 		return objectFactory.getSettingsService().getZoneOverlayPositionSettings();
 	});
 
@@ -683,17 +654,15 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 		objectFactory.getSettingsService().saveZoneOverlayPositionSettings(zoneSettings);
 	});
 
-	ipcMainHandle("getLayoutImagesOverlayPositionSettings", async (_, args) => {
+	ipcMainHandle("getLayoutImagesOverlayPositionSettings", async () => {
 		return objectFactory.getSettingsService().getLayoutImagesOverlayPositionSettings();
 	});
 
 	ipcMainHandle("saveLayoutImagesOverlayPositionSettings", async (event, layoutImageSettings) => {
-		objectFactory
-			.getSettingsService()
-			.saveLayoutImagesOverlayPositionSettings(layoutImageSettings);
+		objectFactory.getSettingsService().saveLayoutImagesOverlayPositionSettings(layoutImageSettings);
 	});
 
-	ipcMainHandle("getLevelOverlayPositionSettings", async (_, args) => {
+	ipcMainHandle("getLevelOverlayPositionSettings", async () => {
 		return objectFactory.getSettingsService().getLevelOverlayPositionSettings();
 	});
 
@@ -701,7 +670,7 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 		objectFactory.getSettingsService().saveLevelOverlayPositionSettings(levelSettings);
 	});
 
-	ipcMainHandle("getGemOverlayPositionSettings", async (_, args) => {
+	ipcMainHandle("getGemOverlayPositionSettings", async () => {
 		return objectFactory.getSettingsService().getGemOverlayPositionSettings();
 	});
 
@@ -721,8 +690,7 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 function registerGlobalHotkeys(mainWindow: BrowserWindow) {
 	//Show/hide settings - default hidden
 	globalShortcut.register("Ctrl+Alt+S", () => {
-		objectFactory.getStateTracker().settingsOpen =
-			!objectFactory.getStateTracker().settingsOpen;
+		objectFactory.getStateTracker().settingsOpen = !objectFactory.getStateTracker().settingsOpen;
 
 		ipcWebContentsSend("Hotkeys", mainWindow.webContents, {
 			hotkey: "ToggleSettings",
@@ -742,8 +710,7 @@ function registerGlobalHotkeys(mainWindow: BrowserWindow) {
 	});
 	//Show/hide zone notes - default shown
 	globalShortcut.register("Ctrl+Alt+z", () => {
-		objectFactory.getStateTracker().zoneNotesOpen =
-			!objectFactory.getStateTracker().zoneNotesOpen;
+		objectFactory.getStateTracker().zoneNotesOpen = !objectFactory.getStateTracker().zoneNotesOpen;
 
 		ipcWebContentsSend("Hotkeys", mainWindow.webContents, {
 			hotkey: "ToggleZoneNotes",
@@ -752,8 +719,7 @@ function registerGlobalHotkeys(mainWindow: BrowserWindow) {
 	});
 	//Show/hide layout images - default shown
 	globalShortcut.register("Ctrl+Alt+i", () => {
-		objectFactory.getStateTracker().layoutImagesOpen =
-			!objectFactory.getStateTracker().layoutImagesOpen;
+		objectFactory.getStateTracker().layoutImagesOpen = !objectFactory.getStateTracker().layoutImagesOpen;
 
 		ipcWebContentsSend("Hotkeys", mainWindow.webContents, {
 			hotkey: "ToggleLayoutImages",
@@ -762,8 +728,7 @@ function registerGlobalHotkeys(mainWindow: BrowserWindow) {
 	});
 	//Show/hide level tracker - default shown
 	globalShortcut.register("Ctrl+Alt+l", () => {
-		objectFactory.getStateTracker().levelTrackerOpen =
-			!objectFactory.getStateTracker().levelTrackerOpen;
+		objectFactory.getStateTracker().levelTrackerOpen = !objectFactory.getStateTracker().levelTrackerOpen;
 
 		ipcWebContentsSend("Hotkeys", mainWindow.webContents, {
 			hotkey: "ToggleLevelTracker",
@@ -772,8 +737,7 @@ function registerGlobalHotkeys(mainWindow: BrowserWindow) {
 	});
 	//Show/hide level tracker - default shown
 	globalShortcut.register("Ctrl+Alt+g", () => {
-		objectFactory.getStateTracker().gemTrackerOpen =
-			!objectFactory.getStateTracker().gemTrackerOpen;
+		objectFactory.getStateTracker().gemTrackerOpen = !objectFactory.getStateTracker().gemTrackerOpen;
 
 		ipcWebContentsSend("Hotkeys", mainWindow.webContents, {
 			hotkey: "ToggleGemTracker",
@@ -806,8 +770,14 @@ function registerGlobalHotkeys(mainWindow: BrowserWindow) {
 
 		const webContents = mainWindow.webContents;
 		ipcWebContentsSend("Hotkeys", webContents, { hotkey: "ToggleZoneNotes", value: visibility.zoneNotesOpen });
-		ipcWebContentsSend("Hotkeys", webContents, { hotkey: "ToggleLayoutImages", value: visibility.layoutImagesOpen });
-		ipcWebContentsSend("Hotkeys", webContents, { hotkey: "ToggleLevelTracker", value: visibility.levelTrackerOpen });
+		ipcWebContentsSend("Hotkeys", webContents, {
+			hotkey: "ToggleLayoutImages",
+			value: visibility.layoutImagesOpen,
+		});
+		ipcWebContentsSend("Hotkeys", webContents, {
+			hotkey: "ToggleLevelTracker",
+			value: visibility.levelTrackerOpen,
+		});
 		ipcWebContentsSend("Hotkeys", webContents, { hotkey: "ToggleGemTracker", value: visibility.gemTrackerOpen });
 		ipcWebContentsSend("Hotkeys", webContents, { hotkey: "ToggleGuide", value: visibility.guideOpen });
 	});
@@ -821,7 +791,7 @@ async function downloadPobExport(url: string): Promise<string> {
 }
 
 //-----------------------testing
-function LogOverlayEventCalls(mainWindow: BrowserWindow) {
+function LogOverlayEventCalls() {
 	// Still getting used to the events so uhhhhh just log when all of them are used.
 	OverlayController.events.addListener("attach", (params) => {
 		log.info("attach event emitted", params);

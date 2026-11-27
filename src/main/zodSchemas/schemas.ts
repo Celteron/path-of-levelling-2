@@ -11,36 +11,36 @@ import { z } from "zod";
 // checking.
 
 // Limit recursion depth to prevent TS from infinite expansion
-type DecrementDepth<D extends number> =
-	D extends 5 ? 4 :
-	D extends 4 ? 3 :
-	D extends 3 ? 2 :
-	D extends 2 ? 1 :
-	D extends 1 ? 0 : 0;
+type DecrementDepth<D extends number> = D extends 5
+	? 4
+	: D extends 4
+		? 3
+		: D extends 3
+			? 2
+			: D extends 2
+				? 1
+				: D extends 1
+					? 0
+					: 0;
 
 // Recursive helper: build dot-separated key paths up to Depth
-export type NestedKeys<T, Depth extends number = 3> = (
-	[Depth] extends [never]
+export type NestedKeys<T, Depth extends number = 3> = [Depth] extends [never]
 	? never
 	: T extends object
-	? {
-		[K in keyof T & string]:
-		| K
-		| (T[K] extends object
-			? `${K}.${NestedKeys<T[K], DecrementDepth<Depth>>}`
-			: never);
-	}[keyof T & string]
-	: never
-);
+		? {
+				[K in keyof T & string]:
+					K | (T[K] extends object ? `${K}.${NestedKeys<T[K], DecrementDepth<Depth>>}` : never);
+			}[keyof T & string]
+		: never;
 
 // Resolve type of a dot path
 export type DeepValue<T, Path extends string> = Path extends `${infer K}.${infer Rest}`
 	? K extends keyof T
-	? DeepValue<T[K], Rest>
-	: never
+		? DeepValue<T[K], Rest>
+		: never
 	: Path extends keyof T
-	? T[Path]
-	: never;
+		? T[Path]
+		: never;
 
 // --- Type schemas for the GlobalSettings store --- //
 export const ProfileId = z.enum(["poe1", "poe2"]);
@@ -127,9 +127,7 @@ export const GameSettingsZodSchema = z.object({
 // ! These need to basically be exactly the same shape as GameSettingsZodSchema !
 export const DefaultPoE1GameSettings = GameSettingsZodSchema.extend({
 	version: z.number().default(1),
-	clientTxtPath: z
-		.string()
-		.default("C:/SteamLibrary/steamapps/common/Path of Exile/logs/Client.txt"),
+	clientTxtPath: z.string().default("C:/SteamLibrary/steamapps/common/Path of Exile/logs/Client.txt"),
 	buildName: z.string().default("Default"),
 	lastSessionState: LastSessionStateZodSchema.default({
 		zoneCode: "1_1_1",
@@ -148,9 +146,7 @@ export const DefaultPoE1GameSettings = GameSettingsZodSchema.extend({
 
 export const DefaultPoE2GameSettings = GameSettingsZodSchema.extend({
 	version: z.number().default(1),
-	clientTxtPath: z
-		.string()
-		.default("C:/SteamLibrary/steamapps/common/Path of Exile 2/logs/Client.txt"),
+	clientTxtPath: z.string().default("C:/SteamLibrary/steamapps/common/Path of Exile 2/logs/Client.txt"),
 	buildName: z.string().default("Default"),
 	lastSessionState: LastSessionStateZodSchema.default({
 		zoneCode: "G1_1",
@@ -222,18 +218,15 @@ export type ActNote = z.infer<typeof ActNoteZodSchema>;
 export type ZoneNote = z.infer<typeof ZoneNoteZodSchema>;
 export type LockNoteOption = z.infer<typeof LockNoteOptionZodSchema>;
 
-
 export const DefaultGemBuild = GemBuildZodSchema.extend({
 	changedByUser: z.boolean().default(true),
-	gemSetups: z.array(GemSetupZodSchema).default(
-		[
-			{
-				level: 1,
-				gemLinks: [],
-				gemSources: []
-			}
-		]
-	),
+	gemSetups: z.array(GemSetupZodSchema).default([
+		{
+			level: 1,
+			gemLinks: [],
+			gemSources: [],
+		},
+	]),
 });
 
 // --- Zone Reference Data --- //

@@ -4,9 +4,12 @@ import { SettingsService } from "../services/Settings.js";
 import { LevelTracker } from "./LevelTracker.js";
 import { Build, DefaultGemBuild, GemBuild, GemSetup } from "../zodSchemas/schemas.js";
 
-// TODO: GemTracker owns builds cuz I haven't added any build stuff to anything else.
+/**
+ * Tracks the gem setup for the current character level. It also owns the build list (selected
+ * build, create, delete) because no other module manages builds yet; a dedicated build module
+ * would be the better home once builds get more features.
+ */
 export class GemTracker {
-	//TODO: move this when I have a Build class or something better than this
 	buildName: string = "Default";
 	allBuildNames: string[] = ["Default"];
 	gemBuild: GemBuild = Object();
@@ -21,7 +24,7 @@ export class GemTracker {
 		this.setGemSetupFromPlayerLevel(levelTracker.playerLevel);
 	}
 
-	init() { }
+	init() {}
 
 	getGemDataDto(): GemDataDto {
 		return {
@@ -40,7 +43,6 @@ export class GemTracker {
 		};
 	}
 
-	//TODO Seriously I need to get all this build stuff out of gem tracker
 	saveNewBuild(newBuildName: string) {
 		log.info("Saving new build:", newBuildName);
 
@@ -75,11 +77,10 @@ export class GemTracker {
 	loadGemSetup(buildName: string) {
 		log.info("Trying to load gem setups");
 
-		//TODO this should go in a real Build class or whatever
 		this.buildName = buildName;
 		this.allBuildNames = objectFactory.getStoreService().getAllBuildNames();
 
-		var build = objectFactory.getStoreService().getBuild(buildName);
+		let build = objectFactory.getStoreService().getBuild(buildName);
 
 		if (!build) {
 			log.warn("Could not load gem setup, build does not exist: " + buildName);
@@ -98,18 +99,15 @@ export class GemTracker {
 		log.info("Successfully loaded gem setups");
 	}
 
-	// Returns bool representing if gem setup was actually changed
-	// (to say if we should post state to renderer basically)
-	setGemSetupFromPlayerLevel(playerLevel: number): Boolean {
-		var foundGemSetup = this.allGemSetups.findLast((gemSetup) => {
-			return playerLevel >= gemSetup.level;
-		});
+	/** Returns true if the gem setup changed, i.e. the renderer needs an update */
+	setGemSetupFromPlayerLevel(playerLevel: number): boolean {
+		const foundGemSetup = this.allGemSetups.findLast((gemSetup) => playerLevel >= gemSetup.level);
 
-		if (foundGemSetup == null) {
+		if (foundGemSetup === undefined) {
 			log.info("Could not find gem setup matching level", playerLevel);
 			return false;
 		}
-		if (foundGemSetup == this.gemSetup) {
+		if (foundGemSetup === this.gemSetup) {
 			log.info("Gem setup found, but same as existing. No changes made.");
 			return false;
 		}

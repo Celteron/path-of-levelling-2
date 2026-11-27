@@ -27,7 +27,6 @@ function App() {
 
 	useEffect(() => {
 		window.electron.subscribeToHotkeys((hotkeyEvent) => {
-			console.log("Received hotkey event in renderer: ", hotkeyEvent);
 			switch (hotkeyEvent.hotkey) {
 				case "ToggleSettings":
 					setSettingsActive(hotkeyEvent.value);
@@ -47,8 +46,11 @@ function App() {
 				case "ToggleGuide":
 					setGuideActive(hotkeyEvent.value);
 					break;
-				default:
-					console.log("Unrecognised hotkey!", hotkeyEvent.hotkey);
+				default: {
+					// Fails to compile when a hotkey is added without a case here
+					const unhandled: never = hotkeyEvent.hotkey;
+					return unhandled;
+				}
 			}
 		});
 	}, []);

@@ -1,11 +1,7 @@
 import log from "electron-log";
 import fs from "fs";
 import path from "path";
-import {
-	getZoneLayoutImagesAbsolutePath,
-	getZoneNotesPath,
-	getZoneReferenceDataPath,
-} from "../pathResolver.js";
+import { getZoneLayoutImagesAbsolutePath, getZoneNotesPath, getZoneReferenceDataPath } from "../pathResolver.js";
 import { objectFactory } from "../objectFactory.js";
 import { StoreService } from "../services/StoreService.js";
 import { getProfile } from "../profiles/profiles.js";
@@ -18,8 +14,6 @@ import {
 	DefaultGemBuild,
 	LockNoteOptionZodSchema,
 } from "../zodSchemas/schemas.js";
-import { SettingsService } from "../services/Settings.js";
-import { StateTracker } from "./StateTracker.js";
 import { guideCoversZoneNote } from "../levelingGuide.js";
 
 export class ZoneTracker {
@@ -45,19 +39,11 @@ export class ZoneTracker {
 	defaultZoneNotesPath: string = "";
 	defaultActAndZoneNotes: DefaultActAndZoneNotes = Object();
 
-	// SettingsService needs to be loaded to call this.loadActNotes
-	// StateTracker required for this.saveZoneFromCode
-	constructor(storeService: StoreService, stateTracker: StateTracker, settingsService: SettingsService) {
-		this.zoneReferenceData = JSON.parse(
-			fs.readFileSync(getZoneReferenceDataPath(getProfile().Id), "utf-8")
-		);
+	constructor(storeService: StoreService) {
+		this.zoneReferenceData = JSON.parse(fs.readFileSync(getZoneReferenceDataPath(getProfile().Id), "utf-8"));
 
 		// ...new Set() removes duplicates
-		this.allActs = [
-			...new Set(
-				Object.values(this.zoneReferenceData).map((zoneReference) => zoneReference.act)
-			),
-		];
+		this.allActs = [...new Set(Object.values(this.zoneReferenceData).map((zoneReference) => zoneReference.act))];
 
 		this.loadDefaultActAndZoneNotes();
 
@@ -67,7 +53,7 @@ export class ZoneTracker {
 		this.saveZoneFromCode(storeService.getGameSetting("lastSessionState.zoneCode"), true);
 	}
 
-	init() { }
+	init() {}
 
 	getZoneDataDto(): ZoneDataDto {
 		return {
@@ -81,7 +67,7 @@ export class ZoneTracker {
 			zoneNotesCoveredByGuide: guideCoversZoneNote(
 				objectFactory.getGuideTracker().isAvailable(),
 				this.zoneNotes,
-				this.defaultActAndZoneNotes.zoneNotes?.find((zoneNote) => zoneNote.zoneCode === this.zoneCode)?.notes
+				this.defaultActAndZoneNotes.zoneNotes?.find((zoneNote) => zoneNote.zoneCode === this.zoneCode)?.notes,
 			),
 		};
 	}
@@ -90,7 +76,7 @@ export class ZoneTracker {
 		const dto = {
 			buildName: objectFactory.getGemTracker().buildName,
 			allBuildNames: objectFactory.getGemTracker().allBuildNames,
-			allActNotes: this.allActNotes
+			allActNotes: this.allActNotes,
 		};
 		return dto;
 	}
@@ -99,7 +85,7 @@ export class ZoneTracker {
 		const dto = {
 			buildName: objectFactory.getGemTracker().buildName,
 			allBuildNames: objectFactory.getGemTracker().allBuildNames,
-			allZoneNotes: this.allZoneNotes
+			allZoneNotes: this.allZoneNotes,
 		};
 		return dto;
 	}
@@ -109,11 +95,10 @@ export class ZoneTracker {
 		log.info("Trying to load zone notes at path", this.defaultZoneNotesPath);
 
 		try {
-			var buffer = fs.readFileSync(this.defaultZoneNotesPath);
-			this.defaultActAndZoneNotes = JSON.parse(buffer.toString());
+			this.defaultActAndZoneNotes = JSON.parse(fs.readFileSync(this.defaultZoneNotesPath, "utf-8"));
 			log.info("Successfully loaded zone notes");
 		} catch (error) {
-			log.info("Could not load zone notes");
+			log.info("Could not load zone notes", error);
 		}
 	}
 
@@ -121,13 +106,14 @@ export class ZoneTracker {
 	 * of act notes in memory.
 	 */
 	loadActNotes() {
-		const currentBuild = objectFactory.getStoreService().getBuild(objectFactory.getSettingsService().getBuildName());
+		const currentBuild = objectFactory
+			.getStoreService()
+			.getBuild(objectFactory.getSettingsService().getBuildName());
 		const userActNotes = currentBuild === undefined ? [] : currentBuild.actNotes;
 
 		// Zip together the default act notes and user's act notes
 		this.allActNotes = this.defaultActAndZoneNotes.actNotes.map((actNote) => {
-			const userActNote = userActNotes
-				.find((userActNotes) => userActNotes.actName === actNote.actName);
+			const userActNote = userActNotes.find((userActNotes) => userActNotes.actName === actNote.actName);
 
 			return {
 				lockNoteOption: userActNote?.lockNoteOption ?? actNote.lockNoteOption,
@@ -144,13 +130,14 @@ export class ZoneTracker {
 	 * of zone notes in memory.
 	 */
 	loadZoneNotes() {
-		const currentBuild = objectFactory.getStoreService().getBuild(objectFactory.getSettingsService().getBuildName());
+		const currentBuild = objectFactory
+			.getStoreService()
+			.getBuild(objectFactory.getSettingsService().getBuildName());
 		const userZoneNotes = currentBuild === undefined ? [] : currentBuild.zoneNotes;
 
 		// Zip together the default zone notes and user's zone notes
 		this.allZoneNotes = this.defaultActAndZoneNotes.zoneNotes.map((zoneNote) => {
-			const userZoneNote = userZoneNotes
-				.find((userZoneNotes) => userZoneNotes.zoneCode === zoneNote.zoneCode);
+			const userZoneNote = userZoneNotes.find((userZoneNotes) => userZoneNotes.zoneCode === zoneNote.zoneCode);
 
 			return {
 				lockNoteOption: userZoneNote?.lockNoteOption ?? zoneNote.lockNoteOption,
@@ -167,26 +154,32 @@ export class ZoneTracker {
 	saveActNotes(buildName: string, newActNotes: Array<ActNote>) {
 		// Notes which are different to the default note must be saved with lockedCannotUnlock
 		const customActNotesToSave = newActNotes
-			.filter(newActNote => newActNote.notes !== this.defaultActAndZoneNotes.actNotes
-				.find(defaultActNote => defaultActNote.actName == newActNote.actName)?.notes)
+			.filter(
+				(newActNote) =>
+					newActNote.notes !==
+					this.defaultActAndZoneNotes.actNotes.find(
+						(defaultActNote) => defaultActNote.actName == newActNote.actName,
+					)?.notes,
+			)
 			.map((customActNote) => ({
 				...customActNote,
 				lockNoteOption: LockNoteOptionZodSchema.enum.lockedCannotUnlock,
 			}));
 
 		// Get the rest of the locked notes - these can remain as just 'locked'
-		const lockedActNotesToSave = newActNotes
-			.filter(newActNote => (newActNote.lockNoteOption === LockNoteOptionZodSchema.enum.locked
-				|| newActNote.lockNoteOption === LockNoteOptionZodSchema.enum.lockedCannotUnlock)
-				&& !customActNotesToSave.some(customActNote => customActNote.actName === newActNote.actName));
+		const lockedActNotesToSave = newActNotes.filter(
+			(newActNote) =>
+				(newActNote.lockNoteOption === LockNoteOptionZodSchema.enum.locked ||
+					newActNote.lockNoteOption === LockNoteOptionZodSchema.enum.lockedCannotUnlock) &&
+				!customActNotesToSave.some((customActNote) => customActNote.actName === newActNote.actName),
+		);
 
 		// Zip the lists together for saving
 		const actNotesToSave = [...customActNotesToSave, ...lockedActNotesToSave];
 
 		// Save the new notes to build - create a new build if required
 		objectFactory.getStoreService().setBuild(buildName, {
-			...(objectFactory.getStoreService().getBuild(buildName)
-				?? {
+			...(objectFactory.getStoreService().getBuild(buildName) ?? {
 				buildName: buildName,
 				gemBuild: DefaultGemBuild.parse({}),
 				zoneNotes: [],
@@ -209,26 +202,32 @@ export class ZoneTracker {
 	saveZoneNotes(buildName: string, newZoneNotes: Array<ZoneNote>) {
 		// Notes which are different to the default note must be saved with lockedCannotUnlock
 		const customZoneNotesToSave = newZoneNotes
-			.filter(newZoneNote => newZoneNote.notes !== this.defaultActAndZoneNotes.zoneNotes
-				.find(defaultZoneNote => defaultZoneNote.zoneCode == newZoneNote.zoneCode)?.notes)
+			.filter(
+				(newZoneNote) =>
+					newZoneNote.notes !==
+					this.defaultActAndZoneNotes.zoneNotes.find(
+						(defaultZoneNote) => defaultZoneNote.zoneCode == newZoneNote.zoneCode,
+					)?.notes,
+			)
 			.map((customZoneNote) => ({
 				...customZoneNote,
 				lockNoteOption: LockNoteOptionZodSchema.enum.lockedCannotUnlock,
 			}));
 
 		// Get the rest of the locked or lockedCannotUnlock notes - these can keep their status
-		const lockedZoneNotesToSave = newZoneNotes
-			.filter(newZoneNote => (newZoneNote.lockNoteOption === LockNoteOptionZodSchema.enum.locked
-				|| newZoneNote.lockNoteOption === LockNoteOptionZodSchema.enum.lockedCannotUnlock)
-				&& !customZoneNotesToSave.some(customZoneNote => customZoneNote.zoneCode === newZoneNote.zoneCode));
+		const lockedZoneNotesToSave = newZoneNotes.filter(
+			(newZoneNote) =>
+				(newZoneNote.lockNoteOption === LockNoteOptionZodSchema.enum.locked ||
+					newZoneNote.lockNoteOption === LockNoteOptionZodSchema.enum.lockedCannotUnlock) &&
+				!customZoneNotesToSave.some((customZoneNote) => customZoneNote.zoneCode === newZoneNote.zoneCode),
+		);
 
 		// Zip the lists together for saving
 		const zoneNotesToSave = [...customZoneNotesToSave, ...lockedZoneNotesToSave];
 
 		// Save the new notes to build - create a new build if required
 		objectFactory.getStoreService().setBuild(buildName, {
-			...(objectFactory.getStoreService().getBuild(buildName)
-				?? {
+			...(objectFactory.getStoreService().getBuild(buildName) ?? {
 				buildName: buildName,
 				gemBuild: DefaultGemBuild.parse({}),
 				actNotes: [],
@@ -255,32 +254,30 @@ export class ZoneTracker {
 
 		// If there is no build selected, idk, we have other problems just send the default note
 		if (!currentBuild)
-			return this.defaultActAndZoneNotes.actNotes
-				.find(defaultActNote => defaultActNote.actName == actName)!;
+			return this.defaultActAndZoneNotes.actNotes.find((defaultActNote) => defaultActNote.actName == actName)!;
 
 		objectFactory.getStoreService().setBuild(currentBuildName, {
 			...currentBuild,
-			actNotes: currentBuild.actNotes.filter(existingActNote => existingActNote.actName !== actName),
+			actNotes: currentBuild.actNotes.filter((existingActNote) => existingActNote.actName !== actName),
 		});
 
-		return this.defaultActAndZoneNotes.actNotes
-			.find(defaultActNote => defaultActNote.actName == actName)!;
+		return this.defaultActAndZoneNotes.actNotes.find((defaultActNote) => defaultActNote.actName == actName)!;
 	}
 
 	// Remove the user's zone note from the saved array of custom Zone Notes
 	resetZoneNoteForZone(zoneCode: string): ZoneNote {
 		const currentBuildName = objectFactory.getSettingsService().getBuildName();
 		const currentBuild = objectFactory.getStoreService().getBuild(currentBuildName);
-		const defaultZoneNote = this.defaultActAndZoneNotes.zoneNotes
-			.find(defaultZoneNote => defaultZoneNote.zoneCode == zoneCode)!;
+		const defaultZoneNote = this.defaultActAndZoneNotes.zoneNotes.find(
+			(defaultZoneNote) => defaultZoneNote.zoneCode == zoneCode,
+		)!;
 
 		// If there is no build selected, idk, we have other problems just send the default note
-		if (!currentBuild)
-			return defaultZoneNote;
+		if (!currentBuild) return defaultZoneNote;
 
 		objectFactory.getStoreService().setBuild(currentBuildName, {
 			...currentBuild,
-			zoneNotes: currentBuild.zoneNotes.filter(existingZoneNote => existingZoneNote.zoneCode !== zoneCode),
+			zoneNotes: currentBuild.zoneNotes.filter((existingZoneNote) => existingZoneNote.zoneCode !== zoneCode),
 		});
 
 		return defaultZoneNote;
@@ -294,9 +291,9 @@ export class ZoneTracker {
 
 		// returns the first [key, value] pair for the act, which should give the first zone.
 		const zoneCodeToZoneReference = Object.entries(this.zoneReferenceData).find(
-			([key, value]) => value.act === actName
+			([, value]) => value.act === actName,
 		);
-		if (zoneCodeToZoneReference == null) {
+		if (zoneCodeToZoneReference === undefined) {
 			return false;
 		}
 
@@ -305,8 +302,8 @@ export class ZoneTracker {
 		this.zoneCode = zoneCodeToZoneReference[0];
 
 		this.allZonesInAct = Object.entries(this.zoneReferenceData)
-			.filter(([key, value]) => value.act === this.actName)
-			.map(([key, value]) => value.zoneName);
+			.filter(([, value]) => value.act === this.actName)
+			.map(([, value]) => value.zoneName);
 
 		this.setZoneNotes();
 
@@ -322,10 +319,10 @@ export class ZoneTracker {
 
 		// returns the first [key, value] pair for the act, which should give the first zone.
 		const zoneCodeToZoneReference = Object.entries(this.zoneReferenceData).find(
-			([key, value]) => value.act === actName && value.zoneName === zoneName
+			([, value]) => value.act === actName && value.zoneName === zoneName,
 		);
 
-		if (zoneCodeToZoneReference == null) {
+		if (zoneCodeToZoneReference === undefined) {
 			log.info("Could not find zone for act name:", actName, "and zone name:", zoneName);
 			return false;
 		}
@@ -335,8 +332,8 @@ export class ZoneTracker {
 		this.zoneCode = zoneCodeToZoneReference[0];
 
 		this.allZonesInAct = Object.entries(this.zoneReferenceData)
-			.filter(([key, value]) => value.act === this.actName)
-			.map(([key, value]) => value.zoneName);
+			.filter(([, value]) => value.act === this.actName)
+			.map(([, value]) => value.zoneName);
 
 		this.setZoneNotes();
 
@@ -349,7 +346,7 @@ export class ZoneTracker {
 	// Returns a boolean representing whether or not there was actually a change in zone
 	// !If a zone is not found with that code we just clear the images and do nothing!
 	saveZoneFromCode(zoneCode: string, updateOnly: boolean = false): boolean {
-		var zoneExists: boolean = this.setZoneFromCode(zoneCode);
+		const zoneExists = this.setZoneFromCode(zoneCode);
 
 		// If we couldn't find a zone with that code (e.g. in Town) then clear the layout images
 		// and don't change the zone notes
@@ -374,9 +371,9 @@ export class ZoneTracker {
 	}
 
 	setZoneFromCode(zoneCode: string): boolean {
-		const zoneReference: ZoneReference = this.zoneReferenceData[zoneCode];
+		const zoneReference: ZoneReference | undefined = this.zoneReferenceData[zoneCode];
 
-		if (zoneReference == undefined) {
+		if (zoneReference === undefined) {
 			return false;
 		}
 
@@ -385,75 +382,36 @@ export class ZoneTracker {
 		this.zoneCode = zoneCode;
 
 		this.allZonesInAct = Object.entries(this.zoneReferenceData)
-			.filter(([key, value]) => value.act === this.actName)
-			.map(([key, value]) => value.zoneName);
+			.filter(([, value]) => value.act === this.actName)
+			.map(([, value]) => value.zoneName);
 
 		return true;
 	}
 
+	/** Shows the notes of the current act and zone; empty for an act or zone without notes */
 	setZoneNotes() {
-		var actNotes = this.allActNotes.find((actNotes) => {
-			return actNotes.actName == this.actName;
-		});
-
-		if (actNotes == null) {
-			return;
-		}
-
-		this.actNotes = actNotes.notes;
-
-		var zoneNotes = this.allZoneNotes.find((zoneNote) => {
-			return zoneNote.zoneCode == this.zoneCode;
-		});
-
-		// This basically gives users the option to not set notes for a zone
-		// Dont know why they would but as a side effect missing notes don't cause error popups
-		if (zoneNotes == null) {
-			return;
-		}
-
-		this.zoneNotes = zoneNotes.notes;
+		this.actNotes = this.allActNotes.find((actNote) => actNote.actName === this.actName)?.notes ?? "";
+		this.zoneNotes = this.allZoneNotes.find((zoneNote) => zoneNote.zoneCode === this.zoneCode)?.notes ?? "";
 	}
 
-	// Returns a boolean representing whether or not zone layout image paths were changed.
-	// Stops us from updating images every time this method is called.
-	//TODO actually I never use this bool, is it really necessary? there are already
-	//TODO safeguards to prevent zone notes from being changed when zone isn't really
-	//TODO changed, but am I ok with these being so coupled? I guess it isn't really coupling
-	//TODO if it's all the same state on the same class.
-	setZoneLayoutImagePaths(zoneCode: string): Boolean {
+	/** Sets the layout images of the zone; none for towns and zones without layout images */
+	setZoneLayoutImagePaths(zoneCode: string) {
 		log.info("Trying to get zone image paths for zone code", zoneCode);
-		const directories = fs.readdirSync(getZoneLayoutImagesAbsolutePath());
+		// Folders are named "<zone code> <zone name>". Compare the whole code: G1_1 must not match
+		// G1_11, and readdirSync returns the folders in no particular order.
+		const requiredDirectory = fs
+			.readdirSync(getZoneLayoutImagesAbsolutePath())
+			.find((directory) => directory.split(" ")[0] === zoneCode);
 
-		// Note we HAVE to use find since G1_1 also matches G1_15
-		const requiredDirectory = directories.find((directory) => {
-			return directory.includes(zoneCode);
-		});
-
-		// If we couldn't find layout images, clear the file paths (i.e. clear the layout images).
-		// This is useful for towns, or for areas that don't have layout images.
-		if (requiredDirectory == null) {
+		if (!requiredDirectory) {
 			this.zoneImageFilePaths = [];
-			return false;
+			return;
 		}
 
-		const fileNames = fs.readdirSync(
-			path.join(getZoneLayoutImagesAbsolutePath(), requiredDirectory)
-		);
-
-		if (fileNames == null || fileNames.length == 0) {
-			this.zoneImageFilePaths = [];
-			return false;
-		}
-
-		var filePaths = fileNames.map((fileName: string) => {
-			//TODO: I have to find a better way to store this ../ stuff, this needs to
-			//TODO: send RELATIVE filepaths, and that is FROM LayoutImageComponent.tsx :(
-			return path.join("Layout Images", getProfile().Id, requiredDirectory, fileName);
-		});
-
-		this.zoneImageFilePaths = filePaths;
+		// The renderer loads the images relative to its own page, where "Layout Images" is served
+		this.zoneImageFilePaths = fs
+			.readdirSync(path.join(getZoneLayoutImagesAbsolutePath(), requiredDirectory))
+			.map((fileName) => path.join("Layout Images", getProfile().Id, requiredDirectory, fileName));
 		log.info("Found zone image paths", this.zoneImageFilePaths);
-		return true;
 	}
 }

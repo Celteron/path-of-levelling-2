@@ -1,20 +1,20 @@
 import { GameProfile } from "../profiles.js";
-import path from 'path';
-import { app } from 'electron';
+import path from "path";
+import { app } from "electron";
 
 export const poe1Profile: GameProfile = {
-    Id: "poe1",
-    steamFolderName: "Path of Exile",
-    windowName: "Path of Exile",
-    defaultClientTxtPath: process.platform === "win32"
-        ? path.join('C:/Program Files (x86)/Steam/steamapps/common/Path of Exile 1/logs/Client.txt')
-        : path.join(app.getPath('home'), '/.steam/root/steamapps/common/Path of Exile 1/logs/Client.txt'),
-    logFilePathGuesses: process.platform === "win32"
-        ? [
-            path.join('C:/Program Files (x86)/Steam/steamapps/common/Path of Exile 1/logs/Client.txt'),
-            path.join('D:/SteamLibrary/steamapps/common/Path of Exile 1/logs/Client.txt')
-        ]
-        : [
-            path.join(app.getPath('home'), '/.steam/root/steamapps/common/Path of Exile 1/logs/Client.txt'),
-        ]
-}
+	Id: "poe1",
+	steamFolderName: "Path of Exile",
+	windowName: "Path of Exile",
+	defaultClientTxtPath:
+		process.platform === "win32"
+			? path.join("C:/Program Files (x86)/Steam/steamapps/common/Path of Exile 1/logs/Client.txt")
+			: path.join(app.getPath("home"), "/.steam/root/steamapps/common/Path of Exile 1/logs/Client.txt"),
+	logFilePathGuesses:
+		process.platform === "win32"
+			? [
+					path.join("C:/Program Files (x86)/Steam/steamapps/common/Path of Exile 1/logs/Client.txt"),
+					path.join("D:/SteamLibrary/steamapps/common/Path of Exile 1/logs/Client.txt"),
+				]
+			: [path.join(app.getPath("home"), "/.steam/root/steamapps/common/Path of Exile 1/logs/Client.txt")],
+};

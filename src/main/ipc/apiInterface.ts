@@ -21,9 +21,7 @@ declare global {
 
 			// Gem Settings
 			getGemSettingsState: () => Promise<GemSettingsDto>;
-			saveGemSetupsForBuild: (
-				saveGemSetupsDto: SaveGemSetupsRequest
-			) => Promise<GemSettingsDto>;
+			saveGemSetupsForBuild: (saveGemSetupsDto: SaveGemSetupsRequest) => Promise<GemSettingsDto>;
 			postBuildSelected: (buildName: string) => Promise<GemSettingsDto>;
 			postAddNewBuild: (buildName: string) => Promise<GemSettingsDto>;
 			postDeleteBuild: (buildName: string) => Promise<GemSettingsDto>;
@@ -31,11 +29,9 @@ declare global {
 
 			// Act Notes Settings
 			getActNotesSettingsState: () => Promise<ActNotesSettingsDto>;
-			saveActNotesForBuild: (
-				saveActNotesDto: SaveActNotesRequest
-			) => Promise<ActNotesSettingsDto>;
+			saveActNotesForBuild: (saveActNotesDto: SaveActNotesRequest) => Promise<ActNotesSettingsDto>;
 			postCopyActNotesFromBuild: (
-				copyActNotesFromBuildRequest: CopyActNotesFromBuildRequest
+				copyActNotesFromBuildRequest: CopyActNotesFromBuildRequest,
 			) => Promise<ActNotesSettingsDto>;
 			postResetActNoteForAct: (actName: string) => Promise<ActNote>;
 			postBuildSelectedFromActNotes: (buildName: string) => Promise<ActNotesSettingsDto>;
@@ -44,11 +40,9 @@ declare global {
 
 			// Zone Notes Settings
 			getZoneNotesSettingsState: () => Promise<ZoneNotesSettingsDto>;
-			saveZoneNotesForBuild: (
-				saveZoneNotesDto: SaveZoneNotesRequest
-			) => Promise<ZoneNotesSettingsDto>;
+			saveZoneNotesForBuild: (saveZoneNotesDto: SaveZoneNotesRequest) => Promise<ZoneNotesSettingsDto>;
 			postCopyZoneNotesFromBuild: (
-				copyZoneNotesFromBuildRequest: CopyZoneNotesFromBuildRequest
+				copyZoneNotesFromBuildRequest: CopyZoneNotesFromBuildRequest,
 			) => Promise<ZoneNotesSettingsDto>;
 			postResetZoneNoteForZone: (zoneCode: string) => Promise<ZoneNote>;
 			postBuildSelectedFromZoneNotes: (buildName: string) => Promise<ZoneNotesSettingsDto>;

@@ -1,4 +1,4 @@
-import { objectFactory } from '../objectFactory.js';
+import { objectFactory } from "../objectFactory.js";
 
 // Class to basically track state that shows in the front end, eg the current zone,
 // current player/monster level, current gem setup, etc.
@@ -14,18 +14,16 @@ export class StateTracker {
 
 	logWatcherActive: boolean = false;
 
-	constructor() { }
+	constructor() {}
 
 	init() {}
 
 	saveSessionState() {
-		objectFactory.getStoreService().setGameSetting('lastSessionState',
-			{
-				zoneCode: objectFactory.getZoneTracker().zoneCode,
-				playerLevel: objectFactory.getLevelTracker().playerLevel,
-				monsterLevel: objectFactory.getLevelTracker().monsterLevel
-			}
-		)
+		objectFactory.getStoreService().setGameSetting("lastSessionState", {
+			zoneCode: objectFactory.getZoneTracker().zoneCode,
+			playerLevel: objectFactory.getLevelTracker().playerLevel,
+			monsterLevel: objectFactory.getLevelTracker().monsterLevel,
+		});
 	}
 
 	getIsClientWatcherActive(): boolean {

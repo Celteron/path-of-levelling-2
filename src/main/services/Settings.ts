@@ -1,40 +1,35 @@
-import { BrowserWindow } from 'electron';
-import { LogWatcherService } from './LogWatcherService.js';
-import { OverlayPosition, readOverlayOpacity, UiSettings } from '../zodSchemas/schemas.js';
-import { objectFactory } from '../objectFactory.js';
+import { BrowserWindow } from "electron";
+import { LogWatcherService } from "./LogWatcherService.js";
+import { OverlayPosition, readOverlayOpacity } from "../zodSchemas/schemas.js";
+import { objectFactory } from "../objectFactory.js";
 
 export class SettingsService {
+	constructor() {}
 
-	constructor() { }
+	init() {}
 
-	init() { }
-	
 	getFontSize(): number {
-		return objectFactory.getStoreService().getGlobalSetting('fontSize') 
+		return objectFactory.getStoreService().getGlobalSetting("fontSize");
 	}
 
 	saveFontSize(fontSize: number) {
-		objectFactory.getStoreService().setGlobalSetting('fontSize', fontSize);
+		objectFactory.getStoreService().setGlobalSetting("fontSize", fontSize);
 	}
 
 	getOverlayOpacity(): number {
-		return readOverlayOpacity(objectFactory.getStoreService().getGlobalSetting('overlayOpacity'));
+		return readOverlayOpacity(objectFactory.getStoreService().getGlobalSetting("overlayOpacity"));
 	}
 
 	saveOverlayOpacity(overlayOpacity: number) {
-		objectFactory.getStoreService().setGlobalSetting('overlayOpacity', overlayOpacity);
+		objectFactory.getStoreService().setGlobalSetting("overlayOpacity", overlayOpacity);
 	}
 
 	getClientTxtPath(): string {
-		return objectFactory.getStoreService().getGameSetting('clientTxtPath');
+		return objectFactory.getStoreService().getGameSetting("clientTxtPath");
 	}
 
-	saveClientTxtPath(
-		newPath: string,
-		mainWindow: BrowserWindow,
-		logWatcher: LogWatcherService
-	): boolean {
-		objectFactory.getStoreService().setGameSetting('clientTxtPath', newPath);
+	saveClientTxtPath(newPath: string, mainWindow: BrowserWindow, logWatcher: LogWatcherService): boolean {
+		objectFactory.getStoreService().setGameSetting("clientTxtPath", newPath);
 
 		// Attempt to subscribe to the log watcher again.
 		//TODO there is a case here when someone has a valid path, changes it, then their
@@ -48,50 +43,50 @@ export class SettingsService {
 	}
 
 	getBuildName(): string {
-		return objectFactory.getStoreService().getGameSetting('buildName');
+		return objectFactory.getStoreService().getGameSetting("buildName");
 	}
 
 	saveBuildName(buildName: string) {
-		objectFactory.getStoreService().setGameSetting('buildName', buildName);
+		objectFactory.getStoreService().setGameSetting("buildName", buildName);
 	}
 
 	getSettingsOverlayPositionSettings(): OverlayPosition {
-		return objectFactory.getStoreService().getGameSetting('uiSettings').settingsOverlayPosition;
+		return objectFactory.getStoreService().getGameSetting("uiSettings").settingsOverlayPosition;
 	}
 
 	saveSettingsOverlayPositionSettings(newSettings: OverlayPosition) {
-		objectFactory.getStoreService().setGameSetting('uiSettings.settingsOverlayPosition', newSettings);
+		objectFactory.getStoreService().setGameSetting("uiSettings.settingsOverlayPosition", newSettings);
 	}
 
 	getZoneOverlayPositionSettings(): OverlayPosition {
-		return objectFactory.getStoreService().getGameSetting('uiSettings.zoneTrackerPosition');
+		return objectFactory.getStoreService().getGameSetting("uiSettings.zoneTrackerPosition");
 	}
 
 	saveZoneOverlayPositionSettings(newSettings: OverlayPosition) {
-		objectFactory.getStoreService().setGameSetting('uiSettings.zoneTrackerPosition', newSettings);
+		objectFactory.getStoreService().setGameSetting("uiSettings.zoneTrackerPosition", newSettings);
 	}
 
 	getLayoutImagesOverlayPositionSettings(): OverlayPosition {
-		return objectFactory.getStoreService().getGameSetting('uiSettings.layoutImagesTrackerPosition');
+		return objectFactory.getStoreService().getGameSetting("uiSettings.layoutImagesTrackerPosition");
 	}
 
 	saveLayoutImagesOverlayPositionSettings(newSettings: OverlayPosition) {
-		objectFactory.getStoreService().setGameSetting('uiSettings.layoutImagesTrackerPosition', newSettings);
+		objectFactory.getStoreService().setGameSetting("uiSettings.layoutImagesTrackerPosition", newSettings);
 	}
 
 	getLevelOverlayPositionSettings(): OverlayPosition {
-		return objectFactory.getStoreService().getGameSetting('uiSettings.levelTrackerPosition');
+		return objectFactory.getStoreService().getGameSetting("uiSettings.levelTrackerPosition");
 	}
 
 	saveLevelOverlayPositionSettings(newSettings: OverlayPosition) {
-		objectFactory.getStoreService().setGameSetting('uiSettings.levelTrackerPosition', newSettings);
+		objectFactory.getStoreService().setGameSetting("uiSettings.levelTrackerPosition", newSettings);
 	}
 
 	getGemOverlayPositionSettings(): OverlayPosition {
-		return objectFactory.getStoreService().getGameSetting('uiSettings.gemTrackerPosition');
+		return objectFactory.getStoreService().getGameSetting("uiSettings.gemTrackerPosition");
 	}
 
 	saveGemOverlayPositionSettings(newSettings: OverlayPosition) {
-		objectFactory.getStoreService().setGameSetting('uiSettings.gemTrackerPosition', newSettings);
+		objectFactory.getStoreService().setGameSetting("uiSettings.gemTrackerPosition", newSettings);
 	}
 }

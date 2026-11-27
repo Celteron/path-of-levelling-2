@@ -55,7 +55,7 @@ class ObjectFactory {
 	// });
 	private getOrCreateObject<K extends keyof ServicesAndTrackers>(
 		key: K,
-		factory: () => ServicesAndTrackers[K]
+		factory: () => ServicesAndTrackers[K],
 	): ServicesAndTrackers[K] {
 		if (!this.objects[key]) {
 			const service = factory();
@@ -103,10 +103,7 @@ class ObjectFactory {
 
 	getZoneTracker(): ZoneTracker {
 		return this.getOrCreateObject("zoneTracker", () => {
-			const storeService = this.getStoreService();
-			const settingsService = this.getSettingsService();
-			const stateTracker = this.getStateTracker();
-			return new ZoneTracker(storeService, stateTracker, settingsService);
+			return new ZoneTracker(this.getStoreService());
 		});
 	}
 

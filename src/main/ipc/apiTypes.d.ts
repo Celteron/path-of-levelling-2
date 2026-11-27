@@ -139,12 +139,12 @@ type channelRequestTypeMapping = {
 // --- Settings --- //
 type HotkeyEvent = {
 	hotkey:
-	| "ToggleSettings"
-	| "ToggleZoneNotes"
-	| "ToggleLayoutImages"
-	| "ToggleLevelTracker"
-	| "ToggleGemTracker"
-	| "ToggleGuide";
+		| "ToggleSettings"
+		| "ToggleZoneNotes"
+		| "ToggleLayoutImages"
+		| "ToggleLevelTracker"
+		| "ToggleGemTracker"
+		| "ToggleGuide";
 	value: boolean;
 };
 
@@ -172,12 +172,11 @@ type CopyActNotesFromBuildRequest = {
 
 // Mirrors PobImportResult in src/main/pob/pobImport.ts
 type PobImportResultDto =
-	| { ok: true; gemSetups: GemSetup[] }
-	| { ok: false; error: "invalidInput" | "downloadFailed" | "noPoe2Gems" };
+	{ ok: true; gemSetups: GemSetup[] } | { ok: false; error: "invalidInput" | "downloadFailed" | "noPoe2Gems" };
 
 type ActNotesSettingsDto = {
 	buildName: string;
-	allBuildNames: string[],
+	allBuildNames: string[];
 	allActNotes: ActNote[];
 };
 
@@ -193,7 +192,7 @@ type CopyZoneNotesFromBuildRequest = {
 
 type ZoneNotesSettingsDto = {
 	buildName: string;
-	allBuildNames: string[],
+	allBuildNames: string[];
 	allZoneNotes: ZoneNote[];
 };
 

@@ -39,7 +39,7 @@ export function guessClientTxtPath(options: ClientTxtGuessOptions): string | und
 	});
 
 	const libraryGuesses = libraries.map((library) =>
-		path.join(library, "steamapps", "common", gameFolderName, "logs", "Client.txt")
+		path.join(library, "steamapps", "common", gameFolderName, "logs", "Client.txt"),
 	);
 
 	return [...directGuesses, ...libraryGuesses].find((guess) => fs.isReadable(guess));

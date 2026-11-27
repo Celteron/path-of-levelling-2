@@ -1,43 +1,55 @@
 import Store from "electron-store";
 import log from "electron-log";
 import screen from "electron";
-import fs from 'fs';
-import path from 'path';
-import { z } from 'zod';
-import poe1DefaultSettings from '../profiles/poe1/defaultUnversionedSettings.json' with { type: "json" };
-import poe2DefaultSettings from '../profiles/poe2/defaultUnversionedSettings.json' with { type: "json" };
-import { Build, DefaultPoE1GameSettings, DefaultPoE2GameSettings, GameSettingsZodSchema, GlobalSettingsZodSchema, ProfileId } from "../zodSchemas/schemas.js";
-import { findClientTxtPathForProfileId, getBuildsRootPath, guessClientTxtPathForProfileId, isReadableFile } from "../pathResolver.js";
+import fs from "fs";
+import path from "path";
+import { z } from "zod";
+import poe1DefaultSettings from "../profiles/poe1/defaultUnversionedSettings.json" with { type: "json" };
+import poe2DefaultSettings from "../profiles/poe2/defaultUnversionedSettings.json" with { type: "json" };
+import {
+	Build,
+	DefaultPoE1GameSettings,
+	DefaultPoE2GameSettings,
+	GameSettingsZodSchema,
+	GlobalSettingsZodSchema,
+	ProfileId,
+} from "../zodSchemas/schemas.js";
+import {
+	findClientTxtPathForProfileId,
+	getBuildsRootPath,
+	guessClientTxtPathForProfileId,
+	isReadableFile,
+} from "../pathResolver.js";
 import { objectFactory } from "../objectFactory.js";
+import { migrateBuildsV1ToV2 } from "./buildMigrations.js";
 
 // Used on startup to migrate any old configuration files to new schemas
 export class MigrationService {
+	constructor() {
+		log.info("MigrationService constructed");
+	}
 
-    constructor() {
-        log.info("MigrationService constructed");
-    }
+	init() {
+		log.info("MigrationService initialised");
+	}
 
-    init() {
-        log.info("MigrationService initialised");
-    }
+	// Run this method every time on startup - runs a migration from old configuration schemas
+	// to new configuration schemas, and fills in missing fields.
+	async MigrateOnStartup() {
+		this.MigrateGlobalSettings();
+		this.MigratePoE1GameSettings();
+		this.MigratePoE2GameSettings();
+		this.RepairClientTxtPath("poe1");
+		this.RepairClientTxtPath("poe2");
+		this.MigrateBuilds();
+	}
 
-    // Run this method every time on startup - runs a migration from old configuration schemas
-    // to new configuration schemas, and fills in missing fields.
-    async MigrateOnStartup() {
-        this.MigrateGlobalSettings();
-        this.MigratePoE1GameSettings();
-        this.MigratePoE2GameSettings();
-        this.RepairClientTxtPath("poe1");
-        this.RepairClientTxtPath("poe2");
-        this.MigrateBuilds();
-    }
+	private MigrateGlobalSettings() {
+		// First need to migrate unversioned files - should just have just added a version day 1 :(
+		this.MigrateGlobalSettingsUnversionedToV1();
 
-    private MigrateGlobalSettings() {
-        // First need to migrate unversioned files - should just have just added a version day 1 :(
-        this.MigrateGlobalSettingsUnversionedToV1();
-
-        // In future I can do this:
-        /*  const migrations = {
+		// In future I can do this:
+		/*  const migrations = {
                 1: (settingsStore) => {return MigrateGlobalSettingsV1ToV2(settingsStore)} // output new version (2)
                 2: (settingsStore) => {return MigrateGlobalSettingsV2ToV3(settingsStore)} // output new version (3)
                 etc
@@ -51,327 +63,281 @@ export class MigrationService {
             }
         */
 
-        // --- Fill missing settings with defaults from zod schema --- //
-        const globalSettings = objectFactory.getStoreService().getAllGlobalSettings();
+		// --- Fill missing settings with defaults from zod schema --- //
+		const globalSettings = objectFactory.getStoreService().getAllGlobalSettings();
 
-        const primaryDisplayHeight = screen.screen.getPrimaryDisplay().workAreaSize.height;
-        const defaultFontSize = Math.ceil(11 * primaryDisplayHeight / 1080);
+		const primaryDisplayHeight = screen.screen.getPrimaryDisplay().workAreaSize.height;
+		const defaultFontSize = Math.ceil((11 * primaryDisplayHeight) / 1080);
 
-        const dataValidationResult = this.FillWithDefaultsAndStrip(
-            GlobalSettingsZodSchema,
-            { ...GlobalSettingsZodSchema.parse({}), fontSize: defaultFontSize },
-            globalSettings
-        );
+		const dataValidationResult = this.FillWithDefaultsAndStrip(
+			GlobalSettingsZodSchema,
+			{ ...GlobalSettingsZodSchema.parse({}), fontSize: defaultFontSize },
+			globalSettings,
+		);
 
-        if (!dataValidationResult) return; // No changes required
+		if (!dataValidationResult) return; // No changes required
 
-        if (dataValidationResult.success) {
-            log.warn("Stripping unknown keys and filling missing Global Settings with defaults");
-            objectFactory.getStoreService().setAllGlobalSettings(dataValidationResult.data);
-            return;
-        } else {
-            log.warn("Resetting Global Settings to defaults");
-            objectFactory.getStoreService().setAllGlobalSettings(GlobalSettingsZodSchema.parse({}));
-        }
-    }
+		if (dataValidationResult.success) {
+			log.warn("Stripping unknown keys and filling missing Global Settings with defaults");
+			objectFactory.getStoreService().setAllGlobalSettings(dataValidationResult.data);
+			return;
+		} else {
+			log.warn("Resetting Global Settings to defaults");
+			objectFactory.getStoreService().setAllGlobalSettings(GlobalSettingsZodSchema.parse({}));
+		}
+	}
 
-    private MigratePoE1GameSettings() {
-        // Only have version 1 right now so no migration required yet
+	private MigratePoE1GameSettings() {
+		// Only have version 1 right now so no migration required yet
 
-        // --- Fill missing settings with defaults from zod schema --- //
-        const poe1GameSettings = objectFactory.getStoreService().getAllGameSettingsForProfileId("poe1");
+		// --- Fill missing settings with defaults from zod schema --- //
+		const poe1GameSettings = objectFactory.getStoreService().getAllGameSettingsForProfileId("poe1");
 
-        const dataValidationResult = this.FillWithDefaultsAndStrip(
-            GameSettingsZodSchema,
-            { ...DefaultPoE1GameSettings.parse({}), clientTxtPath: guessClientTxtPathForProfileId("poe1") },
-            poe1GameSettings
-        );
+		const dataValidationResult = this.FillWithDefaultsAndStrip(
+			GameSettingsZodSchema,
+			{ ...DefaultPoE1GameSettings.parse({}), clientTxtPath: guessClientTxtPathForProfileId("poe1") },
+			poe1GameSettings,
+		);
 
-        if (!dataValidationResult) return; // No changes required
+		if (!dataValidationResult) return; // No changes required
 
-        // If the dataValidationResult.success is true, the data just needed to be filled with
-        // defaults and/or stripped of extra keys. If false, the data was too broken to fix.
-        if (dataValidationResult.success) {
-            log.warn("Filling missing PoE1 Game Settings with defaults");
-            objectFactory.getStoreService().setAllGameSettingsForProfileId("poe1", dataValidationResult.data);
-        } else {
-            log.warn("Resetting PoE1 Game Settings to defaults");
-            objectFactory.getStoreService().setAllGameSettingsForProfileId("poe1", DefaultPoE1GameSettings.parse({}));
-        }
-    }
+		// If the dataValidationResult.success is true, the data just needed to be filled with
+		// defaults and/or stripped of extra keys. If false, the data was too broken to fix.
+		if (dataValidationResult.success) {
+			log.warn("Filling missing PoE1 Game Settings with defaults");
+			objectFactory.getStoreService().setAllGameSettingsForProfileId("poe1", dataValidationResult.data);
+		} else {
+			log.warn("Resetting PoE1 Game Settings to defaults");
+			objectFactory.getStoreService().setAllGameSettingsForProfileId("poe1", DefaultPoE1GameSettings.parse({}));
+		}
+	}
 
-    private MigratePoE2GameSettings() {
-        // Only have version 1 right now so no migration required yet
+	private MigratePoE2GameSettings() {
+		// Only have version 1 right now so no migration required yet
 
-        // --- Fill missing settings with defaults from zod schema --- //
-        const poe2GameSettings = objectFactory.getStoreService().getAllGameSettingsForProfileId("poe2");
+		// --- Fill missing settings with defaults from zod schema --- //
+		const poe2GameSettings = objectFactory.getStoreService().getAllGameSettingsForProfileId("poe2");
 
-        const dataValidationResult = this.FillWithDefaultsAndStrip(
-            GameSettingsZodSchema,
-            { ...DefaultPoE2GameSettings.parse({}), clientTxtPath: guessClientTxtPathForProfileId("poe2") },
-            poe2GameSettings
-        );
+		const dataValidationResult = this.FillWithDefaultsAndStrip(
+			GameSettingsZodSchema,
+			{ ...DefaultPoE2GameSettings.parse({}), clientTxtPath: guessClientTxtPathForProfileId("poe2") },
+			poe2GameSettings,
+		);
 
-        if (!dataValidationResult) return; // No changes required
+		if (!dataValidationResult) return; // No changes required
 
-        if (dataValidationResult.success) {
-            log.warn("Filling missing PoE2 Game Settings with defaults");
-            objectFactory.getStoreService().setAllGameSettingsForProfileId("poe2", dataValidationResult.data);
-        } else {
-            log.warn("Resetting PoE2 Game Settings to defaults");
-            objectFactory.getStoreService().setAllGameSettingsForProfileId("poe2", DefaultPoE2GameSettings.parse({}));
-        }
-    }
+		if (dataValidationResult.success) {
+			log.warn("Filling missing PoE2 Game Settings with defaults");
+			objectFactory.getStoreService().setAllGameSettingsForProfileId("poe2", dataValidationResult.data);
+		} else {
+			log.warn("Resetting PoE2 Game Settings to defaults");
+			objectFactory.getStoreService().setAllGameSettingsForProfileId("poe2", DefaultPoE2GameSettings.parse({}));
+		}
+	}
 
-    private MigrateBuilds() {
-        this.MigrateBuildStoresUnversionedToV1();
-        this.MigrateBuildStoresV1ToV2();
+	private MigrateBuilds() {
+		this.MigrateBuildStoresUnversionedToV1();
+		this.MigrateBuildStoresV1ToV2();
 
-        // Fill missing default builds - PoE1
-        const poe1BuildsDir = getBuildsRootPath("poe1");
-        const poe1BuildFolders = fs.readdirSync(poe1BuildsDir, { withFileTypes: true })
-            .filter(dirent => dirent.isDirectory()
-                && dirent.name !== "template")
-            .map(dirent => dirent.name);
+		// Fill missing default builds - PoE1
+		const poe1BuildsDir = getBuildsRootPath("poe1");
+		const poe1BuildFolders = fs
+			.readdirSync(poe1BuildsDir, { withFileTypes: true })
+			.filter((dirent) => dirent.isDirectory() && dirent.name !== "template")
+			.map((dirent) => dirent.name);
 
-        for (const folder of poe1BuildFolders) {
-            const buildPath = path.join(poe1BuildsDir, folder, 'build.json');
-            if (!fs.existsSync(buildPath)) continue;
+		for (const folder of poe1BuildFolders) {
+			const buildPath = path.join(poe1BuildsDir, folder, "build.json");
+			if (!fs.existsSync(buildPath)) continue;
 
-            const buildData = JSON.parse(fs.readFileSync(buildPath, 'utf-8')) as Build;
-            const buildName = buildData.buildName;
-            if (!objectFactory.getStoreService().getBuildForProfileId("poe1", buildName)) {
-                objectFactory.getStoreService().setBuildForProfileId("poe1", buildName, buildData);
-            }
-        }
+			const buildData = JSON.parse(fs.readFileSync(buildPath, "utf-8")) as Build;
+			const buildName = buildData.buildName;
+			if (!objectFactory.getStoreService().getBuildForProfileId("poe1", buildName)) {
+				objectFactory.getStoreService().setBuildForProfileId("poe1", buildName, buildData);
+			}
+		}
 
-        // Fill missing default builds - PoE2
-        const poe2BuildsDir = getBuildsRootPath("poe2");
-        const poe2BuildFolders = fs.readdirSync(poe2BuildsDir, { withFileTypes: true })
-            .filter(dirent => dirent.isDirectory()
-                && dirent.name !== "template")
-            .map(dirent => dirent.name);
+		// Fill missing default builds - PoE2
+		const poe2BuildsDir = getBuildsRootPath("poe2");
+		const poe2BuildFolders = fs
+			.readdirSync(poe2BuildsDir, { withFileTypes: true })
+			.filter((dirent) => dirent.isDirectory() && dirent.name !== "template")
+			.map((dirent) => dirent.name);
 
-        for (const folder of poe2BuildFolders) {
-            const buildPath = path.join(poe2BuildsDir, folder, 'build.json');
-            if (!fs.existsSync(buildPath)) continue;
+		for (const folder of poe2BuildFolders) {
+			const buildPath = path.join(poe2BuildsDir, folder, "build.json");
+			if (!fs.existsSync(buildPath)) continue;
 
-            const buildData = JSON.parse(fs.readFileSync(buildPath, 'utf-8')) as Build;
-            const buildName = buildData.buildName;
-            if (!objectFactory.getStoreService().getBuildForProfileId("poe2", buildName)) {
-                objectFactory.getStoreService().setBuildForProfileId("poe2", buildName, buildData);
-            }
-        }
-    }
+			const buildData = JSON.parse(fs.readFileSync(buildPath, "utf-8")) as Build;
+			const buildName = buildData.buildName;
+			if (!objectFactory.getStoreService().getBuildForProfileId("poe2", buildName)) {
+				objectFactory.getStoreService().setBuildForProfileId("poe2", buildName, buildData);
+			}
+		}
+	}
 
-    // A stored Client.txt path can be wrong, e.g. the Windows default on a Linux first run (#20) or
-    // a game moved to another library. Only replace it when it is unreadable and a real file was
-    // found, so a user's custom path is never overwritten by another guess.
-    private RepairClientTxtPath(profileId: ProfileId) {
-        const storeService = objectFactory.getStoreService();
-        const storedPath = storeService.getGameSettingForProfileId(profileId, 'clientTxtPath');
-        if (isReadableFile(storedPath)) return;
+	// A stored Client.txt path can be wrong, e.g. the Windows default on a Linux first run (#20) or
+	// a game moved to another library. Only replace it when it is unreadable and a real file was
+	// found, so a user's custom path is never overwritten by another guess.
+	private RepairClientTxtPath(profileId: ProfileId) {
+		const storeService = objectFactory.getStoreService();
+		const storedPath = storeService.getGameSettingForProfileId(profileId, "clientTxtPath");
+		if (isReadableFile(storedPath)) return;
 
-        const foundPath = findClientTxtPathForProfileId(profileId);
-        if (!foundPath) {
-            log.warn(`Client.txt not found for ${profileId}, keeping configured path: ${storedPath}`);
-            return;
-        }
+		const foundPath = findClientTxtPathForProfileId(profileId);
+		if (!foundPath) {
+			log.warn(`Client.txt not found for ${profileId}, keeping configured path: ${storedPath}`);
+			return;
+		}
 
-        log.warn(`Replacing unreadable Client.txt path for ${profileId}: ${storedPath} -> ${foundPath}`);
-        storeService.setGameSettingForProfileId(profileId, 'clientTxtPath', foundPath);
-    }
+		log.warn(`Replacing unreadable Client.txt path for ${profileId}: ${storedPath} -> ${foundPath}`);
+		storeService.setGameSettingForProfileId(profileId, "clientTxtPath", foundPath);
+	}
 
-    // --- Global Settings Migrators --- //
-    private MigrateGlobalSettingsUnversionedToV1() {
-        const oldSettingsStore = new Store(); // opens /~userData~/config.json
-        const oldData = oldSettingsStore.store;
+	// --- Global Settings Migrators --- //
+	private MigrateGlobalSettingsUnversionedToV1() {
+		const oldSettingsStore = new Store(); // opens /~userData~/config.json
+		const oldData = oldSettingsStore.store;
 
-        // If there are no old settings, no migration required.
-        if (!oldData || oldSettingsStore.size === 0)
-            return;
+		// If there are no old settings, no migration required.
+		if (!oldData || oldSettingsStore.size === 0) return;
 
-        // Back in ye olde days 'buildName' was 'buildFolder'
-        if (oldSettingsStore.get('buildFolder')) {
-            oldSettingsStore.set('buildName', oldSettingsStore.get('buildFolder'));
-            oldSettingsStore.delete('buildFolder');
-        }
+		// Back in ye olde days 'buildName' was 'buildFolder'
+		if (oldSettingsStore.get("buildFolder")) {
+			oldSettingsStore.set("buildName", oldSettingsStore.get("buildFolder"));
+			oldSettingsStore.delete("buildFolder");
+		}
 
-        // Originally this app only supported poe2 and had one settings file - now there is a global
-        // settings file and a settings file for poe1 and poe2.
-        const globalSettingsStore = new Store({
-            name: "globalSettings"
-        });
-        globalSettingsStore.set('version', 1);
-        globalSettingsStore.set('selectedProfile', "poe2");
+		// Originally this app only supported poe2 and had one settings file - now there is a global
+		// settings file and a settings file for poe1 and poe2.
+		const globalSettingsStore = new Store({
+			name: "globalSettings",
+		});
+		globalSettingsStore.set("version", 1);
+		globalSettingsStore.set("selectedProfile", "poe2");
 
-        // poe2 settings we can pull from the old file
-        const poe2SettingsStore = new Store({ name: "poe2-gameSettings" });
+		// poe2 settings we can pull from the old file
+		const poe2SettingsStore = new Store({ name: "poe2-gameSettings" });
 
-        poe2SettingsStore.set('version', 1);
-        poe2SettingsStore.set('clientTxtPath', oldSettingsStore.get('clientTxtPath') ?? poe2DefaultSettings.clientTxtPath);
-        poe2SettingsStore.set('buildName', oldSettingsStore.get('buildName') ?? poe2DefaultSettings.buildName);
-        poe2SettingsStore.set('lastSessionState', oldSettingsStore.get('lastSessionState') ?? poe2DefaultSettings.lastSessionState);
-        poe2SettingsStore.set('uiSettings', oldSettingsStore.get('uiSettings') ?? poe2DefaultSettings.uiSettings);
+		poe2SettingsStore.set("version", 1);
+		poe2SettingsStore.set(
+			"clientTxtPath",
+			oldSettingsStore.get("clientTxtPath") ?? poe2DefaultSettings.clientTxtPath,
+		);
+		poe2SettingsStore.set("buildName", oldSettingsStore.get("buildName") ?? poe2DefaultSettings.buildName);
+		poe2SettingsStore.set(
+			"lastSessionState",
+			oldSettingsStore.get("lastSessionState") ?? poe2DefaultSettings.lastSessionState,
+		);
+		poe2SettingsStore.set("uiSettings", oldSettingsStore.get("uiSettings") ?? poe2DefaultSettings.uiSettings);
 
-        // poe1 settings we just fill with defaults
-        const poe1SettingsStore = new Store({ name: "poe1-gameSettings" });
+		// poe1 settings we just fill with defaults
+		const poe1SettingsStore = new Store({ name: "poe1-gameSettings" });
 
-        poe1SettingsStore.set('version', 1);
-        // For clientTxtPath we try to make a few guesses before falling back to the default
-        poe1SettingsStore.set('clientTxtPath', guessClientTxtPathForProfileId("poe1"));
-        poe1SettingsStore.set('buildName', poe1DefaultSettings.buildName);
-        poe1SettingsStore.set('lastSessionState', poe1DefaultSettings.lastSessionState);
-        poe1SettingsStore.set('uiSettings', poe1DefaultSettings.uiSettings);
+		poe1SettingsStore.set("version", 1);
+		// For clientTxtPath we try to make a few guesses before falling back to the default
+		poe1SettingsStore.set("clientTxtPath", guessClientTxtPathForProfileId("poe1"));
+		poe1SettingsStore.set("buildName", poe1DefaultSettings.buildName);
+		poe1SettingsStore.set("lastSessionState", poe1DefaultSettings.lastSessionState);
+		poe1SettingsStore.set("uiSettings", poe1DefaultSettings.uiSettings);
 
-        // Now delete the old settings store
-        oldSettingsStore.clear();
-    }
+		// Now delete the old settings store
+		oldSettingsStore.clear();
+	}
 
-    // --- Builds Migrators --- //
-    private MigrateBuildStoresUnversionedToV1() {
-        const oldBuildStore = new Store({
-            name: "builds",
-            accessPropertiesByDotNotation: false // So ppl can use . in build names (eg 3.27 LA)
-        });
-        const oldData = oldBuildStore.store;
+	// --- Builds Migrators --- //
+	private MigrateBuildStoresUnversionedToV1() {
+		const oldBuildStore = new Store({
+			name: "builds",
+			accessPropertiesByDotNotation: false, // So ppl can use . in build names (eg 3.27 LA)
+		});
+		const oldData = oldBuildStore.store;
 
-        // If there are no old settings, no migration required.
-        if (!oldData || oldBuildStore.size === 0)
-            return;
+		// If there are no old settings, no migration required.
+		if (!oldData || oldBuildStore.size === 0) return;
 
-        // Old build store was just a collection of properties named after the build whose values
-        // were the actual build, i.e.
-        // {
-        //      "0.3.0 CaptainLance9's Archon Blood Mage": {... actual build here ...}
-        // }
-        // So we have to iterate through all the properties in the store and map those into the new
-        // builds dict
-        const poe2newBuildStore = new Store({
-            name: "poe2-builds",
-            accessPropertiesByDotNotation: false
-        });
+		// Old build store was just a collection of properties named after the build whose values
+		// were the actual build, i.e.
+		// {
+		//      "0.3.0 CaptainLance9's Archon Blood Mage": {... actual build here ...}
+		// }
+		// So we have to iterate through all the properties in the store and map those into the new
+		// builds dict
+		const poe2newBuildStore = new Store({
+			name: "poe2-builds",
+			accessPropertiesByDotNotation: false,
+		});
 
-        poe2newBuildStore.set('version', 1);
+		poe2newBuildStore.set("version", 1);
 
-        const migratedBuilds: Record<string, object> = {};
-        for (const buildName in oldBuildStore.store) {
-            const oldBuild = oldBuildStore.get(buildName) as object;
-            Object.assign(oldBuild, { "actNotes": [] });
-            migratedBuilds[buildName] = oldBuild;
-        }
+		const migratedBuilds: Record<string, object> = {};
+		for (const buildName in oldBuildStore.store) {
+			const oldBuild = oldBuildStore.get(buildName) as object;
+			Object.assign(oldBuild, { actNotes: [] });
+			migratedBuilds[buildName] = oldBuild;
+		}
 
-        poe2newBuildStore.set('builds', migratedBuilds);
+		poe2newBuildStore.set("builds", migratedBuilds);
 
-        // There was never a poe1 builds store, so we just create an empty one
-        const poe1newBuildStore = new Store({
-            name: "poe1-builds",
-            accessPropertiesByDotNotation: false
-        });
-        poe1newBuildStore.set('version', 1);
-        poe1newBuildStore.set('builds', {});
+		// There was never a poe1 builds store, so we just create an empty one
+		const poe1newBuildStore = new Store({
+			name: "poe1-builds",
+			accessPropertiesByDotNotation: false,
+		});
+		poe1newBuildStore.set("version", 1);
+		poe1newBuildStore.set("builds", {});
 
-        // Clear the old builds store
-        oldBuildStore.clear();
-    }
+		// Clear the old builds store
+		oldBuildStore.clear();
+	}
 
-    private MigrateBuildStoresV1ToV2() {
-        // V2 added Zone Notes to builds (like how V1 added Act Notes) so here we just:
-        // 1. Change "version": 1 -> "version": 2
-        // 2. Add lockNoteOption: "lockedCannotUnlock" to each act note
-        // 3. Add zoneNotes: [] to each build
-        const poe2NewBuildStore = new Store({
-            name: "poe2-builds",
-            accessPropertiesByDotNotation: false
-        });
+	private MigrateBuildStoresV1ToV2() {
+		// V2 added Zone Notes to builds (like how V1 added Act Notes) so here we just:
+		// 1. Change "version": 1 -> "version": 2
+		// 2. Add lockNoteOption: "lockedCannotUnlock" to each act note
+		// 3. Add zoneNotes: [] to each build
+		for (const profileId of ["poe2", "poe1"] as const) {
+			const buildStore = new Store({ name: `${profileId}-builds`, accessPropertiesByDotNotation: false });
+			if (buildStore.get("version") !== 1) continue;
 
-        // Only migrate if we're on version 1
-        if (poe2NewBuildStore.get('version') == 1) {
-            // Backup
-            const poe2BackupBuildStore = new Store({
-                name: "poe2-builds-v1-backup",
-                defaults: poe2NewBuildStore.store,
-                accessPropertiesByDotNotation: false
-            });
+			// Creating the store writes the backup file
+			new Store({
+				name: `${profileId}-builds-v1-backup`,
+				defaults: buildStore.store,
+				accessPropertiesByDotNotation: false,
+			});
 
-            poe2NewBuildStore.set('version', 2);
+			buildStore.set("version", 2);
+			buildStore.set(
+				"builds",
+				migrateBuildsV1ToV2(buildStore.get("builds") as Parameters<typeof migrateBuildsV1ToV2>[0]),
+			);
+		}
+	}
 
-            // Add zoneNotes to each build
-            const poe2MigratedBuilds: Record<string, object> = {};
+	/** Checks existing settings, trims extra keys and fills defaults.
+	 * Returns undefined if no changes are required.
+	 */
+	private FillWithDefaultsAndStrip<T extends z.ZodObject<z.ZodRawShape>>(
+		schema: T,
+		defaults: z.infer<T>,
+		current: object,
+	): z.ZodSafeParseResult<z.infer<T>> | undefined {
+		// First check that there are missing settings at all, or any extra keys
+		const alreadyValidCheck = schema.safeParse(current);
+		if (alreadyValidCheck.success && Object.keys(alreadyValidCheck.data).length === Object.keys(current).length)
+			return; // No missing settings and no extra keys
 
-            const builds = poe2NewBuildStore.get('builds') as Record<string, object>;
-            for (const buildName in builds) {
-                poe2MigratedBuilds[buildName] = {
-                    ...builds[buildName],
-                    // @ts-ignore
-                    actNotes: builds[buildName].actNotes.map((actNote) => ({
-                        lockNoteOption: "lockedCannotUnlock",
-                        ...actNote
-                    })),
-                    zoneNotes: []
-                };
-            }
+		log.warn(
+			"Failed schema validation on Global Settings:",
+			alreadyValidCheck.error === undefined ? "Unrecognised keys!" : z.treeifyError(alreadyValidCheck.error),
+		);
 
-            poe2NewBuildStore.set('builds', poe2MigratedBuilds);
-        };
-
-        const poe1NewBuildStore = new Store({
-            name: "poe1-builds",
-            accessPropertiesByDotNotation: false
-        });
-
-        if (poe1NewBuildStore.get('version') == 1) {
-            // Backup
-            const poe1BackupBuildStore = new Store({
-                name: "poe1-builds-v1-backup",
-                defaults: poe1NewBuildStore.store,
-                accessPropertiesByDotNotation: false
-            });
-
-            poe1NewBuildStore.set('version', 2);
-
-            // Add zoneNotes to each build
-            const poe1MigratedBuilds: Record<string, object> = {};
-
-            const builds = poe1NewBuildStore.get('builds') as Record<string, object>;
-            for (const buildName in builds) {
-                poe1MigratedBuilds[buildName] = {
-                    ...builds[buildName],
-                    // @ts-ignore
-                    actNotes: builds[buildName].actNotes.map((actNote) => ({
-                        lockNoteOption: "lockedCannotUnlock",
-                        ...actNote
-                    })),
-                    zoneNotes: []
-                };
-            }
-
-            poe1NewBuildStore.set('builds', poe1MigratedBuilds);
-        };
-
-    }
-
-    /** Checks existing settings, trims extra keys and fills defaults.
-     * Returns undefined if no changes are required.
-     */
-    private FillWithDefaultsAndStrip<T extends z.ZodObject<any>>(schema: T, defaults: z.infer<T>, current: object)
-        : z.ZodSafeParseResult<z.infer<T>> | undefined {
-
-        // First check that there are missing settings at all, or any extra keys
-        var alreadyValidCheck = schema.safeParse(current);
-        if (alreadyValidCheck.success && Object.keys(alreadyValidCheck.data).length === Object.keys(current).length)
-            return; // No missing settings or extra keys. yeah returning undefined is yuck, whatever
-
-        log.warn("Failed schema validation on Global Settings:",
-            alreadyValidCheck.error === undefined
-                ? "Unrecognised keys!"
-                : z.treeifyError(alreadyValidCheck.error));
-
-        // Fill in missing settings with defaults and strip extra keys at the same time.
-        // Return result of the safeParse - too hard to automate which store to write to 
-        return schema.safeParse({
-            ...defaults,
-            ...current
-        });
-    }
+		// Fill in missing settings with defaults and strip extra keys at the same time.
+		// Return result of the safeParse - too hard to automate which store to write to
+		return schema.safeParse({
+			...defaults,
+			...current,
+		});
+	}
 }

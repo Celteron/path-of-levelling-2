@@ -1,7 +1,8 @@
-import { ReactNode, useContext, useEffect, useRef, useState } from "react";
-import { OverlayInteractiveContext } from "./overlayInteractive";
-import { Rnd, RndDragCallback, RndResizeCallback } from "react-rnd";
+import { ReactNode, useContext, useEffect, useState } from "react";
+import { Rnd } from "react-rnd";
 import { OverlayPosition } from "../../main/zodSchemas/schemas";
+import { OverlayInteractiveContext } from "./overlayInteractive";
+import { useOverlayPosition } from "./useOverlayPosition";
 
 type TrackerPanelProps = {
 	/** Accessible name of the panel */
@@ -28,31 +29,17 @@ export function TrackerPanel({
 	collapsed = false,
 	children,
 }: TrackerPanelProps) {
-	const [position, setPosition] = useState<OverlayPosition>({ x: 0, y: 0, height: "200px", width: "400px" });
+	const { position, onDragStop, onResizeStop } = useOverlayPosition(loadPosition, savePosition);
 	const [moveMode, setMoveMode] = useState(false);
 	const [isHovered, setIsHovered] = useState(false);
 	const [hasFocus, setHasFocus] = useState(false);
 	const interactive = useContext(OverlayInteractiveContext);
-	// Loaded once per mount, independent of the identity of the function passed in
-	const loadPositionOnMount = useRef(loadPosition);
-
-	useEffect(() => {
-		loadPositionOnMount.current().then(setPosition);
-	}, []);
 
 	useEffect(() => {
 		if (interactive) return;
 		setMoveMode(false);
 		setIsHovered(false);
 	}, [interactive]);
-
-	const save = (newPosition: OverlayPosition) => {
-		setPosition(newPosition);
-		savePosition(newPosition);
-	};
-	const handleDrag: RndDragCallback = (_, d) => save({ ...position, x: d.x, y: d.y });
-	const handleResize: RndResizeCallback = (_, __, ref, ___, newPosition) =>
-		save({ ...newPosition, height: ref.style.height, width: ref.style.width });
 
 	// While moving, the panel takes its saved size so it can be placed for when it has content
 	const isCollapsed = collapsed && !moveMode;
@@ -61,8 +48,8 @@ export function TrackerPanel({
 		<Rnd
 			size={{ width: position.width, height: isCollapsed ? "auto" : position.height }}
 			position={{ x: position.x, y: position.y }}
-			onDragStop={handleDrag}
-			onResizeStop={handleResize}
+			onDragStop={onDragStop}
+			onResizeStop={onResizeStop}
 			bounds="parent"
 			disableDragging={!moveMode}
 			enableResizing={moveMode}
