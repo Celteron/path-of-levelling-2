@@ -215,3 +215,63 @@ export const DefaultZoneNotesZodSchema = z.object({
 });
 
 export type DefaultActAndZoneNotes = z.infer<typeof DefaultZoneNotesZodSchema>;
+
+// --- Leveling Guide (converted from Exile UI, see scripts/exileUiGuide) --- //
+
+export const GuideSegmentZodSchema = z.discriminatedUnion("kind", [
+	z.object({ kind: z.literal("text"), text: z.string(), color: z.string().optional() }),
+	z.object({ kind: z.literal("icon"), icon: z.string() }),
+	z.object({ kind: z.literal("zone"), code: z.string(), name: z.string() }),
+	z.object({ kind: z.literal("quest"), item: z.string() }),
+	z.object({ kind: z.literal("boss"), name: z.string() }),
+	z.object({ kind: z.literal("arena"), name: z.string() }),
+	z.object({ kind: z.literal("tag"), value: z.string() }),
+	z.object({ kind: z.literal("separator") }),
+]);
+
+/** "leaguestart" steps/pages only show on league start, "twinkrun" ones only on later runs */
+export const GuideVariantZodSchema = z.enum(["all", "leaguestart", "twinkrun"]);
+
+export const GuideStepZodSchema = z.object({
+	segments: z.array(GuideSegmentZodSchema),
+	/** Sub-lines shown below the step, filtered together with it */
+	hints: z.array(z.array(GuideSegmentZodSchema)),
+	optional: z.boolean(),
+	variant: GuideVariantZodSchema,
+});
+
+export const GuidePageZodSchema = z.object({
+	/** Index into LevelingGuide.acts */
+	act: z.number().int().nonnegative(),
+	variant: GuideVariantZodSchema,
+	steps: z.array(GuideStepZodSchema),
+});
+
+export const RecommendedLevelZodSchema = z.object({
+	min: z.number(),
+	max: z.number(),
+	/** Original text, e.g. "12 | 13+" */
+	label: z.string(),
+});
+
+export const GuideAreaZodSchema = z.object({
+	name: z.string(),
+	recommendedLevel: RecommendedLevelZodSchema.optional(),
+});
+
+export const LevelingGuideZodSchema = z.object({
+	schemaVersion: z.literal(1),
+	source: z.object({ name: z.string(), version: z.string(), license: z.string() }),
+	acts: z.array(z.object({ name: z.string() })),
+	pages: z.array(GuidePageZodSchema),
+	/** Keyed by uppercase zone code, e.g. "G1_TOWN" */
+	areas: z.record(z.string(), GuideAreaZodSchema),
+});
+
+export type GuideSegment = z.infer<typeof GuideSegmentZodSchema>;
+export type GuideVariant = z.infer<typeof GuideVariantZodSchema>;
+export type GuideStep = z.infer<typeof GuideStepZodSchema>;
+export type GuidePage = z.infer<typeof GuidePageZodSchema>;
+export type RecommendedLevel = z.infer<typeof RecommendedLevelZodSchema>;
+export type GuideArea = z.infer<typeof GuideAreaZodSchema>;
+export type LevelingGuide = z.infer<typeof LevelingGuideZodSchema>;
