@@ -61,16 +61,18 @@ run `pkill -f pol2-test/` in another console or via SSH.
 - **In game the overlay ignores the mouse.** To click or hover in a PoL2 window, press `Ctrl+Alt+S`
   first (opens the settings), and `Ctrl+Alt+S` again afterwards.
 - Hotkeys: `Ctrl+Alt+N` / `Ctrl+Alt+B` next/previous guide page, `Ctrl+Alt+J` show/hide guide,
-  `Ctrl+Alt+A` show/hide all windows, `Ctrl+Alt+S` settings.
-- The app reads Client.txt about every 5 seconds, so reactions to zone changes take up to 5 seconds.
+  `Ctrl+Alt+A` show/hide all windows, `Ctrl+Alt+P` pause/resume the campaign timer, `Ctrl+Alt+S`
+  settings.
+- The app reads Client.txt about every second, so reactions to zone changes take up to a second.
 
 ## 3. Checklist
 
 Go through it in order, ideally with a new character so the guide fits from the start. For every
 failure note: number, what happened, for the guide also the page (e.g. `12 / 136`) and the zone.
 
-**Round 4 (after the window redesign, 2026-11-27):** run the setup script again (`Version:` must show
-`8db8c94` or newer), then test the redesigned windows (9 and 21–25) and the still open 16, 17, 19 and 20.
+**Round 4 (2026-11-27, after the window redesign, the code cleanup and the campaign timer):** run the
+setup script again (`Version:` must show `20f635c` or newer), then test the redesigned windows (9 and
+21–25), the still open 16, 17, 19 and 20, the cleanup fixes (26–29) and the timer (30–32).
 
 ### A. Start and login
 
@@ -164,6 +166,41 @@ failure note: number, what happened, for the guide also the page (e.g. `12 / 136
 25. **Window opacity.** Settings → General → `Window opacity`: slide to 40 %, then 100 %. Set your
     favourite, quit and restart the test build.
     *Expected:* The windows become see-through while you slide; after the restart the value is kept.
+
+### E. Fixes from the code cleanup
+
+26. **Builds switch everywhere.** Settings → Gems: `Add build...`, name it `Test`, `Create`. Then
+    Settings → Act Notes: select `Default`, then `Test` again. Delete `Test` at the end.
+    *Expected:* Each page shows the build you picked; the gem window and the notes window switch with
+    it (a new build shows the shipped notes). `Delete Build` is not offered for `Default`.
+27. **A new Client.txt path takes effect at once.** Settings → General: type in the Client.txt field.
+    Then copy Client.txt next to it as `Client-copy.txt`, enter the copy's path, `Save`, and change
+    the zone in the game. Enter the real path again, `Save`, change the zone again.
+    *Expected:* The button stays `Save` while typing and says `Saved!` after the click. With the copy
+    the overlay does not follow the zone change; with the real path it follows within a second.
+28. **Zone without a tip.** Hide the guide (`Ctrl+Alt+J`). In the notes window choose `Act 4`, a zone
+    with a tip, then `Ngakanu`.
+    *Expected:* Ngakanu shows no zone tip instead of the tip of the zone before.
+29. **Notes settings pages.** Open Settings → Act Notes and Zone Notes and type a few lines.
+    *Expected:* Both pages look alike, and the note fields grow with their text.
+
+### F. Campaign timer (new)
+
+30. **Timer per act.** With a new character enter The Riverbank (with a character further on press
+    `Ctrl+Alt+P` in a campaign zone). Play on into the next act and once back to the previous one.
+    *Expected:* The level window shows e.g. `Act 1 4:12 · Total 4:12`, counting every second. On the
+    first entry into Act 2 it shows `Act 2 0:00` and the total goes on; going back to Act 1 keeps
+    counting on Act 2. The level window is a line taller now; move the gem window if they overlap.
+31. **Pauses.** Switch to the browser for half a minute and back. Go to character select for half a
+    minute and log in again. Press `Ctrl+Alt+P` twice. Open the settings with `Ctrl+Alt+S`.
+    *Expected:* While you are away or at character select the time stands still and `· Paused` is
+    shown; it goes on when you are back in the game or enter a zone. `Ctrl+Alt+P` pauses and resumes.
+    With the settings open the timer keeps running.
+32. **Restart and reset.** Quit the test build (tray → Quit) and start it again. Then `Ctrl+Alt+S`,
+    hover the level window, and use `Reset timer`.
+    *Expected:* After the start the stored times show with `· Paused` and go on with the next zone (or
+    `Ctrl+Alt+P`). On hover the time per act and the buttons appear; `Reset timer` asks first, and
+    after `Reset` the timer line disappears until Act 1 or `Ctrl+Alt+P`.
 
 ## 4. Reporting
 
