@@ -72,7 +72,7 @@ failure note: number, what happened, for the guide also the page (e.g. `12 / 136
 
 **Round 4 (2026-11-27, after the window redesign, the code cleanup and the campaign timer):** run the
 setup script again (`Version:` must show `20f635c` or newer), then test the redesigned windows (9 and
-21–25), the still open 16, 17, 19 and 20, the cleanup fixes (26–29) and the timer (30–32).
+21–25), the still open 16, 17, 19 and 20, the cleanup fixes (26–29) and the timer (30–33).
 
 ### A. Start and login
 
@@ -201,6 +201,15 @@ setup script again (`Version:` must show `20f635c` or newer), then test the rede
     *Expected:* After the start the stored times show with `· Paused` and go on with the next zone (or
     `Ctrl+Alt+P`). On hover the time per act and the buttons appear; `Reset timer` asks first, and
     after `Reset` the timer line disappears until Act 1 or `Ctrl+Alt+P`.
+33. **Finished runs and best times.** Let the timer run for a minute, then `Ctrl+Alt+S` → General
+    settings: note the `Campaign runs folder` (default `Documents/PoL2`), optionally pick another
+    absolute folder and `Save`. Then pretend you reached the endgame town by adding one line to your
+    Client.txt (path from the settings), in a terminal:
+    `echo '2026/11/27 21:30:00 0 0 [DEBUG Client 0] Generating level 65 area "G_ENDGAME_TOWN" with seed 1' >> "<your Client.txt path>"`
+    *Expected:* Within a second the timer line ends with `· Done`. The folder now holds
+    `pol2-campaign-runs-poe2.csv` with a header, one row per act and a `Total` row, each with today's
+    date and time. Hovering the level window with the settings open shows `· PB …` behind each act.
+    Afterwards use `Reset timer` and `Ctrl+Alt+P` to time your character again.
 
 ## 4. Reporting
 
