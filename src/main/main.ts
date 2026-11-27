@@ -21,7 +21,9 @@ import { ipcMainHandle, ipcWebContentsSend } from "./ipc/ipcWrappers.js";
 // Only allow one instance of the app
 if (!app.requestSingleInstanceLock()) {
 	log.info("Another instance of the app is already running, quitting this one.");
-	app.quit();
+	// app.quit() is asynchronous: whenReady() below still resolves, so the second instance would run
+	// the settings migration and create a window/tray before quitting. exit() stops it immediately.
+	app.exit(0);
 }
 
 export function getAutoUpdater(): AppUpdater {
