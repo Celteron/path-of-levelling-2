@@ -3,17 +3,13 @@ import log from "electron-log";
 import fs from "fs";
 import { objectFactory } from "../objectFactory.js";
 import { ipcWebContentsSend } from "../ipc/ipcWrappers.js";
+import { parseLogChunk } from "../logParser.js";
 
 export class LogWatcherService {
-	newZoneRegex: RegExp;
-	levelUpRegex: RegExp;
 	watchedFilePath: string = "";
 	previousFileSize: number;
 
 	constructor() {
-		this.newZoneRegex = RegExp('Generating level (.*) area "(.*)" with seed');
-		this.levelUpRegex = RegExp("is now level (.*)");
-
 		this.previousFileSize = 0;
 
 		log.info("LogWatcherService constructed");
@@ -162,31 +158,9 @@ export class LogWatcherService {
 		this.previousFileSize = newFileSize;
 
 		//read the buffer here
-		var data = this.parseBuffer(buffer);
+		var data = parseLogChunk(buffer.toString());
 
 		log.info("New lines had data", data);
 		return data;
-	}
-
-	parseBuffer(buffer: Buffer) {
-		// Set invalid values that we can check against later.
-		var playerLevel = 0;
-		var monsterLevel = 0;
-		var zoneCode = "";
-
-		var newLines = buffer.toString();
-
-		var matches = newLines.match(this.levelUpRegex);
-		if (matches) {
-			playerLevel = parseInt(matches[1]);
-		}
-
-		var matches = newLines.match(this.newZoneRegex);
-		if (matches) {
-			monsterLevel = parseInt(matches[1]);
-			zoneCode = matches[2];
-		}
-
-		return { playerLevel, monsterLevel, zoneCode };
 	}
 }
