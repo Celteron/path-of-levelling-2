@@ -63,6 +63,9 @@ type channelReturnTypeMapping = {
 
 	// Level Tracker
 	subscribeToLevelUpdates: LevelDataDto;
+
+	// Login/character select vs. game world
+	gameWorldUpdates: boolean;
 	getLevelState: LevelDataDto;
 
 	// Gem Tracker

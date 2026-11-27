@@ -7,10 +7,15 @@ export interface LogChunkData {
 	monsterLevel: number;
 	/** "" if no zone change was found */
 	zoneCode: string;
+	/** true at the login/character select screen, false in the game world, undefined if unknown */
+	atLoginScreen?: boolean;
 }
 
 const newZoneRegex = /Generating level (\d+) area "(.*)" with seed/;
 const levelUpRegex = /is now level (\d+)/;
+// Same signals as Exile UI: the client connects to the login server when logging in and when
+// returning to character select, and writes a "*****" banner when the game starts.
+const loginScreenRegex = /connected to .*\.login\.|\*\*\*\*\*/i;
 
 /**
  * Parses the lines appended to Client.txt since the last read. The file is polled, so one chunk
@@ -30,7 +35,11 @@ export function parseLogChunk(newLines: string): LogChunkData {
 		if (newZone) {
 			data.monsterLevel = parseInt(newZone[1]);
 			data.zoneCode = newZone[2];
+			data.atLoginScreen = false;
+			continue;
 		}
+
+		if (loginScreenRegex.test(line)) data.atLoginScreen = true;
 	}
 
 	return data;

@@ -12,6 +12,10 @@ function App() {
 	const [layoutImagesActive, setLayoutImagesActive] = useState(true);
 	const [levelTrackerActive, setLevelTrackerActive] = useState(true);
 	const [gemTrackerActive, setGemTrackerActive] = useState(true);
+	// Trackers are hidden on the login/character select screen, but stay visible while the
+	// settings are open so they can still be moved and resized there.
+	const [inGameWorld, setInGameWorld] = useState(true);
+	const showTrackers = inGameWorld || settingsActive;
 
 	const [fontSize, setFontSize] = useState(11);
 
@@ -40,18 +44,22 @@ function App() {
 		});
 	}, []);
 
+	useEffect(() => {
+		window.electron.subscribeToGameWorldUpdates(setInGameWorld);
+	}, []);
+
 	const conditionalRenderSettings = () => {
 		if (settingsActive) {
 			return <SettingsComponent fontSize={fontSize} setFontSizeFunction = {setFontSize} />;
 		}
 	};
 	const conditionalRenderLevelTracker = () => {
-		if (levelTrackerActive) {
+		if (levelTrackerActive && showTrackers) {
 			return <LevelTrackerComponent />;
 		}
 	};
 	const conditionalRenderGemTracker = () => {
-		if (gemTrackerActive) {
+		if (gemTrackerActive && showTrackers) {
 			return <GemTrackerComponent />;
 		}
 	};
@@ -70,8 +78,8 @@ function App() {
 			{conditionalRenderSettings()}
 			{/* Zone tracker component set up a little different becuase zone & layout are coupled */}
 			<ZoneTrackerComponent
-				zoneNotesActive={zoneNotesActive}
-				layoutImagesActive={layoutImagesActive}
+				zoneNotesActive={zoneNotesActive && showTrackers}
+				layoutImagesActive={layoutImagesActive && showTrackers}
 			/>
 			{conditionalRenderLevelTracker()}
 			{conditionalRenderGemTracker()}
