@@ -21,8 +21,14 @@ export function createBuild(buildName: string) {
 	activateBuild(buildName);
 }
 
-/** Deletes a build and goes back to the Default build */
+/** Makes buildName the current build unless it already is, keeping a gem setup picked by hand */
+export function useBuild(buildName: string) {
+	if (buildName !== objectFactory.getSettingsService().getBuildName()) activateBuild(buildName);
+}
+
+/** Deletes a build and goes back to the Default build, which every other build falls back to */
 export function removeBuild(buildName: string) {
+	if (buildName === "Default") return;
 	objectFactory.getGemTracker().deleteBuild(buildName);
 	activateBuild("Default");
 }

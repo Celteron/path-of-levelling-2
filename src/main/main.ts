@@ -6,7 +6,7 @@ import path from "path";
 import { LogWatcherService } from "./services/LogWatcherService.js";
 import { getDesktopIconPath, getPreloadPath, getUIPath, isDev } from "./pathResolver.js";
 import { objectFactory } from "./objectFactory.js";
-import { activateBuild, createBuild, removeBuild, sendBuildState } from "./builds.js";
+import { activateBuild, createBuild, removeBuild, sendBuildState, useBuild } from "./builds.js";
 import { getProfile } from "./profiles/profiles.js";
 import { ipcMainHandle, ipcWebContentsSend } from "./ipc/ipcWrappers.js";
 import { toggleAllTrackers } from "./trackers/trackerVisibility.js";
@@ -310,13 +310,13 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 	});
 
 	ipcMainHandle("saveActNotesForBuild", async (_, request) => {
-		activateBuild(request.buildName);
+		useBuild(request.buildName);
 		zoneTracker().saveActNotes(request.buildName, request.allActNotes);
 		return afterBuildChange(() => zoneTracker().getActNotesSettingsDto());
 	});
 
 	ipcMainHandle("postCopyActNotesFromBuild", async (_, request) => {
-		activateBuild(request.buildName);
+		useBuild(request.buildName);
 		zoneTracker().CopyActNotesFromBuild(request.buildName, request.buildToCopyName);
 		return afterBuildChange(() => zoneTracker().getActNotesSettingsDto());
 	});
@@ -346,13 +346,13 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 	});
 
 	ipcMainHandle("saveZoneNotesForBuild", async (_, request) => {
-		activateBuild(request.buildName);
+		useBuild(request.buildName);
 		zoneTracker().saveZoneNotes(request.buildName, request.allZoneNotes);
 		return afterBuildChange(() => zoneTracker().getZoneNotesSettingsDto());
 	});
 
 	ipcMainHandle("postCopyZoneNotesFromBuild", async (_, request) => {
-		activateBuild(request.buildName);
+		useBuild(request.buildName);
 		zoneTracker().CopyZoneNotesFromBuild(request.buildName, request.buildToCopyName);
 		return afterBuildChange(() => zoneTracker().getZoneNotesSettingsDto());
 	});

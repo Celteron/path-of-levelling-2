@@ -58,7 +58,7 @@ export function NotesSettingsPage<Note extends EditableNote>({
 	/** Page heading, e.g. "Act Notes" */
 	title: string;
 	api: NotesSettingsApi<Note>;
-	/** Unique key of a note, sent to resetNote */
+	/** Unique key of a note, sent to resetNote. Pass a stable function: it is an effect dependency. */
 	noteId: (note: Note) => string;
 	noteLabel: (note: Note) => string;
 	onUnsavedChangesChange?: (hasUnsavedChanges: boolean) => void;
@@ -87,6 +87,7 @@ export function NotesSettingsPage<Note extends EditableNote>({
 	};
 	const loadState = (state: NotesSettingsState<Note>) => {
 		setSelectedBuild(state.buildName);
+		setBuildToCopyName(""); // the chosen build may have been deleted or selected
 		setAllBuildNames(state.allBuildNames);
 		loadNotes(state.notes);
 	};
@@ -104,6 +105,7 @@ export function NotesSettingsPage<Note extends EditableNote>({
 	const trimmedNewBuildName = newBuildName.trim();
 	const canAddBuild = trimmedNewBuildName !== "" && !allBuildNames.includes(trimmedNewBuildName);
 	const notesName = title.toLowerCase();
+	const canCopy = buildToCopyName !== selectedBuild && allBuildNames.includes(buildToCopyName);
 
 	const handleBuildDropdownSelection = async (event: ChangeEvent<HTMLSelectElement>) => {
 		// Read before awaiting: React resets the controlled select to the current build meanwhile
@@ -134,7 +136,7 @@ export function NotesSettingsPage<Note extends EditableNote>({
 	};
 
 	const handleCopyFromBuild = () => {
-		if (!buildToCopyName || buildToCopyName === selectedBuild) return;
+		if (!canCopy) return;
 		api.copyFromBuild(selectedBuild, buildToCopyName).then((state) => loadNotes(state.notes));
 	};
 
@@ -233,7 +235,8 @@ export function NotesSettingsPage<Note extends EditableNote>({
 					))}
 					<option value={ADD_BUILD}>Add build...</option>
 				</select>
-				{!addingBuild && (
+				{/* Default is the fallback of every other build and cannot be deleted */}
+				{!addingBuild && selectedBuild !== "Default" && (
 					<button
 						type="button"
 						className="NotesSettingsDeleteBuildButton"
@@ -251,7 +254,7 @@ export function NotesSettingsPage<Note extends EditableNote>({
 						type="button"
 						className="NotesSettingsCopyButton"
 						onClick={handleCopyFromBuild}
-						disabled={!buildToCopyName || buildToCopyName === selectedBuild}
+						disabled={!canCopy}
 						title={`Copy ${notesName} from another build`}
 					>
 						Copy {title} From:

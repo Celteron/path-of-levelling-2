@@ -170,7 +170,8 @@ export function GemSettingsComponent({
 					))}
 					<option value="__add__">Add build...</option>
 				</select>
-				{!addingBuild && (
+				{/* Default is the fallback of every other build and cannot be deleted */}
+				{!addingBuild && selectedBuild !== "Default" && (
 					<button
 						className="GemSettingsDeleteBuildButton"
 						onClick={handleDeleteBuild}
