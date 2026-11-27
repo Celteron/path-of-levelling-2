@@ -47,3 +47,11 @@ export function parseLogChunk(newLines: string): LogChunkData {
 
 	return data;
 }
+
+/**
+ * Whether the game was in the game world at the end of the given log text. Used at startup,
+ * before any new lines arrive; without a login or zone line the overlay stays visible.
+ */
+export function inGameWorldFromLogTail(logTail: string): boolean {
+	return parseLogChunk(logTail).atLoginScreen !== true;
+}

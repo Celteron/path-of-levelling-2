@@ -223,6 +223,8 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 		return objectFactory.getZoneTracker().zoneImageFilePaths;
 	});
 
+	ipcMainHandle("getInGameWorld", async () => objectFactory.getStateTracker().inGameWorld);
+
 	// Handle events from the leveling guide
 	ipcMainHandle("getGuideState", async () => objectFactory.getGuideTracker().getGuideView());
 

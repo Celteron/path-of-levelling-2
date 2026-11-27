@@ -6,6 +6,7 @@ import { LevelTrackerComponent } from "./Components/LevelTrackerComponent";
 import { SettingsComponent } from "./Components/Settings/SettingsComponent";
 import { ZoneNotesComponent } from "./Components/ZoneTracker/ZoneNotesComponent";
 import { ZoneTrackerComponent } from "./Components/ZoneTracker/ZoneTrackerComponent";
+import { useInGameWorld } from "./useInGameWorld";
 
 function App() {
 	const [settingsActive, setSettingsActive] = useState(false);
@@ -16,7 +17,7 @@ function App() {
 	const [guideActive, setGuideActive] = useState(true);
 	// Trackers are hidden on the login/character select screen, but stay visible while the
 	// settings are open so they can still be moved and resized there.
-	const [inGameWorld, setInGameWorld] = useState(true);
+	const inGameWorld = useInGameWorld();
 	const showTrackers = inGameWorld || settingsActive;
 
 	const [fontSize, setFontSize] = useState(11);
@@ -47,10 +48,6 @@ function App() {
 					console.log("Unrecognised hotkey!", hotkeyEvent.hotkey);
 			}
 		});
-	}, []);
-
-	useEffect(() => {
-		window.electron.subscribeToGameWorldUpdates(setInGameWorld);
 	}, []);
 
 	const conditionalRenderSettings = () => {
