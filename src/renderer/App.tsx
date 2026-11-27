@@ -7,6 +7,7 @@ import { SettingsComponent } from "./Components/Settings/SettingsComponent";
 import { ZoneNotesComponent } from "./Components/ZoneTracker/ZoneNotesComponent";
 import { ZoneTrackerComponent } from "./Components/ZoneTracker/ZoneTrackerComponent";
 import { useInGameWorld } from "./useInGameWorld";
+import { ConfirmProvider } from "./Components/ConfirmDialog";
 
 function App() {
 	const [settingsActive, setSettingsActive] = useState(false);
@@ -77,15 +78,17 @@ function App() {
 			style={{ fontSize: fontSize }}
 			className={settingsActive ? "overlay-container-shown" : "overlay-container-hidden"}
 		>
-			{conditionalRenderSettings()}
-			{/* Zone tracker component set up a little different becuase zone & layout are coupled */}
-			<ZoneTrackerComponent
-				zoneNotesActive={zoneNotesActive && showTrackers}
-				layoutImagesActive={layoutImagesActive && showTrackers}
-			/>
-			{conditionalRenderLevelTracker()}
-			{conditionalRenderGemTracker()}
-			{guideActive && showTrackers && <GuideTrackerComponent />}
+			<ConfirmProvider>
+				{conditionalRenderSettings()}
+				{/* Zone tracker component set up a little different becuase zone & layout are coupled */}
+				<ZoneTrackerComponent
+					zoneNotesActive={zoneNotesActive && showTrackers}
+					layoutImagesActive={layoutImagesActive && showTrackers}
+				/>
+				{conditionalRenderLevelTracker()}
+				{conditionalRenderGemTracker()}
+				{guideActive && showTrackers && <GuideTrackerComponent />}
+			</ConfirmProvider>
 		</div>
 	);
 }

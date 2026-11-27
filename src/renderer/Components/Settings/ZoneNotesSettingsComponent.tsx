@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
-import { confirmDiscardUnsavedChanges, useUnsavedChanges } from "./unsavedChanges";
+import { useConfirmDiscardUnsavedChanges, useUnsavedChanges } from "./unsavedChanges";
+import { useConfirm } from "../ConfirmDialog";
 import { LockNoteOption, ZoneNote } from "../../../main/zodSchemas/schemas";
 
 function getLockButtonProps(lockNoteOption: LockNoteOption): {
@@ -43,6 +44,8 @@ export function ZoneNotesSettingsComponent({ onUnsavedChangesChange }: { onUnsav
     const [editableZoneNotes, setEditableZoneNotes] = useState<ZoneNote[]>([]);
     // Last state loaded from/saved to main, to detect unsaved edits
     const [savedZoneNotes, setSavedZoneNotes] = useState<ZoneNote[]>([]);
+    const confirm = useConfirm();
+    const confirmDiscard = useConfirmDiscardUnsavedChanges();
     const hasUnsavedChanges = useUnsavedChanges(savedZoneNotes, editableZoneNotes, onUnsavedChangesChange);
 
     const loadZoneNotes = (zoneNotes: ZoneNote[]) => {
@@ -66,10 +69,9 @@ export function ZoneNotesSettingsComponent({ onUnsavedChangesChange }: { onUnsav
         });
     }, []);
 
-    const handleBuildDropdownSelection = (event: React.ChangeEvent<HTMLSelectElement>) => {
-        if (!confirmDiscardUnsavedChanges(hasUnsavedChanges)) return;
-
+    const handleBuildDropdownSelection = async (event: React.ChangeEvent<HTMLSelectElement>) => {
         const value = event.target.value;
+        if (!(await confirmDiscard(hasUnsavedChanges))) return;
         if (value === "__add__") {
             setAddingBuild(true);
             setNewBuildName("");
@@ -97,10 +99,10 @@ export function ZoneNotesSettingsComponent({ onUnsavedChangesChange }: { onUnsav
         });
     };
 
-    const handleDeleteBuild = () => {
+    const handleDeleteBuild = async () => {
         if (
-            selectedBuild &&
-            window.confirm(`Are you sure you want to delete build "${selectedBuild}"?`)
+        	selectedBuild &&
+        	(await confirm(`Delete build "${selectedBuild}"? This cannot be undone.`, "Delete"))
         ) {
             window.electron.postDeleteBuildFromZoneNotes(selectedBuild).then((response) => {
                 setSelectedBuild(response.buildName);
