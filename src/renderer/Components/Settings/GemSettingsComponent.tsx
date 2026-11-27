@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { GemSetup } from "../../../main/zodSchemas/schemas";
+import { confirmDiscardUnsavedChanges, useUnsavedChanges } from "./unsavedChanges";
 
-export function GemSettingsComponent() {
+export function GemSettingsComponent({ onUnsavedChangesChange }: { onUnsavedChangesChange?: (hasUnsavedChanges: boolean) => void }) {
 	const [selectedBuild, setSelectedBuild] = useState("");
 	const [allBuildNames, setAllBuildNames] = useState<string[]>([]);
 	const [addingBuild, setAddingBuild] = useState(false);
@@ -9,6 +10,8 @@ export function GemSettingsComponent() {
 
 	const [allGemSetups, setallGemSetups] = useState<GemSetup[]>([]);
 	const [editableGemSetups, setEditableGemSetups] = useState<GemSetup[]>([]);
+	// allGemSetups is the last state loaded from/saved to main
+	const hasUnsavedChanges = useUnsavedChanges(allGemSetups, editableGemSetups, onUnsavedChangesChange);
 
 	// Get initial state for gem dropdown
 	useEffect(() => {
@@ -30,6 +33,8 @@ export function GemSettingsComponent() {
 	}, []);
 
 	const handleBuildDropdownSelection = (event: React.ChangeEvent<HTMLSelectElement>) => { 
+		if (!confirmDiscardUnsavedChanges(hasUnsavedChanges)) return;
+
 		const value = event.target.value;
 		if (value === "__add__") {
 			setAddingBuild(true);
