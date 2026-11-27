@@ -81,6 +81,10 @@ export class LogWatcherService {
 			}
 
 			//send data to the renderer
+			if (data.atLoginScreen !== undefined) {
+				ipcWebContentsSend("gameWorldUpdates", mainWindow.webContents, !data.atLoginScreen);
+			}
+
 			if (shouldUpdateZoneTracker) {
 				ipcWebContentsSend(
 					"zoneUpdatesFromLog",
