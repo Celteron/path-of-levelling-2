@@ -16,10 +16,9 @@ import log from "electron-log";
 export class StoreService {
 	private globalSettingsStore: Store<GlobalSettings>;
 
-	//@ts-ignore - ignore ts(2564) these are set in switchProfile in the ctor
-	private gameSettingsStore: Store<GameSettings>;
-	//@ts-ignore - ignore ts(2564) these are set in switchProfile in the ctor
-	private buildsStore: Store<BuildStore>;
+	// Definitely assigned: the constructor calls switchProfile, which sets both
+	private gameSettingsStore!: Store<GameSettings>;
+	private buildsStore!: Store<BuildStore>;
 
 	constructor() {
 		this.globalSettingsStore = new Store<GlobalSettings>({

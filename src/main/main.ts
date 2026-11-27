@@ -28,8 +28,7 @@ export function getAutoUpdater(): AppUpdater {
 }
 
 getAutoUpdater().logger = log;
-//@ts-ignore
-getAutoUpdater().logger.transports.file.level = "info";
+log.transports.file.level = "info";
 log.info("App starting...");
 
 // Basically remove the scale factor people use on windows - we only need to scale font size
@@ -133,16 +132,16 @@ async function createWindow() {
 	});
 
 	// Uh still unfamiliar with this package so just logging all events
-	if (isDev()) LogOverlayEventCalls(mainWindow);
+	if (isDev()) LogOverlayEventCalls();
 }
 
 function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatcherService) {
-	ipcMainHandle("getFontScalingFactor", async (_) => {
-		const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+	ipcMainHandle("getFontScalingFactor", async () => {
+		const { height } = screen.getPrimaryDisplay().workAreaSize;
 		return height / 1080; // return a scaling factor to scale up text with resolution
 	});
 
-	ipcMainHandle("getFontSize", async (_) => {
+	ipcMainHandle("getFontSize", async () => {
 		return objectFactory.getSettingsService().getFontSize();
 	});
 
@@ -161,21 +160,20 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 	});
 
 	// Handle events from the General Settings overlay
-	ipcMainHandle("getClientPath", async (_) => {
+	ipcMainHandle("getClientPath", async () => {
 		return objectFactory.getSettingsService().getClientTxtPath();
 	});
 
 	ipcMainHandle("saveClientPath", async (_, clientTxtPath) => {
-		var result = objectFactory.getSettingsService().saveClientTxtPath(clientTxtPath, mainWindow, logWatcher);
-		return result;
+		return objectFactory.getSettingsService().saveClientTxtPath(clientTxtPath, mainWindow, logWatcher);
 	});
 
-	ipcMainHandle("getIsClientWatcherActive", async (_) => {
+	ipcMainHandle("getIsClientWatcherActive", async () => {
 		return objectFactory.getStateTracker().getIsClientWatcherActive();
 	});
 
 	// Handle events from the Zone Tracker
-	ipcMainHandle("getZoneState", async (_, args) => {
+	ipcMainHandle("getZoneState", async () => {
 		ipcWebContentsSend(
 			"zoneLayoutImageUpdates",
 			mainWindow.webContents,
@@ -196,7 +194,7 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 	});
 
 	ipcMainHandle("postZoneSelected", async (event, zoneSelectedRequest) => {
-		console.log("Updating zone from zoneSelectedRequest:", zoneSelectedRequest);
+		log.info("Updating zone from zoneSelectedRequest:", zoneSelectedRequest);
 		// Update zone based on zone and act selected
 		objectFactory
 			.getZoneTracker()
@@ -213,7 +211,7 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 		return objectFactory.getZoneTracker().getZoneDataDto();
 	});
 
-	ipcMainHandle("getLayoutImagePaths", async (_) => {
+	ipcMainHandle("getLayoutImagePaths", async () => {
 		return objectFactory.getZoneTracker().zoneImageFilePaths;
 	});
 
@@ -239,12 +237,12 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 	});
 
 	// Handle events from the level tracker
-	ipcMainHandle("getLevelState", async (_, args) => {
+	ipcMainHandle("getLevelState", async () => {
 		return objectFactory.getLevelTracker().getLevelDataDto();
 	});
 
 	// Handle events from the gem tracker
-	ipcMainHandle("getGemState", async (_) => {
+	ipcMainHandle("getGemState", async () => {
 		return objectFactory.getGemTracker().getGemDataDto();
 	});
 
@@ -254,7 +252,7 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 	});
 
 	// --- Handle events from the gem SETTINGS --- //
-	ipcMainHandle("getGemSettingsState", async (_, args) => {
+	ipcMainHandle("getGemSettingsState", async () => {
 		return objectFactory.getGemTracker().getGemSettingsDto();
 	});
 
@@ -346,7 +344,7 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 	});
 
 	// --- Handle events from the Act Notes SETTINGS --- //
-	ipcMainHandle("getActNotesSettingsState", async (_, args) => {
+	ipcMainHandle("getActNotesSettingsState", async () => {
 		return objectFactory.getZoneTracker().getActNotesSettingsDto();
 	});
 
@@ -493,7 +491,7 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 	});
 
 	// --- Handle events from the Zone Notes SETTINGS --- //
-	ipcMainHandle("getZoneNotesSettingsState", async (_, args) => {
+	ipcMainHandle("getZoneNotesSettingsState", async () => {
 		return objectFactory.getZoneTracker().getZoneNotesSettingsDto();
 	});
 
@@ -640,7 +638,7 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 	});
 
 	// Handle UI window position events
-	ipcMainHandle("getSettingsOverlayPositionSettings", async (_, args) => {
+	ipcMainHandle("getSettingsOverlayPositionSettings", async () => {
 		return objectFactory.getSettingsService().getSettingsOverlayPositionSettings();
 	});
 
@@ -648,7 +646,7 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 		objectFactory.getSettingsService().saveSettingsOverlayPositionSettings(settingsOverlaySettings);
 	});
 
-	ipcMainHandle("getZoneOverlayPositionSettings", async (_, args) => {
+	ipcMainHandle("getZoneOverlayPositionSettings", async () => {
 		return objectFactory.getSettingsService().getZoneOverlayPositionSettings();
 	});
 
@@ -656,7 +654,7 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 		objectFactory.getSettingsService().saveZoneOverlayPositionSettings(zoneSettings);
 	});
 
-	ipcMainHandle("getLayoutImagesOverlayPositionSettings", async (_, args) => {
+	ipcMainHandle("getLayoutImagesOverlayPositionSettings", async () => {
 		return objectFactory.getSettingsService().getLayoutImagesOverlayPositionSettings();
 	});
 
@@ -664,7 +662,7 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 		objectFactory.getSettingsService().saveLayoutImagesOverlayPositionSettings(layoutImageSettings);
 	});
 
-	ipcMainHandle("getLevelOverlayPositionSettings", async (_, args) => {
+	ipcMainHandle("getLevelOverlayPositionSettings", async () => {
 		return objectFactory.getSettingsService().getLevelOverlayPositionSettings();
 	});
 
@@ -672,7 +670,7 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 		objectFactory.getSettingsService().saveLevelOverlayPositionSettings(levelSettings);
 	});
 
-	ipcMainHandle("getGemOverlayPositionSettings", async (_, args) => {
+	ipcMainHandle("getGemOverlayPositionSettings", async () => {
 		return objectFactory.getSettingsService().getGemOverlayPositionSettings();
 	});
 
@@ -793,7 +791,7 @@ async function downloadPobExport(url: string): Promise<string> {
 }
 
 //-----------------------testing
-function LogOverlayEventCalls(mainWindow: BrowserWindow) {
+function LogOverlayEventCalls() {
 	// Still getting used to the events so uhhhhh just log when all of them are used.
 	OverlayController.events.addListener("attach", (params) => {
 		log.info("attach event emitted", params);

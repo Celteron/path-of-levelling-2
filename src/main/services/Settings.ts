@@ -1,6 +1,6 @@
 import { BrowserWindow } from "electron";
 import { LogWatcherService } from "./LogWatcherService.js";
-import { OverlayPosition, readOverlayOpacity, UiSettings } from "../zodSchemas/schemas.js";
+import { OverlayPosition, readOverlayOpacity } from "../zodSchemas/schemas.js";
 import { objectFactory } from "../objectFactory.js";
 
 export class SettingsService {
