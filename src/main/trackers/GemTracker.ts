@@ -66,6 +66,12 @@ export class GemTracker {
 	deleteBuild(buildName: string) {
 		log.info("Deleting build:", buildName);
 
+		// Every other build falls back to Default, so it must stay
+		if (buildName === "Default") {
+			log.warn("The Default build cannot be deleted");
+			return;
+		}
+
 		if (!objectFactory.getStoreService().getBuild(buildName)) {
 			log.warn("Build does not exist, not deleting:", buildName);
 			return;
