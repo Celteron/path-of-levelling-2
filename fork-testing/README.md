@@ -69,8 +69,8 @@ run `pkill -f pol2-test/` in another console or via SSH.
 Go through it in order, ideally with a new character so the guide fits from the start. For every
 failure note: number, what happened, for the guide also the page (e.g. `12 / 136`) and the zone.
 
-**Round 3 (after the 2026-11-27 focus and dialog fixes):** run the setup script again, then test 16,
-17, 19 and the new item 20.
+**Round 4 (after the window redesign, 2026-11-27):** run the setup script again (`Version:` must show
+`8db8c94` or newer), then test the redesigned windows (9 and 21–25) and the still open 16, 17, 19 and 20.
 
 ### A. Start and login
 
@@ -101,9 +101,10 @@ failure note: number, what happened, for the guide also the page (e.g. `12 / 136
    *Expected:* Page and counter do not change.
 8. **Quick pass.** Enter a target zone with a waypoint and travel on by waypoint right away.
    *Expected:* The guide still advances.
-9. **Level recommendation.** Look at the level tracker (`Level Diff …`, `Exp Multi …`).
-   *Expected:* In combat zones it also shows `Zone: x | y` (recommended character level, e.g.
-   `Zone: 2 | 2` in the Grelwood), not in towns.
+9. **Level window.** Look at the level window in a combat zone and in a town.
+   *Expected:* Top line like `Lvl 11  Area 12 (−1)  XP 100%`; XP turns yellow when you get less
+   experience. In combat zones a second line like `Recommended 12–13+ · Under-levelled` (yellow),
+   `On track` (green) or `Over-levelled` (blue). Towns have no second line.
 10. **Change pages by hotkey.** Without opening the settings, press `Ctrl+Alt+N` (next page), then
     `Ctrl+Alt+B` (previous page) and watch the counter at the top right of the guide window.
     *Expected:* `4 / 136` becomes `5 / 136`, then `4 / 136` again (numbers depend on your progress).
@@ -120,8 +121,8 @@ failure note: number, what happened, for the guide also the page (e.g. `12 / 136
 14. **Progress is kept.** Play a few pages further, quit the test build (tray → Quit) and restart it.
     *Expected:* Guide on the same page, window at the same position and size.
 15. **Restart the guide.** `Ctrl+Alt+S`, hover the guide, `Restart guide`; cancel the dialog first,
-    then again and confirm.
-    *Expected:* Cancel changes nothing, OK sets the guide to `1 / 136`. Page back to your progress with
+    then again and confirm with `Restart`.
+    *Expected:* Cancel changes nothing, Restart sets the guide to `1 / 136`. Page back to your progress with
     `Ctrl+Alt+N` afterwards.
 
 ### C. Other changes
@@ -145,6 +146,24 @@ failure note: number, what happened, for the guide also the page (e.g. `12 / 136
     something in a notes field, close them with `Ctrl+Alt+S` and move or use a skill right away.
     *Expected:* Typing in the settings works, and after closing them the game reacts to the keyboard
     immediately without clicking into it.
+
+### D. Window design
+
+21. **Same look for all windows.** `Ctrl+Alt+S`, then hover each PoL2 window once.
+    *Expected:* All windows share the dark style of the guide. On hover a bar with `Move/Resize`
+    appears at the bottom (for the layout window below it).
+22. **Layout window collapses.** Enter a town (no layout), then a zone with layout images.
+    *Expected:* In town only a slim line `No layout for this zone`; in the zone the images at full
+    size. In Move/Resize mode the window takes its full size, so you can place it.
+23. **Zone notes leave the tips to the guide.** Look at the notes window while the guide is shown,
+    then hide the guide with `Ctrl+Alt+J`. Optional: write your own zone note in Settings → Zone Notes.
+    *Expected:* Guide shown: no zone tip below the zone dropdown (act notes stay). Guide hidden: the
+    tip appears. Your own zone note is always shown.
+24. **Gem setup names.** Open the dropdown in the gem window.
+    *Expected:* Entries read like `Level 1–7`, `Level 8–14`, `Level 15+`.
+25. **Window opacity.** Settings → General → `Window opacity`: slide to 40 %, then 100 %. Set your
+    favourite, quit and restart the test build.
+    *Expected:* The windows become see-through while you slide; after the restart the value is kept.
 
 ## 4. Reporting
 
