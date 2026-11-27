@@ -4,6 +4,7 @@ import { app } from 'electron';
 
 export const poe1Profile: GameProfile = {
     Id: "poe1",
+    steamFolderName: "Path of Exile",
     windowName: "Path of Exile",
     defaultClientTxtPath: process.platform === "win32"
         ? path.join('C:/Program Files (x86)/Steam/steamapps/common/Path of Exile 1/logs/Client.txt')

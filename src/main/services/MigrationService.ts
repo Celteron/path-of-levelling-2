@@ -6,8 +6,8 @@ import path from 'path';
 import { z } from 'zod';
 import poe1DefaultSettings from '../profiles/poe1/defaultUnversionedSettings.json' with { type: "json" };
 import poe2DefaultSettings from '../profiles/poe2/defaultUnversionedSettings.json' with { type: "json" };
-import { Build, DefaultPoE1GameSettings, DefaultPoE2GameSettings, GameSettingsZodSchema, GlobalSettingsZodSchema } from "../zodSchemas/schemas.js";
-import { getBuildsRootPath, guessClientTxtPathForProfileId } from "../pathResolver.js";
+import { Build, DefaultPoE1GameSettings, DefaultPoE2GameSettings, GameSettingsZodSchema, GlobalSettingsZodSchema, ProfileId } from "../zodSchemas/schemas.js";
+import { findClientTxtPathForProfileId, getBuildsRootPath, guessClientTxtPathForProfileId, isReadableFile } from "../pathResolver.js";
 import { objectFactory } from "../objectFactory.js";
 
 // Used on startup to migrate any old configuration files to new schemas
@@ -27,6 +27,8 @@ export class MigrationService {
         this.MigrateGlobalSettings();
         this.MigratePoE1GameSettings();
         this.MigratePoE2GameSettings();
+        this.RepairClientTxtPath("poe1");
+        this.RepairClientTxtPath("poe2");
         this.MigrateBuilds();
     }
 
@@ -81,7 +83,7 @@ export class MigrationService {
 
         const dataValidationResult = this.FillWithDefaultsAndStrip(
             GameSettingsZodSchema,
-            DefaultPoE1GameSettings.parse({}),
+            { ...DefaultPoE1GameSettings.parse({}), clientTxtPath: guessClientTxtPathForProfileId("poe1") },
             poe1GameSettings
         );
 
@@ -106,7 +108,7 @@ export class MigrationService {
 
         const dataValidationResult = this.FillWithDefaultsAndStrip(
             GameSettingsZodSchema,
-            DefaultPoE2GameSettings.parse({}),
+            { ...DefaultPoE2GameSettings.parse({}), clientTxtPath: guessClientTxtPathForProfileId("poe2") },
             poe2GameSettings
         );
 
@@ -160,6 +162,24 @@ export class MigrationService {
                 objectFactory.getStoreService().setBuildForProfileId("poe2", buildName, buildData);
             }
         }
+    }
+
+    // A stored Client.txt path can be wrong, e.g. the Windows default on a Linux first run (#20) or
+    // a game moved to another library. Only replace it when it is unreadable and a real file was
+    // found, so a user's custom path is never overwritten by another guess.
+    private RepairClientTxtPath(profileId: ProfileId) {
+        const storeService = objectFactory.getStoreService();
+        const storedPath = storeService.getGameSettingForProfileId(profileId, 'clientTxtPath');
+        if (isReadableFile(storedPath)) return;
+
+        const foundPath = findClientTxtPathForProfileId(profileId);
+        if (!foundPath) {
+            log.warn(`Client.txt not found for ${profileId}, keeping configured path: ${storedPath}`);
+            return;
+        }
+
+        log.warn(`Replacing unreadable Client.txt path for ${profileId}: ${storedPath} -> ${foundPath}`);
+        storeService.setGameSettingForProfileId(profileId, 'clientTxtPath', foundPath);
     }
 
     // --- Global Settings Migrators --- //

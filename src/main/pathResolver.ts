@@ -3,6 +3,7 @@ import path from "path";
 import fs from "fs";
 import { ProfileId } from "./zodSchemas/schemas.js";
 import { getProfile } from "./profiles/profiles.js";
+import { FileProbe, guessClientTxtPath } from "./clientTxtPathGuesser.js";
 
 export function isDev(): boolean {
 	return process.env.NODE_ENV === "development";
@@ -57,24 +58,52 @@ export function getProfilePath(profileId: ProfileId) {
 	return path.join(app.getAppPath(), isDev() ? "." : "..", "src/main/profiles/", profileId);
 }
 
+/** Steam install directories that may contain libraryfolders.vdf, per platform */
+function getSteamRoots(): string[] {
+	if (process.platform === "win32") return ["C:/Program Files (x86)/Steam"];
+
+	const home = app.getPath("home");
+	return [
+		path.join(home, ".local/share/Steam"),
+		path.join(home, ".steam/steam"),
+		path.join(home, ".var/app/com.valvesoftware.Steam/.local/share/Steam"), // Flatpak
+	];
+}
+
+const realFileProbe: FileProbe = {
+	isReadable: (filePath) => {
+		try {
+			fs.accessSync(filePath, fs.constants.R_OK);
+			return true;
+		} catch {
+			return false;
+		}
+	},
+	readText: (filePath) => {
+		try {
+			return fs.readFileSync(filePath, "utf-8");
+		} catch {
+			return undefined;
+		}
+	},
+};
+
+export function isReadableFile(filePath: string): boolean {
+	return realFileProbe.isReadable(filePath);
+}
+
+/** Looks for Client.txt in the profile's guesses and all Steam libraries */
+export function findClientTxtPathForProfileId(profileId: ProfileId): string | undefined {
+	const profile = getProfile(profileId);
+	return guessClientTxtPath({
+		directGuesses: profile.logFilePathGuesses,
+		steamRoots: getSteamRoots(),
+		gameFolderName: profile.steamFolderName,
+		fs: realFileProbe,
+	});
+}
+
 /** Guesses a few file paths, if none are valid then return default */
 export function guessClientTxtPathForProfileId(profileId: ProfileId): string {
-	const pathGuesses = getProfile(profileId).logFilePathGuesses;
-
-	var foundPath: string | undefined = undefined;
-	for (var pathGuess in pathGuesses) {
-		try {
-			fs.accessSync(pathGuess, fs.constants.R_OK);
-
-			// If we made it here, .access didn't error so we have a valid path.
-			foundPath = pathGuess;
-		} catch {
-			// fs.access threw so that path is invalid, continue guessing
-			continue;
-		}
-
-		if (foundPath) break;
-	}
-
-	return foundPath ?? getProfile(profileId).defaultClientTxtPath;
+	return findClientTxtPathForProfileId(profileId) ?? getProfile(profileId).defaultClientTxtPath;
 }

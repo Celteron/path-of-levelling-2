@@ -9,6 +9,8 @@ export interface GameProfile {
     // Paths
     defaultClientTxtPath: string;
     logFilePathGuesses: string[];
+    /** Folder name below steamapps/common in a Steam library */
+    steamFolderName: string;
 
     // Optional: profile-specific log line parsing
 }
