@@ -103,6 +103,7 @@ export function GeneralSettingsComponent({
                     <p>Show/hide layout images: Ctrl+Alt+i</p>
                     <p>Show/hide level tracker: Ctrl+Alt+l</p>
                     <p>Show/hide gem tracker: Ctrl+Alt+g</p>
+                    <p>Show/hide all trackers: Ctrl+Alt+a</p>
                 </div>
             </div>
             <div className="ClientPathUpdaterWrapper">

@@ -17,6 +17,7 @@ import { getDesktopIconPath, getPreloadPath, getUIPath, isDev } from "./pathReso
 import { objectFactory } from "./objectFactory.js";
 import { getProfile } from "./profiles/profiles.js";
 import { ipcMainHandle, ipcWebContentsSend } from "./ipc/ipcWrappers.js";
+import { toggleAllTrackers } from "./trackers/trackerVisibility.js";
 
 // Only allow one instance of the app
 if (!app.requestSingleInstanceLock()) {
@@ -726,6 +727,18 @@ function registerGlobalHotkeys(mainWindow: BrowserWindow) {
 			hotkey: "ToggleGemTracker",
 			value: objectFactory.getStateTracker().gemTrackerOpen,
 		});
+	});
+	//Show/hide all trackers at once (#3)
+	globalShortcut.register("Ctrl+Alt+a", () => {
+		const stateTracker = objectFactory.getStateTracker();
+		const visibility = toggleAllTrackers(stateTracker);
+		Object.assign(stateTracker, visibility);
+
+		const webContents = mainWindow.webContents;
+		ipcWebContentsSend("Hotkeys", webContents, { hotkey: "ToggleZoneNotes", value: visibility.zoneNotesOpen });
+		ipcWebContentsSend("Hotkeys", webContents, { hotkey: "ToggleLayoutImages", value: visibility.layoutImagesOpen });
+		ipcWebContentsSend("Hotkeys", webContents, { hotkey: "ToggleLevelTracker", value: visibility.levelTrackerOpen });
+		ipcWebContentsSend("Hotkeys", webContents, { hotkey: "ToggleGemTracker", value: visibility.gemTrackerOpen });
 	});
 }
 
