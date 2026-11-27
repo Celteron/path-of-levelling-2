@@ -1,6 +1,7 @@
 import log from 'electron-log';
 import { objectFactory } from '../objectFactory.js';
 import { StoreService } from '../services/StoreService.js';
+import { levelStatus } from '../levelingGuide.js';
 
 export class LevelTracker {
 	playerLevel: number = 0;
@@ -18,12 +19,14 @@ export class LevelTracker {
 	init() { }
 	
 	getLevelDataDto(): LevelDataDto {
+		const recommendedLevel = objectFactory.getGuideTracker().getRecommendedLevel();
 		return {
 			playerLevel: this.playerLevel,
 			monsterLevel: this.monsterLevel,
 			expMulti: this.expMulti,
-			recommendedLevel: objectFactory.getGuideTracker().getRecommendedLevel(),
-		}
+			recommendedLevel,
+			levelStatus: recommendedLevel && levelStatus(this.playerLevel, recommendedLevel),
+		};
 	}
 
 	// It's a huge pain to have a bunch of ifs all over the place to update monster and

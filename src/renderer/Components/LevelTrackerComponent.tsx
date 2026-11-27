@@ -1,148 +1,54 @@
 import { useEffect, useState } from "react";
-import { Rnd } from "react-rnd";
+import { TrackerPanel } from "./TrackerPanel";
+
+const STATUS_TEXT: Record<NonNullable<LevelDataDto["levelStatus"]>, string> = {
+	below: "Under-levelled",
+	within: "On track",
+	above: "Over-levelled",
+};
+
+/** Typographic minus, so negative differences read as clearly as positive ones */
+const signed = (value: number) => (value < 0 ? `−${-value}` : `+${value}`);
 
 export function LevelTrackerComponent() {
-	//TODO need to do a lot of renaming here since this was copied from zone tracker
-	//TODO eg there is no dropdown, you can't even input on the level tracker currently
-	const [levelDropdown, setLevelDropdown] = useState<LevelDataDto>({
-		playerLevel: 0,
-		monsterLevel: 0,
-		expMulti: 1,
-	});
+	const [level, setLevel] = useState<LevelDataDto | null>(null);
 
-	const setLevelDropdownFromTracker = (levelTracker: LevelDataDto) => {
-		setLevelDropdown({
-			playerLevel: levelTracker.playerLevel,
-			monsterLevel: levelTracker.monsterLevel,
-			expMulti: levelTracker.expMulti,
-			recommendedLevel: levelTracker.recommendedLevel,
-		});
-	};
-
-	//Subscribe to the level updates pushed from log tracker
 	useEffect(() => {
-		window.electron.subscribeToLevelUpdates((levelTracker) => {
-			setLevelDropdownFromTracker(levelTracker);
-		});
+		// The panel remounts whenever it is toggled, so the listener must not outlive it
+		const unsubscribe = window.electron.subscribeToLevelUpdates(setLevel);
+		window.electron.getLevelState().then(setLevel);
+		return unsubscribe;
 	}, []);
-
-	// Get initial state for level dropdown
-	useEffect(() => {
-		window.electron.getLevelState().then((levelTracker) => {
-			setLevelDropdownFromTracker(levelTracker);
-		});
-	}, []);
-
-	function getDiffLine() {
-		// @ts-ignore
-		var diff = levelDropdown.playerLevel - levelDropdown.monsterLevel;
-
-		return "Level Diff: " + (diff < 0 ? "" : "+") + diff.toString();
-	}
-
-	// Setting up the deggable/resizable state
-	const [moveMode, setMoveMode] = useState(false);
-	const [isHovered, setIsHovered] = useState(false);
-	const [rndState, setRndState] = useState({
-		x: 0,
-		y: 0,
-		height: "200",
-		width: "400",
-	});
-
-	// Get initial state for level tracker position
-	useEffect(() => {
-		window.electron.getLevelOverlayPositionSettings().then((levelOverlayPositionSettings) => {
-			setRndState({
-				x: levelOverlayPositionSettings.x,
-				y: levelOverlayPositionSettings.y,
-				height: levelOverlayPositionSettings.height,
-				width: levelOverlayPositionSettings.width,
-			});
-		});
-	}, []);
-
-	const handleDrag = (e: any, d: any) => {
-		// Send new settings to client to be saved
-		window.electron.saveLevelOverlayPositionSettings({
-			...rndState,
-			x: d.x,
-			y: d.y,
-		});
-
-		setRndState({
-			...rndState,
-			x: d.x,
-			y: d.y,
-		});
-	};
-
-	// @ts-ignore
-	const handleResize = (e, direction, ref, delta, position) => {
-		// Send new settings to client to be saved
-		window.electron.saveLevelOverlayPositionSettings({
-			...position,
-			height: ref.style.height,
-			width: ref.style.width,
-		});
-
-		setRndState({
-			...position,
-			height: ref.style.height,
-			width: ref.style.width,
-		});
-	};
 
 	return (
-		<Rnd
-			size={{ width: rndState.width, height: rndState.height }}
-			position={{ x: rndState.x, y: rndState.y }}
-			onDragStop={(e, d) => handleDrag(e, d)}
-			onResizeStop={(e, direction, ref, delta, position) =>
-				handleResize(e, direction, ref, delta, position)
-			}
-			bounds="parent"
-			disableDragging={!moveMode}
-			enableResizing={{
-				top: moveMode,
-				right: moveMode,
-				bottom: moveMode,
-				left: moveMode,
-				topRight: false,
-				bottomRight: false,
-				bottomLeft: false,
-				topLeft: false,
-			}}
-			onMouseEnter={() => setIsHovered(true)}
-			onMouseLeave={() => setIsHovered(false)}
-			resizeHandleComponent={
-				moveMode
-					? {
-							bottomRight: <div className="RndResizeCircleHandle"></div>,
-						}
-					: {}
-			}
+		<TrackerPanel
+			label="Level"
+			loadPosition={window.electron.getLevelOverlayPositionSettings}
+			savePosition={window.electron.saveLevelOverlayPositionSettings}
 		>
-			{/* Move/Resize button just to the right */}
-			{isHovered && !moveMode && (
-				<div className="TrackerMoveResizeButtonContainer">
-					<button onClick={() => setMoveMode(true)}>Move/Resize</button>
-				</div>
+			{level && (
+				<>
+					<div className="PanelHeader">
+						<span className="PanelTitle">Lvl {level.playerLevel}</span>
+						<span title="Area level and your level difference to it">
+							Area {level.monsterLevel} ({signed(level.playerLevel - level.monsterLevel)})
+						</span>
+						<span className="LevelXp" title="Experience multiplier" data-penalty={level.expMulti < 1}>
+							XP {Math.round(level.expMulti * 100)}%
+						</span>
+					</div>
+					{level.recommendedLevel && level.levelStatus && (
+						<p
+							className="LevelAdvice"
+							data-status={level.levelStatus}
+							title="Recommended character level for this zone (Exile UI)"
+						>
+							Recommended {level.recommendedLevel.label.replace(/\s*\|\s*/, "–")} ·{" "}
+							{STATUS_TEXT[level.levelStatus]}
+						</p>
+					)}
+				</>
 			)}
-			{moveMode && (
-				<div className="TrackerMoveResizeButtonContainer">
-					<button onClick={() => setMoveMode(false)}>Done</button>
-				</div>
-			)}
-			<div className="LevelTracker">
-				<p>{getDiffLine()}</p>
-				{levelDropdown.recommendedLevel && (
-					<p className="RecommendedLevel" title="Recommended character level for this zone (Exile UI)">
-						Zone: {levelDropdown.recommendedLevel.label}
-					</p>
-				)}
-				<p className="ExpMulti">Exp Multi: {levelDropdown.expMulti.toString()}</p>
-			</div>
-		</Rnd>
+		</TrackerPanel>
 	);
 }

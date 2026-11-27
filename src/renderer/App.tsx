@@ -1,13 +1,14 @@
-import React, { useEffect, useState } from "react";
+import { CSSProperties, useEffect, useState } from "react";
 import "./App.css";
 import { GemTrackerComponent } from "./Components/GemTrackerComponent";
 import { GuideTrackerComponent } from "./Components/GuideTrackerComponent";
 import { LevelTrackerComponent } from "./Components/LevelTrackerComponent";
 import { SettingsComponent } from "./Components/Settings/SettingsComponent";
 import { ZoneNotesComponent } from "./Components/ZoneTracker/ZoneNotesComponent";
-import { ZoneTrackerComponent } from "./Components/ZoneTracker/ZoneTrackerComponent";
+import { LayoutImagesComponent } from "./Components/ZoneTracker/LayoutImagesComponent";
 import { useInGameWorld } from "./useInGameWorld";
 import { ConfirmProvider } from "./Components/ConfirmDialog";
+import { OverlayInteractiveContext } from "./Components/overlayInteractive";
 
 function App() {
 	const [settingsActive, setSettingsActive] = useState(false);
@@ -22,6 +23,7 @@ function App() {
 	const showTrackers = inGameWorld || settingsActive;
 
 	const [fontSize, setFontSize] = useState(11);
+	const [overlayOpacity, setOverlayOpacity] = useState(0.85);
 
 	useEffect(() => {
 		window.electron.subscribeToHotkeys((hotkeyEvent) => {
@@ -51,44 +53,37 @@ function App() {
 		});
 	}, []);
 
-	const conditionalRenderSettings = () => {
-		if (settingsActive) {
-			return <SettingsComponent fontSize={fontSize} setFontSizeFunction = {setFontSize} />;
-		}
-	};
-	const conditionalRenderLevelTracker = () => {
-		if (levelTrackerActive && showTrackers) {
-			return <LevelTrackerComponent />;
-		}
-	};
-	const conditionalRenderGemTracker = () => {
-		if (gemTrackerActive && showTrackers) {
-			return <GemTrackerComponent />;
-		}
-	};
-
 	useEffect(() => {
-		window.electron.getFontSize().then((fontSize) => {
-			setFontSize(fontSize);
-		});
+		window.electron.getFontSize().then(setFontSize);
+		window.electron.getOverlayOpacity().then(setOverlayOpacity);
 	}, []);
 
+	// Panels read the opacity from this custom property
+	const overlayStyle = { fontSize, "--panel-opacity": overlayOpacity } as CSSProperties;
+
 	return (
-		<div
-			style={{ fontSize: fontSize }}
-			className={settingsActive ? "overlay-container-shown" : "overlay-container-hidden"}
-		>
-			<ConfirmProvider>
-				{conditionalRenderSettings()}
-				{/* Zone tracker component set up a little different becuase zone & layout are coupled */}
-				<ZoneTrackerComponent
-					zoneNotesActive={zoneNotesActive && showTrackers}
-					layoutImagesActive={layoutImagesActive && showTrackers}
-				/>
-				{conditionalRenderLevelTracker()}
-				{conditionalRenderGemTracker()}
-				{guideActive && showTrackers && <GuideTrackerComponent />}
-			</ConfirmProvider>
+		<div style={overlayStyle} className={settingsActive ? "overlay-container-shown" : "overlay-container-hidden"}>
+			<OverlayInteractiveContext.Provider value={settingsActive}>
+				<ConfirmProvider>
+					{settingsActive && (
+						<SettingsComponent
+							fontSize={fontSize}
+							setFontSizeFunction={setFontSize}
+							overlayOpacity={overlayOpacity}
+							onOverlayOpacityChange={setOverlayOpacity}
+						/>
+					)}
+					{showTrackers && (
+						<>
+							{zoneNotesActive && <ZoneNotesComponent guideShown={guideActive} />}
+							{layoutImagesActive && <LayoutImagesComponent />}
+							{levelTrackerActive && <LevelTrackerComponent />}
+							{gemTrackerActive && <GemTrackerComponent />}
+							{guideActive && <GuideTrackerComponent />}
+						</>
+					)}
+				</ConfirmProvider>
+			</OverlayInteractiveContext.Provider>
 		</div>
 	);
 }

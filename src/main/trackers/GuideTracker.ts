@@ -47,6 +47,10 @@ export class GuideTracker {
 		}
 	}
 
+	isAvailable(): boolean {
+		return this.guide !== null;
+	}
+
 	getGuideView(): GuideView {
 		return guideView(this.guide, this.pageIndex, this.prefs);
 	}

@@ -87,8 +87,29 @@ export function restorePageIndex(guide: LevelingGuide, saved: unknown, leagueSta
 	return candidates[0]?.index ?? clamped;
 }
 
+export type LevelStatus = "below" | "within" | "above";
+
+/**
+ * Where the character level stands against a zone recommendation; "13+" has no upper bound.
+ * Undefined while the level is unknown (0 until the log reports a level up).
+ */
+export function levelStatus(playerLevel: number, recommended: RecommendedLevel): LevelStatus | undefined {
+	if (playerLevel <= 0) return undefined;
+	if (playerLevel < recommended.min) return "below";
+	if (playerLevel > recommended.max && !recommended.label.trim().endsWith("+")) return "above";
+	return "within";
+}
+
 export function recommendationFor(guide: LevelingGuide, zoneCode: string): RecommendedLevel | undefined {
 	return guide.areas[zoneCode.toUpperCase()]?.recommendedLevel;
+}
+
+/**
+ * The shipped zone tips duplicate what the guide says, so they are left to the guide. Notes the
+ * user wrote are always shown, and without a guide (PoE1, broken guide file) all notes are.
+ */
+export function guideCoversZoneNote(guideAvailable: boolean, zoneNote: string, shippedZoneNote: string | undefined): boolean {
+	return guideAvailable && shippedZoneNote !== undefined && zoneNote === shippedZoneNote;
 }
 
 /** What the guide overlay shows; steps are already filtered so the renderer stays simple */

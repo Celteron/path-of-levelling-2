@@ -1,8 +1,5 @@
-import { createContext, ReactNode, useCallback, useContext, useEffect, useRef, useState } from "react";
-
-type Confirm = (message: string, confirmLabel?: string) => Promise<boolean>;
-
-const ConfirmContext = createContext<Confirm | null>(null);
+import { ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { Confirm, ConfirmContext } from "./useConfirm";
 
 type PendingQuestion = { message: string; confirmLabel: string; resolve: (confirmed: boolean) => void };
 
@@ -35,12 +32,6 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
 			{question && <ConfirmDialog question={question} onAnswer={answer} />}
 		</ConfirmContext.Provider>
 	);
-}
-
-export function useConfirm(): Confirm {
-	const confirm = useContext(ConfirmContext);
-	if (!confirm) throw new Error("useConfirm must be used inside a ConfirmProvider");
-	return confirm;
 }
 
 function ConfirmDialog({ question, onAnswer }: { question: PendingQuestion; onAnswer: (confirmed: boolean) => void }) {

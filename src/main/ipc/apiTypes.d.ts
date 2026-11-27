@@ -19,6 +19,8 @@ type channelReturnTypeMapping = {
 	getFontScalingFactor: number;
 	getFontSize: number;
 	saveFontSize: number;
+	getOverlayOpacity: number;
+	saveOverlayOpacity: void;
 
 	getClientPath: string;
 	saveClientPath: boolean;
@@ -96,6 +98,7 @@ type channelRequestTypeMapping = {
 	saveGemOverlayPositionSettings: OverlayPosition;
 
 	saveFontSize: number;
+	saveOverlayOpacity: number;
 
 	saveClientPath: string;
 
@@ -208,6 +211,8 @@ type ZoneDataDto = {
 	allZonesInAct: string[];
 	actNotes: string;
 	zoneNotes: string;
+	/** The zone note is the shipped tip, which the leveling guide already covers */
+	zoneNotesCoveredByGuide: boolean;
 };
 
 type LevelDataDto = {
@@ -216,6 +221,8 @@ type LevelDataDto = {
 	expMulti: number;
 	/** Recommended character level for the current zone, from the leveling guide */
 	recommendedLevel?: import("../zodSchemas/schemas.js").RecommendedLevel;
+	/** Character level against recommendedLevel */
+	levelStatus?: import("../levelingGuide.js").LevelStatus;
 };
 
 type GuideDataDto = import("../levelingGuide.js").GuideView;
