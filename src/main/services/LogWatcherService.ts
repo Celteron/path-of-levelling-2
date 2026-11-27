@@ -1,4 +1,4 @@
-import { BrowserWindow, webContents } from "electron";
+import { BrowserWindow } from "electron";
 import log from "electron-log";
 import fs from "fs";
 import { objectFactory } from "../objectFactory.js";
@@ -30,19 +30,15 @@ export class LogWatcherService {
 
 		try {
 			this.previousFileSize = fs.statSync(filePathGuess).size;
-		} catch (e: any) {
-			// TODO shouldn't I just catch whatever error ENONET is separately?
-			// This flag basically displays a warning on the UI telling the user to
-			// update their client txt path.
+		} catch (error) {
+			// Shows a warning in the settings asking the user to fix the Client.txt path
 			objectFactory.getStateTracker().logWatcherActive = false;
 
-			if ((e.code = "ENOENT")) {
-				//@ts-ignore
+			if ((error as NodeJS.ErrnoException).code === "ENOENT") {
 				log.error(`Could not subscribe to client txt changes, wrong client path! ${filePathGuess}`);
-				return;
+			} else {
+				log.error(`Could not subscribe to client txt changes, unknown error for path: ${filePathGuess}`, error);
 			}
-
-			log.error(`Could not subscribe to client txt changes, unknown error for path: ${filePathGuess}`, e);
 			return;
 		}
 
@@ -57,27 +53,19 @@ export class LogWatcherService {
 		);
 
 		fs.watchFile(this.watchedFilePath, (current, previous) => {
-			var data = this.readNewLines(current, previous);
+			const data = this.readNewLines(current, previous);
+			if (!data) return;
 
-			if (data == null) {
-				return;
-			}
+			const shouldUpdateZoneTracker =
+				data.zoneCode !== "" && objectFactory.getZoneTracker().saveZoneFromCode(data.zoneCode);
 
-			var shouldUpdateZoneTracker = false;
-			// handle new zone code
-			if (data.zoneCode != "") {
-				shouldUpdateZoneTracker = objectFactory.getZoneTracker().saveZoneFromCode(data.zoneCode);
-			}
-
-			var shouldUpdateLevelTracker;
-			if (data.monsterLevel > 0 || data.playerLevel > 0) {
-				shouldUpdateLevelTracker = true;
+			const shouldUpdateLevelTracker = data.monsterLevel > 0 || data.playerLevel > 0;
+			if (shouldUpdateLevelTracker) {
 				objectFactory.getLevelTracker().savePlayerOrMonsterLevel(data.playerLevel, data.monsterLevel);
 			}
 
-			var shouldUpdateGemTracker;
-			if (data.playerLevel > 0) {
-				shouldUpdateGemTracker = true;
+			const shouldUpdateGemTracker = data.playerLevel > 0;
+			if (shouldUpdateGemTracker) {
 				objectFactory.getGemTracker().setGemSetupFromPlayerLevel(data.playerLevel);
 			}
 
@@ -86,7 +74,7 @@ export class LogWatcherService {
 				.map((zoneCode) => objectFactory.getGuideTracker().onZoneEntered(zoneCode))
 				.some(Boolean);
 
-			//send data to the renderer
+			// Send the changes to the renderer
 			if (guideChanged) {
 				ipcWebContentsSend(
 					"guideUpdates",
@@ -130,12 +118,6 @@ export class LogWatcherService {
 					mainWindow.webContents,
 					objectFactory.getGemTracker().getGemDataDto(),
 				);
-
-				ipcWebContentsSend(
-					"subscribeToGemUpdates",
-					mainWindow.webContents,
-					objectFactory.getGemTracker().getGemDataDto(),
-				);
 			}
 		});
 	}
@@ -144,36 +126,29 @@ export class LogWatcherService {
 		fs.unwatchFile(this.watchedFilePath);
 	}
 
+	/** Reads the lines appended since the last call; undefined if the file was not modified */
 	readNewLines(current: fs.Stats, previous: fs.Stats) {
-		//mtime is I think last changed time?
+		// mtime is the last modification time
 		if (current.mtime <= previous.mtime) {
 			return;
 		}
 
-		// Figure out size of the buffer
-		var newFileSize: number = fs.statSync(objectFactory.getSettingsService().getClientTxtPath()).size;
-		var sizeDiff: number = newFileSize - this.previousFileSize;
+		const newFileSize = fs.statSync(objectFactory.getSettingsService().getClientTxtPath()).size;
+		let sizeDiff = newFileSize - this.previousFileSize;
 
-		//If we get a negative difference, the file was reset, so we read the whole
-		// file
+		// A negative difference means the file was truncated (the game recreated it), so read all of it
 		if (sizeDiff < 0) {
 			this.previousFileSize = 0;
 			sizeDiff = newFileSize;
 		}
 
-		var buffer = Buffer.alloc(sizeDiff);
-
-		//read the file and save our place
-		var fileDescriptor = fs.openSync(objectFactory.getSettingsService().getClientTxtPath(), "r");
+		const buffer = Buffer.alloc(sizeDiff);
+		const fileDescriptor = fs.openSync(objectFactory.getSettingsService().getClientTxtPath(), "r");
 		fs.readSync(fileDescriptor, buffer, 0, sizeDiff, this.previousFileSize);
 		fs.closeSync(fileDescriptor);
-
-		//update the fileSize for the next loop
 		this.previousFileSize = newFileSize;
 
-		//read the buffer here
-		var data = parseLogChunk(buffer.toString());
-
+		const data = parseLogChunk(buffer.toString());
 		log.info("New lines had data", data);
 		return data;
 	}
