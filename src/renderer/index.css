@@ -1230,6 +1230,10 @@ react-draggable {
 .GemLinks {
 	background-color: rgb(0, 0, 0, 0);
 }
+.RecommendedLevel {
+	text-align: center;
+}
+
 /* Leveling Guide - local tokens, to be lifted into global ones by the design pass */
 .GuideTracker {
 	--guide-bg: rgba(20, 22, 28, 0.82);

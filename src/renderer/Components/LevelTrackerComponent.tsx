@@ -4,7 +4,7 @@ import { Rnd } from "react-rnd";
 export function LevelTrackerComponent() {
 	//TODO need to do a lot of renaming here since this was copied from zone tracker
 	//TODO eg there is no dropdown, you can't even input on the level tracker currently
-	const [levelDropdown, setLevelDropdown] = useState({
+	const [levelDropdown, setLevelDropdown] = useState<LevelDataDto>({
 		playerLevel: 0,
 		monsterLevel: 0,
 		expMulti: 1,
@@ -15,6 +15,7 @@ export function LevelTrackerComponent() {
 			playerLevel: levelTracker.playerLevel,
 			monsterLevel: levelTracker.monsterLevel,
 			expMulti: levelTracker.expMulti,
+			recommendedLevel: levelTracker.recommendedLevel,
 		});
 	};
 
@@ -135,6 +136,11 @@ export function LevelTrackerComponent() {
 			)}
 			<div className="LevelTracker">
 				<p>{getDiffLine()}</p>
+				{levelDropdown.recommendedLevel && (
+					<p className="RecommendedLevel" title="Recommended character level for this zone (Exile UI)">
+						Zone: {levelDropdown.recommendedLevel.label}
+					</p>
+				)}
 				<p className="ExpMulti">Exp Multi: {levelDropdown.expMulti.toString()}</p>
 			</div>
 		</Rnd>

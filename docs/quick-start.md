@@ -30,6 +30,8 @@ The leveling guide window shows a step-by-step campaign route for the current pa
 
 The overlay ignores the mouse while you play, so for everything else hit `Ctrl+Alt+S` first and hover over the guide window: switch between league start and later runs (some steps only matter on a fresh league), hide optional steps, or restart the guide for a new character.
 
+The level tracker also shows the recommended character level for the current zone, e.g. `Zone: 12 | 13+`.
+
 The guide data comes from [Exile UI](https://github.com/Lailloken/Exile-UI) by Lailloken (MIT License).
 
 At this point the app is already fully configured! You will start off with the Default build selected which is just the basic set of Act and Zone Notes, and your Gem Setups window will be blank. Head to [Creating A Gem Setup](/creating-a-gem-setup) to get started with the Gem Setups window, or [Customising Notes](/customising-notes) to get started with writing your own notes.
