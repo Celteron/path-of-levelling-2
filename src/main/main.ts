@@ -217,6 +217,8 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 		return objectFactory.getZoneTracker().zoneImageFilePaths;
 	});
 
+	ipcMainHandle("getInGameWorld", async () => objectFactory.getStateTracker().inGameWorld);
+
 	// Handle events from the level tracker
 	ipcMainHandle("getLevelState", async (_, args) => {
 		return objectFactory.getLevelTracker().getLevelDataDto();

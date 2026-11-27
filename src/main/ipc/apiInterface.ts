@@ -76,7 +76,9 @@ declare global {
 
 			// Level Tracker
 			subscribeToLevelUpdates: (callback: (levelDataDto: LevelDataDto) => void) => void;
-			subscribeToGameWorldUpdates: (callback: (inGameWorld: boolean) => void) => void;
+			/** Returns an unsubscribe function */
+			subscribeToGameWorldUpdates: (callback: (inGameWorld: boolean) => void) => () => void;
+			getInGameWorld: () => Promise<boolean>;
 			getLevelState: () => Promise<LevelDataDto>;
 
 			// Gem Tracker
