@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import "./App.css";
+import { ConfirmProvider } from "./Components/ConfirmDialog";
 import { GemTrackerComponent } from "./Components/GemTrackerComponent";
 import { LevelTrackerComponent } from "./Components/LevelTrackerComponent";
 import { SettingsComponent } from "./Components/Settings/SettingsComponent";
@@ -42,7 +43,12 @@ function App() {
 
 	const conditionalRenderSettings = () => {
 		if (settingsActive) {
-			return <SettingsComponent fontSize={fontSize} setFontSizeFunction = {setFontSize} />;
+			// Settings are the only place that asks for confirmation
+			return (
+				<ConfirmProvider>
+					<SettingsComponent fontSize={fontSize} setFontSizeFunction = {setFontSize} />
+				</ConfirmProvider>
+			);
 		}
 	};
 	const conditionalRenderLevelTracker = () => {

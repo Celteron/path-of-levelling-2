@@ -6,7 +6,7 @@ import { GemSettingsComponent } from './GemSettingsComponent';
 import { AboutSettingsComponent } from './AboutSettingsComponent';
 import { ActNotesSettingsComponent } from './ActNotesSettingsComponent';
 import { ZoneNotesSettingsComponent } from './ZoneNotesSettingsComponent';
-import { confirmDiscardUnsavedChanges } from './unsavedChanges';
+import { useConfirmDiscardUnsavedChanges } from './unsavedChanges';
 
 type SettingsPage = 'General' | 'Gems' | 'Act Notes' | 'Zone Notes' | 'About';
 
@@ -21,8 +21,9 @@ export function SettingsComponent({
 	// Pages unmount when switching, so their unsaved edits would be lost without a warning
 	const [pageHasUnsavedChanges, setPageHasUnsavedChanges] = useState(false);
 
-	const changePage = (page: SettingsPage) => {
-		if (page === activePage || !confirmDiscardUnsavedChanges(pageHasUnsavedChanges)) return;
+	const confirmDiscard = useConfirmDiscardUnsavedChanges();
+	const changePage = async (page: SettingsPage) => {
+		if (page === activePage || !(await confirmDiscard(pageHasUnsavedChanges))) return;
 		setPageHasUnsavedChanges(false);
 		setActivePage(page);
 	};
