@@ -7,6 +7,7 @@ import { LogWatcherService } from "./services/LogWatcherService.js";
 import { getDesktopIconPath, getPreloadPath, getUIPath, isDev } from "./pathResolver.js";
 import { objectFactory } from "./objectFactory.js";
 import { activateBuild, createBuild, removeBuild, sendBuildState, useBuild } from "./builds.js";
+import { TimerEvent } from "./campaignTimer.js";
 import { getProfile } from "./profiles/profiles.js";
 import { ipcMainHandle, ipcWebContentsSend } from "./ipc/ipcWrappers.js";
 import { toggleAllTrackers } from "./trackers/trackerVisibility.js";
@@ -131,8 +132,36 @@ async function createWindow() {
 		mainWindow.setIgnoreMouseEvents(!objectFactory.getStateTracker().settingsOpen);
 	});
 
+	pauseTimerWhileAway(mainWindow);
+
 	// Uh still unfamiliar with this package so just logging all events
 	if (isDev()) LogOverlayEventCalls();
+}
+
+function updateTimer(mainWindow: BrowserWindow, event: TimerEvent) {
+	objectFactory.getTimerTracker().apply(event);
+	ipcWebContentsSend("timerUpdates", mainWindow.webContents, objectFactory.getTimerTracker().getTimerDto());
+}
+
+/** Like Exile UI, the campaign timer does not count while the player is in another app */
+function pauseTimerWhileAway(mainWindow: BrowserWindow) {
+	// The settings take the focus from the game on purpose; that is still playing time
+	OverlayController.events.addListener("blur", () => {
+		if (!objectFactory.getStateTracker().settingsOpen) {
+			updateTimer(mainWindow, { type: "pause", at: Date.now(), reason: "unfocused" });
+		}
+	});
+	OverlayController.events.addListener("focus", () =>
+		updateTimer(mainWindow, { type: "resume", at: Date.now(), reason: "unfocused" }),
+	);
+	// The game was closed
+	OverlayController.events.addListener("detach", () =>
+		updateTimer(mainWindow, { type: "pause", at: Date.now(), reason: "unfocused" }),
+	);
+	// Settles and stores the running time; after the next start the timer waits for the player
+	app.on("before-quit", () =>
+		objectFactory.getTimerTracker().apply({ type: "pause", at: Date.now(), reason: "appStart" }),
+	);
 }
 
 function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatcherService) {
@@ -289,6 +318,19 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 		return afterBuildChange(() => gemTracker().getGemSettingsDto());
 	});
 
+	// --- Campaign timer --- //
+	ipcMainHandle("getTimerState", async () => objectFactory.getTimerTracker().getTimerDto());
+
+	ipcMainHandle("postTimerToggle", async () => {
+		objectFactory.getTimerTracker().togglePause(Date.now(), zoneTracker().zoneCode);
+		return objectFactory.getTimerTracker().getTimerDto();
+	});
+
+	ipcMainHandle("postTimerReset", async () => {
+		objectFactory.getTimerTracker().apply({ type: "reset" });
+		return objectFactory.getTimerTracker().getTimerDto();
+	});
+
 	// --- Handle events from the Act Notes SETTINGS --- //
 	ipcMainHandle("getActNotesSettingsState", async () => {
 		return zoneTracker().getActNotesSettingsDto();
@@ -412,6 +454,12 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 }
 
 function registerGlobalHotkeys(mainWindow: BrowserWindow) {
+	// Pause/resume the campaign timer; starts it in the current act if it has not run yet
+	globalShortcut.register("Ctrl+Alt+P", () => {
+		objectFactory.getTimerTracker().togglePause(Date.now(), objectFactory.getZoneTracker().zoneCode);
+		ipcWebContentsSend("timerUpdates", mainWindow.webContents, objectFactory.getTimerTracker().getTimerDto());
+	});
+
 	//Show/hide settings - default hidden
 	globalShortcut.register("Ctrl+Alt+S", () => {
 		objectFactory.getStateTracker().settingsOpen = !objectFactory.getStateTracker().settingsOpen;

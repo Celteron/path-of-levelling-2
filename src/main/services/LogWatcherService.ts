@@ -8,6 +8,8 @@ import { readFileTail } from "../fileTail.js";
 
 /** Enough log to contain the last login or zone line of a session */
 const LOG_TAIL_BYTES = 256 * 1024;
+/** Node polls every 5 s by default; the guide and the act splits should follow within a second */
+const POLL_INTERVAL_MS = 1000;
 
 export class LogWatcherService {
 	watchedFilePath: string = "";
@@ -53,7 +55,7 @@ export class LogWatcherService {
 			readFileTail(filePathGuess, LOG_TAIL_BYTES),
 		);
 
-		fs.watchFile(this.watchedFilePath, (current, previous) => {
+		fs.watchFile(this.watchedFilePath, { interval: POLL_INTERVAL_MS }, (current, previous) => {
 			const data = this.readNewLines(current, previous);
 			if (!data) return;
 
@@ -82,6 +84,15 @@ export class LogWatcherService {
 					mainWindow.webContents,
 					objectFactory.getGuideTracker().getGuideView(),
 				);
+			}
+
+			// All lines of one poll arrived within the poll interval, so they share one timestamp
+			const now = Date.now();
+			const timerTracker = objectFactory.getTimerTracker();
+			for (const zoneCode of data.zoneCodes) timerTracker.apply({ type: "zoneEntered", at: now, zoneCode });
+			if (data.atLoginScreen) timerTracker.apply({ type: "pause", at: now, reason: "loginScreen" });
+			if (data.zoneCodes.length > 0 || data.atLoginScreen) {
+				ipcWebContentsSend("timerUpdates", mainWindow.webContents, timerTracker.getTimerDto());
 			}
 
 			if (data.atLoginScreen !== undefined) {
