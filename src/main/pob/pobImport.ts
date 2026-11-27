@@ -70,7 +70,7 @@ function readAttributes(attributes: string): Record<string, string> {
 		Array.from(attributes.matchAll(/(\w+)="([^"]*)"/g), ([, name, value]) => [
 			name,
 			value.replace(/&(amp|lt|gt|quot|apos);/g, (_, entity: string) => xmlEntities[entity]),
-		])
+		]),
 	);
 }
 
@@ -93,17 +93,13 @@ export function pobDownloadUrl(input: string): string | undefined {
 }
 
 export type PobImportResult =
-	| { ok: true; gemSetups: GemSetup[] }
-	| { ok: false; error: "invalidInput" | "downloadFailed" | "noPoe2Gems" };
+	{ ok: true; gemSetups: GemSetup[] } | { ok: false; error: "invalidInput" | "downloadFailed" | "noPoe2Gems" };
 
 /**
  * Imports gem setups from a PoB export code or a pobb.in/pastebin link. The download is injected
  * so the main process decides how to fetch (timeout, user-triggered only) and tests stay offline.
  */
-export async function importPob(
-	input: string,
-	download: (url: string) => Promise<string>
-): Promise<PobImportResult> {
+export async function importPob(input: string, download: (url: string) => Promise<string>): Promise<PobImportResult> {
 	const url = pobDownloadUrl(input);
 	let code = input;
 	if (url) {

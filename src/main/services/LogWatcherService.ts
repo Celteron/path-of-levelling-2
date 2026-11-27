@@ -38,16 +38,11 @@ export class LogWatcherService {
 
 			if ((e.code = "ENOENT")) {
 				//@ts-ignore
-				log.error(
-					`Could not subscribe to client txt changes, wrong client path! ${filePathGuess}`
-				);
+				log.error(`Could not subscribe to client txt changes, wrong client path! ${filePathGuess}`);
 				return;
 			}
 
-			log.error(
-				`Could not subscribe to client txt changes, unknown error for path: ${filePathGuess}`,
-				e
-			);
+			log.error(`Could not subscribe to client txt changes, unknown error for path: ${filePathGuess}`, e);
 			return;
 		}
 
@@ -58,7 +53,7 @@ export class LogWatcherService {
 		// New lines only arrive on the next game event; until then the end of the log tells
 		// whether the game sits at the login/character select screen.
 		objectFactory.getStateTracker().inGameWorld = inGameWorldFromLogTail(
-			readFileTail(filePathGuess, LOG_TAIL_BYTES)
+			readFileTail(filePathGuess, LOG_TAIL_BYTES),
 		);
 
 		fs.watchFile(this.watchedFilePath, (current, previous) => {
@@ -71,17 +66,13 @@ export class LogWatcherService {
 			var shouldUpdateZoneTracker = false;
 			// handle new zone code
 			if (data.zoneCode != "") {
-				shouldUpdateZoneTracker = objectFactory
-					.getZoneTracker()
-					.saveZoneFromCode(data.zoneCode);
+				shouldUpdateZoneTracker = objectFactory.getZoneTracker().saveZoneFromCode(data.zoneCode);
 			}
 
 			var shouldUpdateLevelTracker;
 			if (data.monsterLevel > 0 || data.playerLevel > 0) {
 				shouldUpdateLevelTracker = true;
-				objectFactory
-					.getLevelTracker()
-					.savePlayerOrMonsterLevel(data.playerLevel, data.monsterLevel);
+				objectFactory.getLevelTracker().savePlayerOrMonsterLevel(data.playerLevel, data.monsterLevel);
 			}
 
 			var shouldUpdateGemTracker;
@@ -97,7 +88,11 @@ export class LogWatcherService {
 
 			//send data to the renderer
 			if (guideChanged) {
-				ipcWebContentsSend("guideUpdates", mainWindow.webContents, objectFactory.getGuideTracker().getGuideView());
+				ipcWebContentsSend(
+					"guideUpdates",
+					mainWindow.webContents,
+					objectFactory.getGuideTracker().getGuideView(),
+				);
 			}
 
 			if (data.atLoginScreen !== undefined) {
@@ -109,23 +104,23 @@ export class LogWatcherService {
 				ipcWebContentsSend(
 					"zoneUpdatesFromLog",
 					mainWindow.webContents,
-					objectFactory.getZoneTracker().getZoneDataDto()
+					objectFactory.getZoneTracker().getZoneDataDto(),
 				);
 			}
 
-			// We always update the zone layout images, even if the zone wasn't found, the images 
+			// We always update the zone layout images, even if the zone wasn't found, the images
 			// should still be cleared in saveZoneFromCode, so here we're just updating the UI
 			ipcWebContentsSend(
 				"zoneLayoutImageUpdates",
 				mainWindow.webContents,
-				objectFactory.getZoneTracker().zoneImageFilePaths
+				objectFactory.getZoneTracker().zoneImageFilePaths,
 			);
 
 			if (shouldUpdateLevelTracker) {
 				ipcWebContentsSend(
 					"subscribeToLevelUpdates",
 					mainWindow.webContents,
-					objectFactory.getLevelTracker().getLevelDataDto()
+					objectFactory.getLevelTracker().getLevelDataDto(),
 				);
 			}
 
@@ -133,13 +128,13 @@ export class LogWatcherService {
 				ipcWebContentsSend(
 					"subscribeToGemUpdates",
 					mainWindow.webContents,
-					objectFactory.getGemTracker().getGemDataDto()
+					objectFactory.getGemTracker().getGemDataDto(),
 				);
 
 				ipcWebContentsSend(
 					"subscribeToGemUpdates",
 					mainWindow.webContents,
-					objectFactory.getGemTracker().getGemDataDto()
+					objectFactory.getGemTracker().getGemDataDto(),
 				);
 			}
 		});
@@ -156,9 +151,7 @@ export class LogWatcherService {
 		}
 
 		// Figure out size of the buffer
-		var newFileSize: number = fs.statSync(
-			objectFactory.getSettingsService().getClientTxtPath()
-		).size;
+		var newFileSize: number = fs.statSync(objectFactory.getSettingsService().getClientTxtPath()).size;
 		var sizeDiff: number = newFileSize - this.previousFileSize;
 
 		//If we get a negative difference, the file was reset, so we read the whole
@@ -171,10 +164,7 @@ export class LogWatcherService {
 		var buffer = Buffer.alloc(sizeDiff);
 
 		//read the file and save our place
-		var fileDescriptor = fs.openSync(
-			objectFactory.getSettingsService().getClientTxtPath(),
-			"r"
-		);
+		var fileDescriptor = fs.openSync(objectFactory.getSettingsService().getClientTxtPath(), "r");
 		fs.readSync(fileDescriptor, buffer, 0, sizeDiff, this.previousFileSize);
 		fs.closeSync(fileDescriptor);
 

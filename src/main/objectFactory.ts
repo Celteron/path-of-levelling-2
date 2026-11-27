@@ -55,7 +55,7 @@ class ObjectFactory {
 	// });
 	private getOrCreateObject<K extends keyof ServicesAndTrackers>(
 		key: K,
-		factory: () => ServicesAndTrackers[K]
+		factory: () => ServicesAndTrackers[K],
 	): ServicesAndTrackers[K] {
 		if (!this.objects[key]) {
 			const service = factory();

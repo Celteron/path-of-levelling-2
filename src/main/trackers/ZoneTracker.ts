@@ -1,11 +1,7 @@
 import log from "electron-log";
 import fs from "fs";
 import path from "path";
-import {
-	getZoneLayoutImagesAbsolutePath,
-	getZoneNotesPath,
-	getZoneReferenceDataPath,
-} from "../pathResolver.js";
+import { getZoneLayoutImagesAbsolutePath, getZoneNotesPath, getZoneReferenceDataPath } from "../pathResolver.js";
 import { objectFactory } from "../objectFactory.js";
 import { StoreService } from "../services/StoreService.js";
 import { getProfile } from "../profiles/profiles.js";
@@ -48,16 +44,10 @@ export class ZoneTracker {
 	// SettingsService needs to be loaded to call this.loadActNotes
 	// StateTracker required for this.saveZoneFromCode
 	constructor(storeService: StoreService, stateTracker: StateTracker, settingsService: SettingsService) {
-		this.zoneReferenceData = JSON.parse(
-			fs.readFileSync(getZoneReferenceDataPath(getProfile().Id), "utf-8")
-		);
+		this.zoneReferenceData = JSON.parse(fs.readFileSync(getZoneReferenceDataPath(getProfile().Id), "utf-8"));
 
 		// ...new Set() removes duplicates
-		this.allActs = [
-			...new Set(
-				Object.values(this.zoneReferenceData).map((zoneReference) => zoneReference.act)
-			),
-		];
+		this.allActs = [...new Set(Object.values(this.zoneReferenceData).map((zoneReference) => zoneReference.act))];
 
 		this.loadDefaultActAndZoneNotes();
 
@@ -67,7 +57,7 @@ export class ZoneTracker {
 		this.saveZoneFromCode(storeService.getGameSetting("lastSessionState.zoneCode"), true);
 	}
 
-	init() { }
+	init() {}
 
 	getZoneDataDto(): ZoneDataDto {
 		return {
@@ -81,7 +71,7 @@ export class ZoneTracker {
 			zoneNotesCoveredByGuide: guideCoversZoneNote(
 				objectFactory.getGuideTracker().isAvailable(),
 				this.zoneNotes,
-				this.defaultActAndZoneNotes.zoneNotes?.find((zoneNote) => zoneNote.zoneCode === this.zoneCode)?.notes
+				this.defaultActAndZoneNotes.zoneNotes?.find((zoneNote) => zoneNote.zoneCode === this.zoneCode)?.notes,
 			),
 		};
 	}
@@ -90,7 +80,7 @@ export class ZoneTracker {
 		const dto = {
 			buildName: objectFactory.getGemTracker().buildName,
 			allBuildNames: objectFactory.getGemTracker().allBuildNames,
-			allActNotes: this.allActNotes
+			allActNotes: this.allActNotes,
 		};
 		return dto;
 	}
@@ -99,7 +89,7 @@ export class ZoneTracker {
 		const dto = {
 			buildName: objectFactory.getGemTracker().buildName,
 			allBuildNames: objectFactory.getGemTracker().allBuildNames,
-			allZoneNotes: this.allZoneNotes
+			allZoneNotes: this.allZoneNotes,
 		};
 		return dto;
 	}
@@ -121,13 +111,14 @@ export class ZoneTracker {
 	 * of act notes in memory.
 	 */
 	loadActNotes() {
-		const currentBuild = objectFactory.getStoreService().getBuild(objectFactory.getSettingsService().getBuildName());
+		const currentBuild = objectFactory
+			.getStoreService()
+			.getBuild(objectFactory.getSettingsService().getBuildName());
 		const userActNotes = currentBuild === undefined ? [] : currentBuild.actNotes;
 
 		// Zip together the default act notes and user's act notes
 		this.allActNotes = this.defaultActAndZoneNotes.actNotes.map((actNote) => {
-			const userActNote = userActNotes
-				.find((userActNotes) => userActNotes.actName === actNote.actName);
+			const userActNote = userActNotes.find((userActNotes) => userActNotes.actName === actNote.actName);
 
 			return {
 				lockNoteOption: userActNote?.lockNoteOption ?? actNote.lockNoteOption,
@@ -144,13 +135,14 @@ export class ZoneTracker {
 	 * of zone notes in memory.
 	 */
 	loadZoneNotes() {
-		const currentBuild = objectFactory.getStoreService().getBuild(objectFactory.getSettingsService().getBuildName());
+		const currentBuild = objectFactory
+			.getStoreService()
+			.getBuild(objectFactory.getSettingsService().getBuildName());
 		const userZoneNotes = currentBuild === undefined ? [] : currentBuild.zoneNotes;
 
 		// Zip together the default zone notes and user's zone notes
 		this.allZoneNotes = this.defaultActAndZoneNotes.zoneNotes.map((zoneNote) => {
-			const userZoneNote = userZoneNotes
-				.find((userZoneNotes) => userZoneNotes.zoneCode === zoneNote.zoneCode);
+			const userZoneNote = userZoneNotes.find((userZoneNotes) => userZoneNotes.zoneCode === zoneNote.zoneCode);
 
 			return {
 				lockNoteOption: userZoneNote?.lockNoteOption ?? zoneNote.lockNoteOption,
@@ -167,26 +159,32 @@ export class ZoneTracker {
 	saveActNotes(buildName: string, newActNotes: Array<ActNote>) {
 		// Notes which are different to the default note must be saved with lockedCannotUnlock
 		const customActNotesToSave = newActNotes
-			.filter(newActNote => newActNote.notes !== this.defaultActAndZoneNotes.actNotes
-				.find(defaultActNote => defaultActNote.actName == newActNote.actName)?.notes)
+			.filter(
+				(newActNote) =>
+					newActNote.notes !==
+					this.defaultActAndZoneNotes.actNotes.find(
+						(defaultActNote) => defaultActNote.actName == newActNote.actName,
+					)?.notes,
+			)
 			.map((customActNote) => ({
 				...customActNote,
 				lockNoteOption: LockNoteOptionZodSchema.enum.lockedCannotUnlock,
 			}));
 
 		// Get the rest of the locked notes - these can remain as just 'locked'
-		const lockedActNotesToSave = newActNotes
-			.filter(newActNote => (newActNote.lockNoteOption === LockNoteOptionZodSchema.enum.locked
-				|| newActNote.lockNoteOption === LockNoteOptionZodSchema.enum.lockedCannotUnlock)
-				&& !customActNotesToSave.some(customActNote => customActNote.actName === newActNote.actName));
+		const lockedActNotesToSave = newActNotes.filter(
+			(newActNote) =>
+				(newActNote.lockNoteOption === LockNoteOptionZodSchema.enum.locked ||
+					newActNote.lockNoteOption === LockNoteOptionZodSchema.enum.lockedCannotUnlock) &&
+				!customActNotesToSave.some((customActNote) => customActNote.actName === newActNote.actName),
+		);
 
 		// Zip the lists together for saving
 		const actNotesToSave = [...customActNotesToSave, ...lockedActNotesToSave];
 
 		// Save the new notes to build - create a new build if required
 		objectFactory.getStoreService().setBuild(buildName, {
-			...(objectFactory.getStoreService().getBuild(buildName)
-				?? {
+			...(objectFactory.getStoreService().getBuild(buildName) ?? {
 				buildName: buildName,
 				gemBuild: DefaultGemBuild.parse({}),
 				zoneNotes: [],
@@ -209,26 +207,32 @@ export class ZoneTracker {
 	saveZoneNotes(buildName: string, newZoneNotes: Array<ZoneNote>) {
 		// Notes which are different to the default note must be saved with lockedCannotUnlock
 		const customZoneNotesToSave = newZoneNotes
-			.filter(newZoneNote => newZoneNote.notes !== this.defaultActAndZoneNotes.zoneNotes
-				.find(defaultZoneNote => defaultZoneNote.zoneCode == newZoneNote.zoneCode)?.notes)
+			.filter(
+				(newZoneNote) =>
+					newZoneNote.notes !==
+					this.defaultActAndZoneNotes.zoneNotes.find(
+						(defaultZoneNote) => defaultZoneNote.zoneCode == newZoneNote.zoneCode,
+					)?.notes,
+			)
 			.map((customZoneNote) => ({
 				...customZoneNote,
 				lockNoteOption: LockNoteOptionZodSchema.enum.lockedCannotUnlock,
 			}));
 
 		// Get the rest of the locked or lockedCannotUnlock notes - these can keep their status
-		const lockedZoneNotesToSave = newZoneNotes
-			.filter(newZoneNote => (newZoneNote.lockNoteOption === LockNoteOptionZodSchema.enum.locked
-				|| newZoneNote.lockNoteOption === LockNoteOptionZodSchema.enum.lockedCannotUnlock)
-				&& !customZoneNotesToSave.some(customZoneNote => customZoneNote.zoneCode === newZoneNote.zoneCode));
+		const lockedZoneNotesToSave = newZoneNotes.filter(
+			(newZoneNote) =>
+				(newZoneNote.lockNoteOption === LockNoteOptionZodSchema.enum.locked ||
+					newZoneNote.lockNoteOption === LockNoteOptionZodSchema.enum.lockedCannotUnlock) &&
+				!customZoneNotesToSave.some((customZoneNote) => customZoneNote.zoneCode === newZoneNote.zoneCode),
+		);
 
 		// Zip the lists together for saving
 		const zoneNotesToSave = [...customZoneNotesToSave, ...lockedZoneNotesToSave];
 
 		// Save the new notes to build - create a new build if required
 		objectFactory.getStoreService().setBuild(buildName, {
-			...(objectFactory.getStoreService().getBuild(buildName)
-				?? {
+			...(objectFactory.getStoreService().getBuild(buildName) ?? {
 				buildName: buildName,
 				gemBuild: DefaultGemBuild.parse({}),
 				actNotes: [],
@@ -255,32 +259,30 @@ export class ZoneTracker {
 
 		// If there is no build selected, idk, we have other problems just send the default note
 		if (!currentBuild)
-			return this.defaultActAndZoneNotes.actNotes
-				.find(defaultActNote => defaultActNote.actName == actName)!;
+			return this.defaultActAndZoneNotes.actNotes.find((defaultActNote) => defaultActNote.actName == actName)!;
 
 		objectFactory.getStoreService().setBuild(currentBuildName, {
 			...currentBuild,
-			actNotes: currentBuild.actNotes.filter(existingActNote => existingActNote.actName !== actName),
+			actNotes: currentBuild.actNotes.filter((existingActNote) => existingActNote.actName !== actName),
 		});
 
-		return this.defaultActAndZoneNotes.actNotes
-			.find(defaultActNote => defaultActNote.actName == actName)!;
+		return this.defaultActAndZoneNotes.actNotes.find((defaultActNote) => defaultActNote.actName == actName)!;
 	}
 
 	// Remove the user's zone note from the saved array of custom Zone Notes
 	resetZoneNoteForZone(zoneCode: string): ZoneNote {
 		const currentBuildName = objectFactory.getSettingsService().getBuildName();
 		const currentBuild = objectFactory.getStoreService().getBuild(currentBuildName);
-		const defaultZoneNote = this.defaultActAndZoneNotes.zoneNotes
-			.find(defaultZoneNote => defaultZoneNote.zoneCode == zoneCode)!;
+		const defaultZoneNote = this.defaultActAndZoneNotes.zoneNotes.find(
+			(defaultZoneNote) => defaultZoneNote.zoneCode == zoneCode,
+		)!;
 
 		// If there is no build selected, idk, we have other problems just send the default note
-		if (!currentBuild)
-			return defaultZoneNote;
+		if (!currentBuild) return defaultZoneNote;
 
 		objectFactory.getStoreService().setBuild(currentBuildName, {
 			...currentBuild,
-			zoneNotes: currentBuild.zoneNotes.filter(existingZoneNote => existingZoneNote.zoneCode !== zoneCode),
+			zoneNotes: currentBuild.zoneNotes.filter((existingZoneNote) => existingZoneNote.zoneCode !== zoneCode),
 		});
 
 		return defaultZoneNote;
@@ -294,7 +296,7 @@ export class ZoneTracker {
 
 		// returns the first [key, value] pair for the act, which should give the first zone.
 		const zoneCodeToZoneReference = Object.entries(this.zoneReferenceData).find(
-			([key, value]) => value.act === actName
+			([key, value]) => value.act === actName,
 		);
 		if (zoneCodeToZoneReference == null) {
 			return false;
@@ -322,7 +324,7 @@ export class ZoneTracker {
 
 		// returns the first [key, value] pair for the act, which should give the first zone.
 		const zoneCodeToZoneReference = Object.entries(this.zoneReferenceData).find(
-			([key, value]) => value.act === actName && value.zoneName === zoneName
+			([key, value]) => value.act === actName && value.zoneName === zoneName,
 		);
 
 		if (zoneCodeToZoneReference == null) {
@@ -437,9 +439,7 @@ export class ZoneTracker {
 			return false;
 		}
 
-		const fileNames = fs.readdirSync(
-			path.join(getZoneLayoutImagesAbsolutePath(), requiredDirectory)
-		);
+		const fileNames = fs.readdirSync(path.join(getZoneLayoutImagesAbsolutePath(), requiredDirectory));
 
 		if (fileNames == null || fileNames.length == 0) {
 			this.zoneImageFilePaths = [];

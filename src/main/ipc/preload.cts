@@ -9,7 +9,7 @@ const electron = require("electron");
 
 /** Type safe wrapper for get requests from Renderer->Main */
 function ipcRendererInvokeGet<K extends keyof channelReturnTypeMapping>(
-	channel: K
+	channel: K,
 ): Promise<channelReturnTypeMapping[K]> {
 	return electron.ipcRenderer.invoke(channel as string);
 }
@@ -17,7 +17,7 @@ function ipcRendererInvokeGet<K extends keyof channelReturnTypeMapping>(
 /** Type safe wrapper for get requests from Renderer->Main which expect a response */
 function ipcRendererInvokePost<K extends keyof channelReturnTypeMapping>(
 	channel: K,
-	request: K extends keyof channelRequestTypeMapping ? channelRequestTypeMapping[K] : undefined
+	request: K extends keyof channelRequestTypeMapping ? channelRequestTypeMapping[K] : undefined,
 ): Promise<channelReturnTypeMapping[K]> {
 	return electron.ipcRenderer.invoke(channel as string, request as any);
 }
@@ -25,7 +25,7 @@ function ipcRendererInvokePost<K extends keyof channelReturnTypeMapping>(
 /** Subscribes to a main->renderer channel and returns the matching unsubscribe function */
 function ipcRendererOn<K extends keyof channelReturnTypeMapping>(
 	channel: K,
-	callback: (event: Electron.IpcRendererEvent, payload: channelReturnTypeMapping[K]) => void
+	callback: (event: Electron.IpcRendererEvent, payload: channelReturnTypeMapping[K]) => void,
 ): () => void {
 	electron.ipcRenderer.on(channel, callback);
 	return () => {
@@ -47,33 +47,27 @@ electron.contextBridge.exposeInMainWorld("electron", {
 
 	getIsClientWatcherActive: async () => ipcRendererInvokeGet("getIsClientWatcherActive"),
 	getClientPath: async () => ipcRendererInvokeGet("getClientPath"),
-	saveClientPath: async (clientTxtPath: string) =>
-		ipcRendererInvokePost("saveClientPath", clientTxtPath),
+	saveClientPath: async (clientTxtPath: string) => ipcRendererInvokePost("saveClientPath", clientTxtPath),
 
 	// Position Settings
 	getFontScalingFactor: async () => ipcRendererInvokeGet("getFontScalingFactor"),
-	getSettingsOverlayPositionSettings: async () =>
-		ipcRendererInvokeGet("getSettingsOverlayPositionSettings"),
+	getSettingsOverlayPositionSettings: async () => ipcRendererInvokeGet("getSettingsOverlayPositionSettings"),
 	saveSettingsOverlayPositionSettings: async (settingsOverlaySettings) =>
 		ipcRendererInvokePost("saveSettingsOverlayPositionSettings", settingsOverlaySettings),
 
-	getZoneOverlayPositionSettings: async () =>
-		ipcRendererInvokeGet("getZoneOverlayPositionSettings"),
+	getZoneOverlayPositionSettings: async () => ipcRendererInvokeGet("getZoneOverlayPositionSettings"),
 	saveZoneOverlayPositionSettings: async (zoneSettings) =>
 		ipcRendererInvokePost("saveZoneOverlayPositionSettings", zoneSettings),
 
-	getLayoutImagesOverlayPositionSettings: async () =>
-		ipcRendererInvokeGet("getLayoutImagesOverlayPositionSettings"),
+	getLayoutImagesOverlayPositionSettings: async () => ipcRendererInvokeGet("getLayoutImagesOverlayPositionSettings"),
 	saveLayoutImagesOverlayPositionSettings: async (layoutImagesSettings) =>
 		ipcRendererInvokePost("saveLayoutImagesOverlayPositionSettings", layoutImagesSettings),
 
-	getLevelOverlayPositionSettings: async () =>
-		ipcRendererInvokeGet("getLevelOverlayPositionSettings"),
+	getLevelOverlayPositionSettings: async () => ipcRendererInvokeGet("getLevelOverlayPositionSettings"),
 	saveLevelOverlayPositionSettings: async (levelSettings) =>
 		ipcRendererInvokePost("saveLevelOverlayPositionSettings", levelSettings),
 
-	getGemOverlayPositionSettings: async () =>
-		ipcRendererInvokeGet("getGemOverlayPositionSettings"),
+	getGemOverlayPositionSettings: async () => ipcRendererInvokeGet("getGemOverlayPositionSettings"),
 	saveGemOverlayPositionSettings: async (gemSettings) =>
 		ipcRendererInvokePost("saveGemOverlayPositionSettings", gemSettings),
 
@@ -84,10 +78,8 @@ electron.contextBridge.exposeInMainWorld("electron", {
 		});
 	},
 	getZoneState: async () => ipcRendererInvokeGet("getZoneState"),
-	postActSelected: async (actSelected: string) =>
-		ipcRendererInvokePost("postActSelected", actSelected),
-	postZoneSelected: async (zoneSelectedRequest) =>
-		ipcRendererInvokePost("postZoneSelected", zoneSelectedRequest),
+	postActSelected: async (actSelected: string) => ipcRendererInvokePost("postActSelected", actSelected),
+	postZoneSelected: async (zoneSelectedRequest) => ipcRendererInvokePost("postZoneSelected", zoneSelectedRequest),
 
 	subscribeToZoneLayoutImageUpdates: (callback) => {
 		return ipcRendererOn("zoneLayoutImageUpdates", (_, args) => {
@@ -97,7 +89,8 @@ electron.contextBridge.exposeInMainWorld("electron", {
 	getLayoutImagePaths: async () => ipcRendererInvokeGet("getLayoutImagePaths"),
 
 	// Login/character select vs. game world
-	subscribeToGameWorldUpdates: (callback) => ipcRendererOn("gameWorldUpdates", (_, inGameWorld) => callback(inGameWorld)),
+	subscribeToGameWorldUpdates: (callback) =>
+		ipcRendererOn("gameWorldUpdates", (_, inGameWorld) => callback(inGameWorld)),
 	getInGameWorld: async () => ipcRendererInvokeGet("getInGameWorld"),
 
 	// Leveling guide
@@ -125,25 +118,20 @@ electron.contextBridge.exposeInMainWorld("electron", {
 		});
 	},
 	getGemState: async () => ipcRendererInvokeGet("getGemState"),
-	postGemLevelSelected: async (gemLevelSelected) =>
-		ipcRendererInvokePost("postGemLevelSelected", gemLevelSelected),
+	postGemLevelSelected: async (gemLevelSelected) => ipcRendererInvokePost("postGemLevelSelected", gemLevelSelected),
 
 	// Methods for the gem SETTINGS
 	getGemSettingsState: async () => ipcRendererInvokeGet("getGemSettingsState"),
-	postBuildSelected: async (buildName) =>
-		ipcRendererInvokePost("postBuildSelected", buildName),
+	postBuildSelected: async (buildName) => ipcRendererInvokePost("postBuildSelected", buildName),
 	postAddNewBuild: async (buildName) => ipcRendererInvokePost("postAddNewBuild", buildName),
 	postDeleteBuild: async (buildName) => ipcRendererInvokePost("postDeleteBuild", buildName),
-	saveGemSetupsForBuild: async (response) =>
-		ipcRendererInvokePost("saveGemSetupsForBuild", response),
+	saveGemSetupsForBuild: async (response) => ipcRendererInvokePost("saveGemSetupsForBuild", response),
 	postImportPob: async (input: string) => ipcRendererInvokePost("postImportPob", input),
 
 	// Methods for the act notes SETTINGS
 	getActNotesSettingsState: async () => ipcRendererInvokeGet("getActNotesSettingsState"),
-	saveActNotesForBuild: async (response) =>
-		ipcRendererInvokePost("saveActNotesForBuild", response),
-	postCopyActNotesFromBuild: async (response) =>
-		ipcRendererInvokePost("postCopyActNotesFromBuild", response),
+	saveActNotesForBuild: async (response) => ipcRendererInvokePost("saveActNotesForBuild", response),
+	postCopyActNotesFromBuild: async (response) => ipcRendererInvokePost("postCopyActNotesFromBuild", response),
 	postResetActNoteForAct: async (actName) => ipcRendererInvokePost("postResetActNoteForAct", actName),
 	postBuildSelectedFromActNotes: async (buildName) =>
 		ipcRendererInvokePost("postBuildSelectedFromActNotes", buildName),
@@ -152,14 +140,11 @@ electron.contextBridge.exposeInMainWorld("electron", {
 
 	// Methods for the zone notes SETTINGS
 	getZoneNotesSettingsState: async () => ipcRendererInvokeGet("getZoneNotesSettingsState"),
-	saveZoneNotesForBuild: async (response) =>
-		ipcRendererInvokePost("saveZoneNotesForBuild", response),
-	postCopyZoneNotesFromBuild: async (response) =>
-		ipcRendererInvokePost("postCopyZoneNotesFromBuild", response),
+	saveZoneNotesForBuild: async (response) => ipcRendererInvokePost("saveZoneNotesForBuild", response),
+	postCopyZoneNotesFromBuild: async (response) => ipcRendererInvokePost("postCopyZoneNotesFromBuild", response),
 	postResetZoneNoteForZone: async (zoneCode) => ipcRendererInvokePost("postResetZoneNoteForZone", zoneCode),
 	postBuildSelectedFromZoneNotes: async (buildName) =>
 		ipcRendererInvokePost("postBuildSelectedFromZoneNotes", buildName),
 	postAddNewBuildFromZoneNotes: async (buildName) => ipcRendererInvokePost("postAddNewBuildFromZoneNotes", buildName),
 	postDeleteBuildFromZoneNotes: async (buildName) => ipcRendererInvokePost("postDeleteBuildFromZoneNotes", buildName),
-
 } satisfies Window["electron"]);

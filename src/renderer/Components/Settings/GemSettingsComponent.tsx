@@ -3,7 +3,11 @@ import { GemSetup } from "../../../main/zodSchemas/schemas";
 import { useConfirmDiscardUnsavedChanges, useUnsavedChanges } from "./unsavedChanges";
 import { useConfirm } from "../useConfirm";
 
-export function GemSettingsComponent({ onUnsavedChangesChange }: { onUnsavedChangesChange?: (hasUnsavedChanges: boolean) => void }) {
+export function GemSettingsComponent({
+	onUnsavedChangesChange,
+}: {
+	onUnsavedChangesChange?: (hasUnsavedChanges: boolean) => void;
+}) {
 	const [selectedBuild, setSelectedBuild] = useState("");
 	const [allBuildNames, setAllBuildNames] = useState<string[]>([]);
 	const [addingBuild, setAddingBuild] = useState(false);
@@ -32,7 +36,7 @@ export function GemSettingsComponent({ onUnsavedChangesChange }: { onUnsavedChan
 				response.allGemSetups.map((setup: GemSetup) => ({
 					...setup,
 					gemLinks: [...setup.gemLinks],
-				}))
+				})),
 			);
 		});
 	}, []);
@@ -54,7 +58,7 @@ export function GemSettingsComponent({ onUnsavedChangesChange }: { onUnsavedChan
 					response.allGemSetups.map((setup: GemSetup) => ({
 						...setup,
 						gemLinks: [...setup.gemLinks],
-					}))
+					})),
 				);
 			});
 		}
@@ -70,7 +74,7 @@ export function GemSettingsComponent({ onUnsavedChangesChange }: { onUnsavedChan
 				response.allGemSetups.map((setup: GemSetup) => ({
 					...setup,
 					gemLinks: [...setup.gemLinks],
-				}))
+				})),
 			);
 			setAddingBuild(false);
 			setNewBuildName("");
@@ -93,16 +97,13 @@ export function GemSettingsComponent({ onUnsavedChangesChange }: { onUnsavedChan
 				response.allGemSetups.map((setup: GemSetup) => ({
 					...setup,
 					gemLinks: [...setup.gemLinks],
-				}))
+				})),
 			);
 		});
 	};
 
 	const handleDeleteBuild = async () => {
-		if (
-			selectedBuild &&
-			(await confirm(`Delete build "${selectedBuild}"? This cannot be undone.`, "Delete"))
-		) {
+		if (selectedBuild && (await confirm(`Delete build "${selectedBuild}"? This cannot be undone.`, "Delete"))) {
 			window.electron.postDeleteBuild(selectedBuild).then((response) => {
 				setSelectedBuild(response.buildName);
 				setAllBuildNames(response.allBuildNames);
@@ -111,7 +112,7 @@ export function GemSettingsComponent({ onUnsavedChangesChange }: { onUnsavedChan
 					response.allGemSetups.map((setup: GemSetup) => ({
 						...setup,
 						gemLinks: [...setup.gemLinks],
-					}))
+					})),
 				);
 			});
 		}
@@ -138,9 +139,7 @@ export function GemSettingsComponent({ onUnsavedChangesChange }: { onUnsavedChan
 	};
 
 	const handleLevelChange = (index: number, value: number) => {
-		const newSetups = editableGemSetups.map((setup, i) =>
-			i === index ? { ...setup, level: value } : setup
-		);
+		const newSetups = editableGemSetups.map((setup, i) => (i === index ? { ...setup, level: value } : setup));
 		setEditableGemSetups(newSetups);
 	};
 
@@ -148,7 +147,7 @@ export function GemSettingsComponent({ onUnsavedChangesChange }: { onUnsavedChan
 	const handleGemLinksChange = (index: number, value: string) => {
 		const linksArray = value.split("\n");
 		const newSetups = editableGemSetups.map((setup, i) =>
-			i === index ? { ...setup, gemLinks: linksArray } : setup
+			i === index ? { ...setup, gemLinks: linksArray } : setup,
 		);
 		setEditableGemSetups(newSetups);
 	};
@@ -193,9 +192,7 @@ export function GemSettingsComponent({ onUnsavedChangesChange }: { onUnsavedChan
 					<button
 						className="GemSettingsAddBuildButton"
 						onClick={handleAddBuild}
-						disabled={
-							!newBuildName.trim() || allBuildNames.includes(newBuildName.trim())
-						}
+						disabled={!newBuildName.trim() || allBuildNames.includes(newBuildName.trim())}
 					>
 						Create
 					</button>
@@ -256,9 +253,7 @@ export function GemSettingsComponent({ onUnsavedChangesChange }: { onUnsavedChan
 					className="GemSettingsAddBlockButton"
 					onClick={() => {
 						const lastLevel =
-							editableGemSetups.length > 0
-								? editableGemSetups[editableGemSetups.length - 1].level
-								: 0;
+							editableGemSetups.length > 0 ? editableGemSetups[editableGemSetups.length - 1].level : 0;
 						setEditableGemSetups([
 							...editableGemSetups,
 							{ level: lastLevel + 1, gemLinks: [], gemSources: [] },

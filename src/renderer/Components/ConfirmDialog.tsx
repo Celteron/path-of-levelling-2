@@ -18,7 +18,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
 					return { message, confirmLabel, resolve };
 				});
 			}),
-		[]
+		[],
 	);
 
 	const answer = (confirmed: boolean) => {

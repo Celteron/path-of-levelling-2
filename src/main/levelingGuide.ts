@@ -1,10 +1,4 @@
-import {
-	GuidePage,
-	GuideStep,
-	LevelingGuide,
-	LevelingGuideZodSchema,
-	RecommendedLevel,
-} from "./zodSchemas/schemas.js";
+import { GuidePage, GuideStep, LevelingGuide, LevelingGuideZodSchema, RecommendedLevel } from "./zodSchemas/schemas.js";
 
 // Pure leveling guide logic without Electron imports, so it can be unit tested.
 // Page targets and auto-advance follow Exile UI, where the guide data comes from.
@@ -27,7 +21,7 @@ function matchesRun(variant: GuidePage["variant"], leagueStart: boolean): boolea
 
 export function visibleSteps(page: GuidePage, prefs: GuidePrefs): GuideStep[] {
 	return page.steps.filter(
-		(step) => matchesRun(step.variant, prefs.leagueStart) && (prefs.showOptional || !step.optional)
+		(step) => matchesRun(step.variant, prefs.leagueStart) && (prefs.showOptional || !step.optional),
 	);
 }
 
@@ -61,7 +55,7 @@ export function advanceOnZoneEntered(
 	guide: LevelingGuide,
 	pageIndex: number,
 	zoneCode: string,
-	leagueStart: boolean
+	leagueStart: boolean,
 ): number {
 	const page = guide.pages[pageIndex];
 	if (!page || pageTarget(page, leagueStart) !== zoneCode.toUpperCase()) return pageIndex;
@@ -108,7 +102,11 @@ export function recommendationFor(guide: LevelingGuide, zoneCode: string): Recom
  * The shipped zone tips duplicate what the guide says, so they are left to the guide. Notes the
  * user wrote are always shown, and without a guide (PoE1, broken guide file) all notes are.
  */
-export function guideCoversZoneNote(guideAvailable: boolean, zoneNote: string, shippedZoneNote: string | undefined): boolean {
+export function guideCoversZoneNote(
+	guideAvailable: boolean,
+	zoneNote: string,
+	shippedZoneNote: string | undefined,
+): boolean {
 	return guideAvailable && shippedZoneNote !== undefined && zoneNote === shippedZoneNote;
 }
 
@@ -126,7 +124,16 @@ export interface GuideView extends GuidePrefs {
 export function guideView(guide: LevelingGuide | null, pageIndex: number, prefs: GuidePrefs): GuideView {
 	const page = guide?.pages[pageIndex];
 	if (!guide || !page) {
-		return { enabled: false, pageIndex: 0, pageCount: 0, actName: "", steps: [], targetZoneName: null, sourceVersion: "", ...prefs };
+		return {
+			enabled: false,
+			pageIndex: 0,
+			pageCount: 0,
+			actName: "",
+			steps: [],
+			targetZoneName: null,
+			sourceVersion: "",
+			...prefs,
+		};
 	}
 
 	const target = pageTarget(page, prefs.leagueStart);

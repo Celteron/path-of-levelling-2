@@ -60,7 +60,11 @@ function Segment({ segment }: { segment: GuideSegment }) {
 		case "tag":
 			return <span className="GuideTag">{segment.value}</span>;
 		case "separator":
-			return <span className="GuideSeparator" aria-hidden="true">·</span>;
+			return (
+				<span className="GuideSeparator" aria-hidden="true">
+					·
+				</span>
+			);
 		default: {
 			const unhandled: never = segment;
 			return unhandled;
@@ -126,10 +130,20 @@ export function GuideTrackerComponent() {
 				<span className="PanelTitle">{guide.actName}</span>
 				{guide.targetZoneName && <span className="GuideTarget">→ {guide.targetZoneName}</span>}
 				<span className="PanelMuted">{`${guide.pageIndex + 1} / ${guide.pageCount}`}</span>
-				<button className="PanelButton" aria-label="Previous page" title="Previous page (Ctrl+Alt+B)" onClick={() => step(-1)}>
+				<button
+					className="PanelButton"
+					aria-label="Previous page"
+					title="Previous page (Ctrl+Alt+B)"
+					onClick={() => step(-1)}
+				>
 					‹
 				</button>
-				<button className="PanelButton" aria-label="Next page" title="Next page (Ctrl+Alt+N)" onClick={() => step(1)}>
+				<button
+					className="PanelButton"
+					aria-label="Next page"
+					title="Next page (Ctrl+Alt+N)"
+					onClick={() => step(1)}
+				>
 					›
 				</button>
 			</header>

@@ -1,6 +1,6 @@
 @font-face {
-	font-family: 'Jetbrains Mono Regular';
-	src: local('Jetbrains Mono Regular'), url(/fonts/JetBrainsMono-Regular.woff2), format('woff2');
+	font-family: "Jetbrains Mono Regular";
+	src: local("Jetbrains Mono Regular"), url(/fonts/JetBrainsMono-Regular.woff2), format("woff2");
 }
 
 ::-webkit-scrollbar {
@@ -43,7 +43,7 @@ input {
 
 	font-synthesis: none;
 	text-rendering: optimizeLegibility;
-	font-family: 'Jetbrains Mono Regular';
+	font-family: "Jetbrains Mono Regular";
 	font-weight: 400;
 
 	-webkit-font-smoothing: antialiased;
@@ -76,7 +76,6 @@ react-draggable {
 }
 
 .SettingsOverlay p {
-
 	margin-left: 12px;
 	margin-top: 5px;
 	margin-bottom: 5px;
@@ -535,35 +534,35 @@ react-draggable {
 }
 
 .ActNotesSettingsCopyRow {
-    display: flex;
-    align-items: center;
-    margin: 8px 0 16px 0;
-    gap: 8px;
+	display: flex;
+	align-items: center;
+	margin: 8px 0 16px 0;
+	gap: 8px;
 }
 
 .ActNotesSettingsCopyButton {
-    background: #2d2d2d;
-    color: #fff;
-    border: 1px solid #444;
-    border-radius: 4px;
-    padding: 4px 12px;
-    cursor: pointer;
-    font-size: 1em;
-    transition: background 0.2s;
+	background: #2d2d2d;
+	color: #fff;
+	border: 1px solid #444;
+	border-radius: 4px;
+	padding: 4px 12px;
+	cursor: pointer;
+	font-size: 1em;
+	transition: background 0.2s;
 }
 
 .ActNotesSettingsCopyButton:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+	opacity: 0.5;
+	cursor: not-allowed;
 }
 
 .ActNotesSettingsCopySelect {
-    background: #232323;
-    color: #fff;
-    border: 1px solid #444;
-    border-radius: 4px;
-    padding: 4px 8px;
-    font-size: 1em;
+	background: #232323;
+	color: #fff;
+	border: 1px solid #444;
+	border-radius: 4px;
+	padding: 4px 8px;
+	font-size: 1em;
 }
 
 .ActNotesSettingsDeleteBuildButton:hover {
@@ -603,7 +602,9 @@ react-draggable {
 	height: 28px;
 	font-weight: bold;
 	cursor: pointer;
-	transition: background 0.2s, opacity 0.2s;
+	transition:
+		background 0.2s,
+		opacity 0.2s;
 	margin: 0;
 	z-index: 2;
 	display: flex;
@@ -808,35 +809,35 @@ react-draggable {
 }
 
 .ZoneNotesSettingsCopyRow {
-    display: flex;
-    align-items: center;
-    margin: 8px 0 16px 0;
-    gap: 8px;
+	display: flex;
+	align-items: center;
+	margin: 8px 0 16px 0;
+	gap: 8px;
 }
 
 .ZoneNotesSettingsCopyButton {
-    background: #2d2d2d;
-    color: #fff;
-    border: 1px solid #444;
-    border-radius: 4px;
-    padding: 4px 12px;
-    cursor: pointer;
-    font-size: 1em;
-    transition: background 0.2s;
+	background: #2d2d2d;
+	color: #fff;
+	border: 1px solid #444;
+	border-radius: 4px;
+	padding: 4px 12px;
+	cursor: pointer;
+	font-size: 1em;
+	transition: background 0.2s;
 }
 
 .ZoneNotesSettingsCopyButton:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+	opacity: 0.5;
+	cursor: not-allowed;
 }
 
 .ZoneNotesSettingsCopySelect {
-    background: #232323;
-    color: #fff;
-    border: 1px solid #444;
-    border-radius: 4px;
-    padding: 4px 8px;
-    font-size: 1em;
+	background: #232323;
+	color: #fff;
+	border: 1px solid #444;
+	border-radius: 4px;
+	padding: 4px 8px;
+	font-size: 1em;
 }
 
 .ZoneNotesSettingsBlocksContainer {
@@ -872,7 +873,9 @@ react-draggable {
 	height: 28px;
 	font-weight: bold;
 	cursor: pointer;
-	transition: background 0.2s, opacity 0.2s;
+	transition:
+		background 0.2s,
+		opacity 0.2s;
 	margin: 0;
 	z-index: 2;
 	display: flex;
@@ -1005,7 +1008,9 @@ react-draggable {
 .AboutSettingsWrapper a {
 	color: #7fc7ff;
 	text-decoration: underline;
-	transition: color 0.2s, text-decoration-thickness 0.2s;
+	transition:
+		color 0.2s,
+		text-decoration-thickness 0.2s;
 	text-decoration-thickness: 1px;
 }
 

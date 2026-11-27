@@ -15,7 +15,7 @@ export function useConfirmDiscardUnsavedChanges(): (hasUnsavedChanges: boolean) 
 export function useUnsavedChanges<T>(
 	saved: T,
 	edited: T,
-	onUnsavedChangesChange?: (hasUnsavedChanges: boolean) => void
+	onUnsavedChangesChange?: (hasUnsavedChanges: boolean) => void,
 ): boolean {
 	const hasUnsavedChanges = JSON.stringify(saved) !== JSON.stringify(edited);
 

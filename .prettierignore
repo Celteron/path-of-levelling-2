@@ -1,0 +1,10 @@
+# Generated or vendored content, formatted by its own tools
+dist
+dist-electron
+dist-react
+node_modules
+package-lock.json
+patches
+src/main/profiles/*/referenceData
+docs
+assets

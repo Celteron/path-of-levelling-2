@@ -18,10 +18,8 @@ export function ipcMainHandle<K extends keyof channelReturnTypeMapping>(
 	channel: K,
 	handler: (
 		event: any, // I never use this event, can add some type safety later if needed
-		request: K extends keyof channelRequestTypeMapping
-			? channelRequestTypeMapping[K]
-			: undefined
-	) => channelReturnTypeMapping[K] | Promise<channelReturnTypeMapping[K]>
+		request: K extends keyof channelRequestTypeMapping ? channelRequestTypeMapping[K] : undefined,
+	) => channelReturnTypeMapping[K] | Promise<channelReturnTypeMapping[K]>,
 ) {
 	ipcMain.handle(channel as string, (event, request) => {
 		return handler(event, request as any);
@@ -32,7 +30,7 @@ export function ipcMainHandle<K extends keyof channelReturnTypeMapping>(
 export function ipcWebContentsSend<K extends keyof channelReturnTypeMapping>(
 	channel: K,
 	webContents: WebContents,
-	payload: channelReturnTypeMapping[K]
+	payload: channelReturnTypeMapping[K],
 ) {
 	webContents.send(channel, payload);
 }
