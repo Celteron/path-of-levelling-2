@@ -67,6 +67,7 @@ type channelReturnTypeMapping = {
 
 	// Login/character select vs. game world
 	gameWorldUpdates: boolean;
+	getInGameWorld: boolean;
 
 	// Leveling Guide
 	guideUpdates: GuideDataDto;

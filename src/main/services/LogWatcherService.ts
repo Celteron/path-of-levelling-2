@@ -3,7 +3,11 @@ import log from "electron-log";
 import fs from "fs";
 import { objectFactory } from "../objectFactory.js";
 import { ipcWebContentsSend } from "../ipc/ipcWrappers.js";
-import { parseLogChunk } from "../logParser.js";
+import { inGameWorldFromLogTail, parseLogChunk } from "../logParser.js";
+import { readFileTail } from "../fileTail.js";
+
+/** Enough log to contain the last login or zone line of a session */
+const LOG_TAIL_BYTES = 256 * 1024;
 
 export class LogWatcherService {
 	watchedFilePath: string = "";
@@ -51,6 +55,12 @@ export class LogWatcherService {
 		this.watchedFilePath = filePathGuess;
 		log.info("Successfully subscribed to Client.txt");
 
+		// New lines only arrive on the next game event; until then the end of the log tells
+		// whether the game sits at the login/character select screen.
+		objectFactory.getStateTracker().inGameWorld = inGameWorldFromLogTail(
+			readFileTail(filePathGuess, LOG_TAIL_BYTES)
+		);
+
 		fs.watchFile(this.watchedFilePath, (current, previous) => {
 			var data = this.readNewLines(current, previous);
 
@@ -91,6 +101,7 @@ export class LogWatcherService {
 			}
 
 			if (data.atLoginScreen !== undefined) {
+				objectFactory.getStateTracker().inGameWorld = !data.atLoginScreen;
 				ipcWebContentsSend("gameWorldUpdates", mainWindow.webContents, !data.atLoginScreen);
 			}
 

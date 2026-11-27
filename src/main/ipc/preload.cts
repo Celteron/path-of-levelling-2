@@ -95,10 +95,13 @@ electron.contextBridge.exposeInMainWorld("electron", {
 
 	// Login/character select vs. game world
 	subscribeToGameWorldUpdates: (callback) => {
-		return ipcRendererOn("gameWorldUpdates", (_, args) => {
-			callback(args);
-		});
+		const listener = (_: Electron.IpcRendererEvent, inGameWorld: boolean) => callback(inGameWorld);
+		electron.ipcRenderer.on("gameWorldUpdates", listener);
+		return () => {
+			electron.ipcRenderer.removeListener("gameWorldUpdates", listener);
+		};
 	},
+	getInGameWorld: async () => ipcRendererInvokeGet("getInGameWorld"),
 
 	// Leveling guide
 	subscribeToGuideUpdates: (callback) => {

@@ -9,6 +9,8 @@ export class StateTracker {
 	levelTrackerOpen: boolean = true;
 	gemTrackerOpen: boolean = true;
 	guideOpen: boolean = true;
+	/** false at login/character select; true until Client.txt says otherwise */
+	inGameWorld: boolean = true;
 
 	logWatcherActive: boolean = false;
 
