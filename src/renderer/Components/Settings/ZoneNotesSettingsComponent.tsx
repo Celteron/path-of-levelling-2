@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
+import { confirmDiscardUnsavedChanges, useUnsavedChanges } from "./unsavedChanges";
 import { LockNoteOption, ZoneNote } from "../../../main/zodSchemas/schemas";
 
 function getLockButtonProps(lockNoteOption: LockNoteOption): {
@@ -32,7 +33,7 @@ function getLockButtonProps(lockNoteOption: LockNoteOption): {
     }
 }
 
-export function ZoneNotesSettingsComponent() {
+export function ZoneNotesSettingsComponent({ onUnsavedChangesChange }: { onUnsavedChangesChange?: (hasUnsavedChanges: boolean) => void }) {
     const [selectedBuild, setSelectedBuild] = useState("");
     const [allBuildNames, setAllBuildNames] = useState<string[]>([]);
     const [addingBuild, setAddingBuild] = useState(false);
@@ -40,6 +41,14 @@ export function ZoneNotesSettingsComponent() {
     const [buildToCopyName, setBuildToCopyName] = useState<string>("");
 
     const [editableZoneNotes, setEditableZoneNotes] = useState<ZoneNote[]>([]);
+    // Last state loaded from/saved to main, to detect unsaved edits
+    const [savedZoneNotes, setSavedZoneNotes] = useState<ZoneNote[]>([]);
+    const hasUnsavedChanges = useUnsavedChanges(savedZoneNotes, editableZoneNotes, onUnsavedChangesChange);
+
+    const loadZoneNotes = (zoneNotes: ZoneNote[]) => {
+        setEditableZoneNotes(zoneNotes);
+        setSavedZoneNotes(zoneNotes);
+    };
     const textareaRefs = React.useRef<{ [zoneCode: string]: HTMLTextAreaElement | null; }>({});
     const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -53,11 +62,13 @@ export function ZoneNotesSettingsComponent() {
             setSelectedBuild(response.buildName);
             setAllBuildNames(response.allBuildNames);
 
-            setEditableZoneNotes(response.allZoneNotes || []);
+            loadZoneNotes(response.allZoneNotes || []);
         });
     }, []);
 
     const handleBuildDropdownSelection = (event: React.ChangeEvent<HTMLSelectElement>) => {
+        if (!confirmDiscardUnsavedChanges(hasUnsavedChanges)) return;
+
         const value = event.target.value;
         if (value === "__add__") {
             setAddingBuild(true);
@@ -69,7 +80,7 @@ export function ZoneNotesSettingsComponent() {
                 setSelectedBuild(response.buildName);
                 setAllBuildNames(response.allBuildNames);
 
-                setEditableZoneNotes(response.allZoneNotes || []);
+                loadZoneNotes(response.allZoneNotes || []);
             });
         }
     };
@@ -82,7 +93,7 @@ export function ZoneNotesSettingsComponent() {
             setAddingBuild(false);
             setNewBuildName("");
 
-            setEditableZoneNotes(response.allZoneNotes || []);
+            loadZoneNotes(response.allZoneNotes || []);
         });
     };
 
@@ -94,7 +105,7 @@ export function ZoneNotesSettingsComponent() {
             window.electron.postDeleteBuildFromZoneNotes(selectedBuild).then((response) => {
                 setSelectedBuild(response.buildName);
                 setAllBuildNames(response.allBuildNames);
-                setEditableZoneNotes(response.allZoneNotes || []);
+                loadZoneNotes(response.allZoneNotes || []);
             });
         }
     };
@@ -107,7 +118,7 @@ export function ZoneNotesSettingsComponent() {
 
         // Save notes in main process and use returned state to refresh local state
         window.electron.saveZoneNotesForBuild(payload).then((response) => {
-            setEditableZoneNotes(response.allZoneNotes);
+            loadZoneNotes(response.allZoneNotes);
         });
     };
 
@@ -120,7 +131,7 @@ export function ZoneNotesSettingsComponent() {
         };
 
         window.electron.postCopyZoneNotesFromBuild(payload).then((response) => {
-            setEditableZoneNotes(response.allZoneNotes || []);
+            loadZoneNotes(response.allZoneNotes || []);
         });
     };
 

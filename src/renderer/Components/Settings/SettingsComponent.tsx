@@ -6,6 +6,9 @@ import { GemSettingsComponent } from './GemSettingsComponent';
 import { AboutSettingsComponent } from './AboutSettingsComponent';
 import { ActNotesSettingsComponent } from './ActNotesSettingsComponent';
 import { ZoneNotesSettingsComponent } from './ZoneNotesSettingsComponent';
+import { confirmDiscardUnsavedChanges } from './unsavedChanges';
+
+type SettingsPage = 'General' | 'Gems' | 'Act Notes' | 'Zone Notes' | 'About';
 
 export function SettingsComponent({
 	setFontSizeFunction,
@@ -14,7 +17,15 @@ export function SettingsComponent({
 	setFontSizeFunction: (n: number) => void;
 	fontSize: number;
 }) {
-	const [activePage, setActivePage] = useState<'General' | 'Gems' | 'Act Notes' | 'Zone Notes' | 'About'>('General');
+	const [activePage, setActivePage] = useState<SettingsPage>('General');
+	// Pages unmount when switching, so their unsaved edits would be lost without a warning
+	const [pageHasUnsavedChanges, setPageHasUnsavedChanges] = useState(false);
+
+	const changePage = (page: SettingsPage) => {
+		if (page === activePage || !confirmDiscardUnsavedChanges(pageHasUnsavedChanges)) return;
+		setPageHasUnsavedChanges(false);
+		setActivePage(page);
+	};
 	const [isHovered, setIsHovered] = useState(false);
 	const [moveMode, setMoveMode] = useState(false);
 
@@ -140,31 +151,31 @@ export function SettingsComponent({
 				<div className="SettingsSidebar">
 					<button
 						className={`SidebarTab${activePage === 'General' ? ' Active' : ''}`}
-						onClick={() => setActivePage('General')}
+						onClick={() => changePage('General')}
 					>
 						<h3>General</h3>
 					</button>
 					<button
 						className={`SidebarTab${activePage === 'Gems' ? ' Active' : ''}`}
-						onClick={() => setActivePage('Gems')}
+						onClick={() => changePage('Gems')}
 					>
 						<h3>Gems</h3>
 					</button>
 					<button
 						className={`SidebarTab${activePage === 'Act Notes' ? ' Active' : ''}`}
-						onClick={() => setActivePage('Act Notes')}
+						onClick={() => changePage('Act Notes')}
 					>
 						<h3>Act Notes</h3>
 					</button>
 					<button
 						className={`SidebarTab${activePage === 'Zone Notes' ? ' Active' : ''}`}
-						onClick={() => setActivePage('Zone Notes')}
+						onClick={() => changePage('Zone Notes')}
 					>
 						<h3>Zone Notes</h3>
 					</button>
 					<button
 						className={`SidebarTab${activePage === 'About' ? ' Active' : ''}`}
-						onClick={() => setActivePage('About')}
+						onClick={() => changePage('About')}
 					>
 						<h3>About</h3>
 					</button>
@@ -174,9 +185,9 @@ export function SettingsComponent({
 					{activePage === 'General' && <GeneralSettingsComponent
 						fontSize={fontSize}
 						setFontSizeFunction={setFontSizeFunction} />}
-					{activePage === 'Gems' && <GemSettingsComponent />}
-					{activePage === 'Act Notes' && <ActNotesSettingsComponent />}
-					{activePage === 'Zone Notes' && <ZoneNotesSettingsComponent />}
+					{activePage === 'Gems' && <GemSettingsComponent onUnsavedChangesChange={setPageHasUnsavedChanges} />}
+					{activePage === 'Act Notes' && <ActNotesSettingsComponent onUnsavedChangesChange={setPageHasUnsavedChanges} />}
+					{activePage === 'Zone Notes' && <ZoneNotesSettingsComponent onUnsavedChangesChange={setPageHasUnsavedChanges} />}
 					{activePage === 'About' && <AboutSettingsComponent />}
 				</div>
 			</div>
