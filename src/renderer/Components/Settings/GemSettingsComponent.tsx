@@ -50,7 +50,7 @@ export function GemSettingsComponent({
 		} else {
 			setAddingBuild(false);
 			// Post the change to main process and get back the new build selected
-			window.electron.postBuildSelected(event.target.value).then((response) => {
+			window.electron.postBuildSelected(value).then((response) => {
 				setSelectedBuild(response.buildName);
 				setAllBuildNames(response.allBuildNames);
 				setallGemSetups(response.allGemSetups);
