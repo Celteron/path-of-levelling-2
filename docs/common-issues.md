@@ -8,3 +8,20 @@ This should be impossible now, if you experience this issue you can raise an iss
 
 Windows: `C:\users\<your user>\AppData\Local\Path of Levelling 2\`  
 Linux: `~/.config/Path Of Levelling 2/`
+## The overlay opens in its own window or blurs the game on Hyprland
+Hyprland needs window rules for the overlay (thanks to the report in [#19](https://github.com/Kami-Guru/path-of-levelling-2/issues/19)):
+
+```
+windowrule {
+  name = pol2-pin
+  match:class = Path Of Levelling 2
+  pin = true
+  float = true
+  no_blur = on
+  opacity = 1.0 override 1.0 override
+  no_initial_focus = true
+  no_focus = true
+}
+```
+
+To interact with the settings (`Ctrl+Alt+S`), comment out `no_focus = true`. While it is commented out the game does not receive keyboard input, so remove the comment again afterwards.
