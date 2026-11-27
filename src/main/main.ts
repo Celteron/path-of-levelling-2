@@ -243,6 +243,10 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 		objectFactory.getGemTracker()
 			.setGemSetupFromPlayerLevel(objectFactory.getLevelTracker().playerLevel);
 
+		// The act and zone notes belong to the build too
+		objectFactory.getZoneTracker().loadActNotes();
+		objectFactory.getZoneTracker().loadZoneNotes();
+
 		// Send the updated state to the Gem Tracker component
 		ipcWebContentsSend(
 			"subscribeToGemUpdates",
@@ -272,11 +276,23 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 		objectFactory.getGemTracker()
 			.setGemSetupFromPlayerLevel(objectFactory.getLevelTracker().playerLevel);
 
+		// The act and zone notes belong to the build too
+		objectFactory.getZoneTracker().loadActNotes();
+		objectFactory.getZoneTracker().loadZoneNotes();
+
 		// Send the updated state to the Gem Tracker component
 		ipcWebContentsSend(
 			"subscribeToGemUpdates",
 			mainWindow.webContents,
 			objectFactory.getGemTracker().getGemDataDto()
+		);
+
+		// Send the updated state to the Zone Tracker component (zone tracker also cares about
+		// build change)
+		ipcWebContentsSend(
+			"zoneUpdatesFromLog",
+			mainWindow.webContents,
+			objectFactory.getZoneTracker().getZoneDataDto()
 		);
 
 		// Return the updated state to Gem Tracker Settings component
@@ -293,11 +309,23 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 		objectFactory.getGemTracker()
 			.setGemSetupFromPlayerLevel(objectFactory.getLevelTracker().playerLevel);
 
+		// The act and zone notes belong to the build too
+		objectFactory.getZoneTracker().loadActNotes();
+		objectFactory.getZoneTracker().loadZoneNotes();
+
 		// Send the updated state to the Gem Tracker component
 		ipcWebContentsSend(
 			"subscribeToGemUpdates",
 			mainWindow.webContents,
 			objectFactory.getGemTracker().getGemDataDto()
+		);
+
+		// Send the updated state to the Zone Tracker component (zone tracker also cares about
+		// build change)
+		ipcWebContentsSend(
+			"zoneUpdatesFromLog",
+			mainWindow.webContents,
+			objectFactory.getZoneTracker().getZoneDataDto()
 		);
 
 		// Return the updated state to Gem Tracker Settings component
