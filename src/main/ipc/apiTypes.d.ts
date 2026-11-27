@@ -32,6 +32,7 @@ type channelReturnTypeMapping = {
 	postAddNewBuild: GemSettingsDto;
 	postDeleteBuild: GemSettingsDto;
 	saveGemSetupsForBuild: GemSettingsDto;
+	postImportPob: PobImportResultDto;
 
 	// Act Notes Settings
 	getActNotesSettingsState: ActNotesSettingsDto;
@@ -92,6 +93,7 @@ type channelRequestTypeMapping = {
 	postAddNewBuild: string;
 	postDeleteBuild: string;
 	saveGemSetupsForBuild: SaveGemSetupsRequest;
+	postImportPob: string; // PoB export code or pobb.in/pastebin link
 
 	postBuildSelectedFromActNotes: string;
 	saveActNotesForBuild: SaveActNotesRequest;
@@ -148,6 +150,11 @@ type CopyActNotesFromBuildRequest = {
 	buildName: string;
 	buildToCopyName: string;
 };
+
+// Mirrors PobImportResult in src/main/pob/pobImport.ts
+type PobImportResultDto =
+	| { ok: true; gemSetups: GemSetup[] }
+	| { ok: false; error: "invalidInput" | "downloadFailed" | "noPoe2Gems" };
 
 type ActNotesSettingsDto = {
 	buildName: string;

@@ -285,6 +285,16 @@ react-draggable {
 	white-space: nowrap;
 }
 
+.GemSettingsPobImportInput {
+	flex: 1;
+	min-width: 0;
+}
+
+.GemSettingsPobImportError {
+	color: #ff8a80;
+	margin-bottom: 8px;
+}
+
 .GemSettingsBuildRow label {
 	white-space: nowrap;
 	/* Prevent label from wrapping */

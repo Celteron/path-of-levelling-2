@@ -25,6 +25,7 @@ declare global {
 			postBuildSelected: (buildName: string) => Promise<GemSettingsDto>;
 			postAddNewBuild: (buildName: string) => Promise<GemSettingsDto>;
 			postDeleteBuild: (buildName: string) => Promise<GemSettingsDto>;
+			postImportPob: (input: string) => Promise<PobImportResultDto>;
 
 			// Act Notes Settings
 			getActNotesSettingsState: () => Promise<ActNotesSettingsDto>;

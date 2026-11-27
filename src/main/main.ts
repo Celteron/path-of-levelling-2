@@ -7,6 +7,7 @@ import {
 	screen,
 	Tray,
 	nativeImage,
+	net,
 } from "electron";
 import log from "electron-log";
 import { OVERLAY_WINDOW_OPTS, OverlayController } from "electron-overlay-window";
@@ -18,6 +19,7 @@ import { objectFactory } from "./objectFactory.js";
 import { getProfile } from "./profiles/profiles.js";
 import { ipcMainHandle, ipcWebContentsSend } from "./ipc/ipcWrappers.js";
 import { toggleAllTrackers } from "./trackers/trackerVisibility.js";
+import { importPob } from "./pob/pobImport.js";
 
 // Only allow one instance of the app
 if (!app.requestSingleInstanceLock()) {
@@ -306,6 +308,9 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 		// Return the updated state to Gem Tracker Settings component
 		return objectFactory.getGemTracker().getGemSettingsDto();
 	});
+
+	// Only parses and returns the setups, the user reviews and saves them in the settings
+	ipcMainHandle("postImportPob", async (_, input) => importPob(input, downloadPobExport));
 
 	ipcMainHandle("saveGemSetupsForBuild", async (_, request) => {
 		// Set the current build
@@ -740,6 +745,13 @@ function registerGlobalHotkeys(mainWindow: BrowserWindow) {
 		ipcWebContentsSend("Hotkeys", webContents, { hotkey: "ToggleLevelTracker", value: visibility.levelTrackerOpen });
 		ipcWebContentsSend("Hotkeys", webContents, { hotkey: "ToggleGemTracker", value: visibility.gemTrackerOpen });
 	});
+}
+
+/** Downloads a PoB export on user request, pobb.in and pastebin answer with the plain code */
+async function downloadPobExport(url: string): Promise<string> {
+	const response = await net.fetch(url, { signal: AbortSignal.timeout(10_000) });
+	if (!response.ok) throw new Error(`PoB download failed with HTTP ${response.status}: ${url}`);
+	return response.text();
 }
 
 //-----------------------testing

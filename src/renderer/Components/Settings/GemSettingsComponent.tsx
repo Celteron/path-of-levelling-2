@@ -10,6 +10,8 @@ export function GemSettingsComponent({ onUnsavedChangesChange }: { onUnsavedChan
 
 	const [allGemSetups, setallGemSetups] = useState<GemSetup[]>([]);
 	const [editableGemSetups, setEditableGemSetups] = useState<GemSetup[]>([]);
+	const [pobInput, setPobInput] = useState("");
+	const [pobImportError, setPobImportError] = useState("");
 	// allGemSetups is the last state loaded from/saved to main
 	const hasUnsavedChanges = useUnsavedChanges(allGemSetups, editableGemSetups, onUnsavedChangesChange);
 
@@ -114,6 +116,25 @@ export function GemSettingsComponent({ onUnsavedChangesChange }: { onUnsavedChan
 	};
 
 	// Handle edits to level
+	const pobImportErrors: Record<"invalidInput" | "downloadFailed" | "noPoe2Gems", string> = {
+		invalidInput: "Paste a PoB export code or a pobb.in/pastebin link.",
+		downloadFailed: "Could not download the build. Check the link and your connection.",
+		noPoe2Gems: "No PoE2 skill sets with gems found in this build.",
+	};
+
+	/** Replaces the editor content with the imported setups, the user saves them explicitly */
+	const handleImportPob = () => {
+		window.electron.postImportPob(pobInput).then((result) => {
+			if (!result.ok) {
+				setPobImportError(pobImportErrors[result.error]);
+				return;
+			}
+			setEditableGemSetups(result.gemSetups);
+			setPobImportError("");
+			setPobInput("");
+		});
+	};
+
 	const handleLevelChange = (index: number, value: number) => {
 		const newSetups = editableGemSetups.map((setup, i) =>
 			i === index ? { ...setup, level: value } : setup
@@ -176,6 +197,26 @@ export function GemSettingsComponent({ onUnsavedChangesChange }: { onUnsavedChan
 					>
 						Create
 					</button>
+				</div>
+			)}
+			{!addingBuild && (
+				<div className="GemSettingsBuildRow">
+					<input
+						type="text"
+						value={pobInput}
+						onChange={(e) => setPobInput(e.target.value)}
+						placeholder="Paste PoB code or pobb.in link"
+						aria-label="PoB export code or pobb.in/pastebin link"
+						className="GemSettingsPobImportInput"
+					/>
+					<button onClick={handleImportPob} disabled={!pobInput.trim()}>
+						Import from PoB
+					</button>
+				</div>
+			)}
+			{pobImportError && (
+				<div role="alert" className="GemSettingsPobImportError">
+					{pobImportError}
 				</div>
 			)}
 			<div className="GemSettingsBlocksContainer">

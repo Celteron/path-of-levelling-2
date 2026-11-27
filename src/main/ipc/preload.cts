@@ -126,6 +126,7 @@ electron.contextBridge.exposeInMainWorld("electron", {
 	postDeleteBuild: async (buildName) => ipcRendererInvokePost("postDeleteBuild", buildName),
 	saveGemSetupsForBuild: async (response) =>
 		ipcRendererInvokePost("saveGemSetupsForBuild", response),
+	postImportPob: async (input: string) => ipcRendererInvokePost("postImportPob", input),
 
 	// Methods for the act notes SETTINGS
 	getActNotesSettingsState: async () => ipcRendererInvokeGet("getActNotesSettingsState"),
