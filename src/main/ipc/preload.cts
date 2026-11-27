@@ -22,14 +22,15 @@ function ipcRendererInvokePost<K extends keyof channelReturnTypeMapping>(
 	return electron.ipcRenderer.invoke(channel as string, request as any);
 }
 
-/** Type safe wrapper for Renderer->Main subscriptions */
+/** Subscribes to a main->renderer channel and returns the matching unsubscribe function */
 function ipcRendererOn<K extends keyof channelReturnTypeMapping>(
 	channel: K,
-	callback: (event: any, payload: channelReturnTypeMapping[K]) => void
-) {
-	return electron.ipcRenderer.on(channel as string, (event: any, args: any) => {
-		callback(event, args);
-	});
+	callback: (event: Electron.IpcRendererEvent, payload: channelReturnTypeMapping[K]) => void
+): () => void {
+	electron.ipcRenderer.on(channel, callback);
+	return () => {
+		electron.ipcRenderer.removeListener(channel, callback);
+	};
 }
 
 electron.contextBridge.exposeInMainWorld("electron", {
@@ -41,6 +42,8 @@ electron.contextBridge.exposeInMainWorld("electron", {
 	},
 	getFontSize: async () => ipcRendererInvokeGet("getFontSize"),
 	saveFontSize: async (fontSize: number) => ipcRendererInvokePost("saveFontSize", fontSize),
+	getOverlayOpacity: async () => ipcRendererInvokeGet("getOverlayOpacity"),
+	saveOverlayOpacity: async (overlayOpacity: number) => ipcRendererInvokePost("saveOverlayOpacity", overlayOpacity),
 
 	getIsClientWatcherActive: async () => ipcRendererInvokeGet("getIsClientWatcherActive"),
 	getClientPath: async () => ipcRendererInvokeGet("getClientPath"),
@@ -94,23 +97,11 @@ electron.contextBridge.exposeInMainWorld("electron", {
 	getLayoutImagePaths: async () => ipcRendererInvokeGet("getLayoutImagePaths"),
 
 	// Login/character select vs. game world
-	subscribeToGameWorldUpdates: (callback) => {
-		const listener = (_: Electron.IpcRendererEvent, inGameWorld: boolean) => callback(inGameWorld);
-		electron.ipcRenderer.on("gameWorldUpdates", listener);
-		return () => {
-			electron.ipcRenderer.removeListener("gameWorldUpdates", listener);
-		};
-	},
+	subscribeToGameWorldUpdates: (callback) => ipcRendererOn("gameWorldUpdates", (_, inGameWorld) => callback(inGameWorld)),
 	getInGameWorld: async () => ipcRendererInvokeGet("getInGameWorld"),
 
 	// Leveling guide
-	subscribeToGuideUpdates: (callback) => {
-		const listener = (_: Electron.IpcRendererEvent, args: GuideDataDto) => callback(args);
-		electron.ipcRenderer.on("guideUpdates", listener);
-		return () => {
-			electron.ipcRenderer.removeListener("guideUpdates", listener);
-		};
-	},
+	subscribeToGuideUpdates: (callback) => ipcRendererOn("guideUpdates", (_, guide) => callback(guide)),
 	getGuideState: async () => ipcRendererInvokeGet("getGuideState"),
 	postGuideStep: async (delta: 1 | -1) => ipcRendererInvokePost("postGuideStep", delta),
 	postGuideReset: async () => ipcRendererInvokeGet("postGuideReset"),

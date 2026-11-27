@@ -19,9 +19,8 @@ import {
 	LockNoteOptionZodSchema,
 } from "../zodSchemas/schemas.js";
 import { SettingsService } from "../services/Settings.js";
-import { cpuUsage } from "process";
-import { error } from "console";
 import { StateTracker } from "./StateTracker.js";
+import { guideCoversZoneNote } from "../levelingGuide.js";
 
 export class ZoneTracker {
 	actName: string = "Act 1";
@@ -79,6 +78,11 @@ export class ZoneTracker {
 			allZonesInAct: this.allZonesInAct,
 			actNotes: this.actNotes,
 			zoneNotes: this.zoneNotes,
+			zoneNotesCoveredByGuide: guideCoversZoneNote(
+				objectFactory.getGuideTracker().isAvailable(),
+				this.zoneNotes,
+				this.defaultActAndZoneNotes.zoneNotes?.find((zoneNote) => zoneNote.zoneCode === this.zoneCode)?.notes
+			),
 		};
 	}
 

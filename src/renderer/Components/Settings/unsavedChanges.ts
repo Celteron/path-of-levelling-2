@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useConfirm } from "../ConfirmDialog";
+import { useConfirm } from "../useConfirm";
 
 /** Asks in the overlay before discarding unsaved edits. Resolves true if it is fine to continue. */
 export function useConfirmDiscardUnsavedChanges(): (hasUnsavedChanges: boolean) => Promise<boolean> {

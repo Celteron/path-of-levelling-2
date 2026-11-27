@@ -61,11 +61,6 @@ input {
 	background-color: none;
 }
 
-.ZoneTrackerContainer {
-	height: 100%;
-	width: 100%;
-}
-
 react-draggable {
 	background-color: rgba(50, 50, 50, 0.7);
 }
@@ -1022,284 +1017,221 @@ react-draggable {
 	outline: none;
 }
 
-/* Tracker Overlays ------------------- */
-/* Move/Resize Button Styles for Overlays */
-.TrackerMoveResizeButtonContainer {
+.OverlayOpacityWrapper {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-top: 8px;
+}
+
+.OverlayOpacityWrapper input {
+	width: 200px;
+	accent-color: #7fc8ff;
+}
+
+/* Overlay panels ------------------- */
+/* Shared look of all overlay windows. --panel-opacity comes from the "Window opacity" setting. */
+:root {
+	--panel-opacity: 0.85;
+	--panel-bg-solid: #1a1d25;
+	--panel-border: rgb(255 255 255 / 0.08);
+	--panel-text: #e8e6e3;
+	--panel-muted: #9a9ea8;
+	--panel-accent: #7fc8ff;
+	--panel-danger: #ff8a80;
+	--panel-warning: #ffd27f;
+	--panel-success: #8fdca4;
+	--panel-control-bg: #353e54;
+	--panel-radius: 6px;
+}
+
+.TrackerPanel {
 	position: absolute;
-	top: 8px;
-	right: 8px;
+	inset: 0;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	color: var(--panel-text);
+	/* Resolved here, not on :root, so the opacity set on the app container takes effect */
+	background: rgb(20 22 28 / var(--panel-opacity));
+	border: 1px solid var(--panel-border);
+	border-radius: var(--panel-radius);
+	line-height: 1.45;
+	/* #root centres text for the settings window */
+	text-align: start;
+}
+
+/* Collapsed panels size to their content, so the toolbar opens below instead of covering it */
+.TrackerPanelCollapsed {
+	position: relative;
+	overflow: visible;
+}
+
+.TrackerPanelToolbar {
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	left: 0;
 	z-index: 10;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 6px;
+	padding: 4px 6px;
+	background: var(--panel-bg-solid);
+	border-top: 1px solid var(--panel-border);
+}
+
+.TrackerPanelCollapsed .TrackerPanelToolbar {
+	top: 100%;
+	bottom: auto;
+	border: 1px solid var(--panel-border);
+	border-radius: 0 0 var(--panel-radius) var(--panel-radius);
+}
+
+.PanelHeader {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 4px 10px;
+	padding: 4px 6px 4px 10px;
+}
+
+.PanelHeader + * {
+	border-top: 1px solid var(--panel-border);
+}
+
+.PanelTitle {
+	font-weight: 600;
+}
+
+.PanelMuted {
+	color: var(--panel-muted);
+	font-variant-numeric: tabular-nums;
+}
+
+.PanelEmpty {
+	margin: 0;
+	padding: 4px 10px;
+}
+
+.PanelButton {
+	min-width: 28px;
+	min-height: 28px;
+	padding: 2px 8px;
+	border: 1px solid var(--panel-border);
+	border-radius: 4px;
+	background: var(--panel-control-bg);
+	color: var(--panel-text);
+	font-size: inherit;
+	cursor: pointer;
+}
+
+.PanelButton[aria-pressed="false"] {
+	background: transparent;
+	color: var(--panel-muted);
+}
+
+.PanelButton:focus-visible,
+.PanelSelect:focus-visible {
+	outline: 2px solid var(--panel-accent);
+	outline-offset: 2px;
+}
+
+.PanelSelect option {
+	background: var(--panel-bg-solid);
+}
+
+.PanelSelect {
+	width: 100%;
+	min-height: 28px;
+	padding: 2px 10px;
+	border: 0;
+	border-bottom: 1px solid var(--panel-border);
+	/* Darkens the panel slightly instead of covering it, so it follows the window opacity */
+	background: rgb(0 0 0 / 0.25);
+	color: var(--panel-text);
+	font: inherit;
+	cursor: pointer;
+}
+
+.PanelNotes {
+	flex: 1;
+	margin: 0;
+	padding: 6px 10px;
+	overflow-y: auto;
+	white-space: pre-wrap;
 }
 
 .RndResizeCircleHandle {
 	width: 16px;
 	height: 16px;
 	border-radius: 50%;
-	background: #353e54;
+	background: var(--panel-control-bg);
 	border: 2px solid #fff;
 	position: absolute;
-
 	cursor: se-resize;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-	display: flex;
-	align-items: center;
-	justify-content: center;
+	box-shadow: 0 2px 8px rgb(0 0 0 / 0.2);
 	z-index: 999;
 }
 
-.TrackerMoveResizeButtonContainer button {
-	background: #353e54;
-	color: #fff;
-	border: none;
-	border-radius: 2px;
-	padding: 4px 8px;
-	margin: 0;
-	cursor: pointer;
-	font-size: inherit;
-	/* font-size: 14px; */
-	height: 28px;
-	align-self: center;
-}
-
-/* Zone Notes Overlay */
-.ZoneNotes {
-	position: absolute;
-	top: 0;
-	left: 0;
-
-	width: 100%;
-	height: 100%;
-	color: white;
-
-	display: flex;
-	flex-direction: column;
-	justify-content: space-between;
-}
-
-.ZoneNotes * {
-	margin: 0;
-	padding-left: 5px;
-	width: 100%-10px;
-	/*Account for padding*/
-	flex-grow: 1;
-
-	position: relative;
-
-	color: white;
-	background-color: rgba(50, 50, 50, 0.7);
-
-	white-space: pre-wrap;
-}
-
-.ZoneDropdown {
-	/*Select tags don't make the boxes bigger with padding, so we have to
-	increase width here to match the <p> tags*/
-	width: 100%;
-	height: auto;
-	flex-grow: 0;
-	padding-left: 0px;
-	padding-top: 6px;
-	padding-bottom: 4px;
-	font-family: 'Jetbrains Mono Regular';
-	/* font-size: 18px; */
-
-	text-align: center;
-
-	appearance: none;
-	background-color: rgba(50, 50, 50);
-	border: 0px;
-}
-
-.ZoneOrActNotes {
-	text-align: start;
-}
-
-.LayoutImages {
-	position: absolute;
-	top: 0;
-	left: 0;
-
-	width: 100%;
-	height: 100%;
-
+/* Layout images */
+.LayoutImageRow {
 	display: flex;
 	flex-direction: row-reverse;
-	justify-content: flex-start;
-	background-color: rgba(50, 50, 50, 0.7);
-}
-
-.LayoutImageContainer {
-	flex: 0 0 auto;
-	display: flex;
+	gap: 4px;
+	height: 100%;
+	padding: 4px;
+	box-sizing: border-box;
 }
 
 .LayoutImage {
 	height: 100%;
 	width: auto;
 	object-fit: contain;
-	display: block;
 }
 
-/* Level Tracker */
-.LevelTracker {
-	position: absolute;
-	top: 0;
-	left: 0;
-
-	width: 100%;
-	height: 100%;
-	color: white;
-
-	display: flex;
-	flex-direction: row;
-	justify-content: space-between;
+/* Level tracker */
+.LevelXp[data-penalty="true"] {
+	color: var(--panel-warning);
 }
 
-.LevelTracker * {
+.LevelAdvice {
 	margin: 0;
-	padding-left: 5px;
-	width: 100%-10px;
-	/*Account for padding*/
-	min-height: auto;
-	flex-grow: 1;
-
-	position: relative;
-	text-align: start;
-
-	color: white;
-	background-color: rgba(50, 50, 50, 0.7);
-
-	white-space: pre-wrap;
+	padding: 2px 10px 4px;
+	color: var(--panel-muted);
 }
 
-.ExpMulti {
-	text-align: end;
+.LevelAdvice[data-status="within"] {
+	color: var(--panel-success);
 }
 
-/* Gem Tracker */
-.GemTracker {
-	position: absolute;
-	top: 0;
-	left: 0;
-
-	width: 100%;
-	height: 100%;
-	color: white;
-
-	display: flex;
-	flex-direction: column;
-	justify-content: space-between;
+.LevelAdvice[data-status="below"] {
+	color: var(--panel-warning);
 }
 
-.GemTracker * {
-	margin: 0;
-	padding-left: 5px;
-	width: 100%-10px;
-	/*Account for padding*/
-	flex-grow: 1;
-
-	position: relative;
-	text-align: start;
-
-	color: white;
-	background-color: rgba(50, 50, 50, 0.7);
-
-	white-space: pre-wrap;
+.LevelAdvice[data-status="above"] {
+	color: var(--panel-accent);
 }
 
-.GemDropdown {
-	/*Select tags don't make the boxes bigger with padding, so we have to
-	increase width here to match the <p> tags*/
-	width: 100%;
-	height: auto;
-	flex-grow: 0;
-	padding-left: 20px;
-	padding-top: 2px;
-	padding-bottom: 2px;
-	font-family: 'Jetbrains Mono Regular';
-	/* font-size: 16px; */
-
-	text-align: center;
-
-	appearance: none;
-	background-color: rgba(50, 50, 50);
-	border: 0px;
-}
-
-.GemSources,
+/* Gem tracker */
 .GemLinks {
-	background-color: rgb(0, 0, 0, 0);
-}
-.RecommendedLevel {
-	text-align: center;
-}
-
-/* Leveling Guide - local tokens, to be lifted into global ones by the design pass */
-.GuideTracker {
-	--guide-bg: rgba(20, 22, 28, 0.82);
-	--guide-border: rgba(255, 255, 255, 0.08);
-	--guide-text: #e8e6e3;
-	--guide-muted: #9a9ea8;
-	--guide-zone: #7fc8ff;
-	--guide-boss: #ff8a80;
-	--guide-quest: #ffd27f;
-	--guide-badge-bg: #353e54;
-
-	position: absolute;
-	inset: 0;
-	display: flex;
-	flex-direction: column;
-	overflow: hidden;
-	color: var(--guide-text);
-	background: var(--guide-bg);
-	border: 1px solid var(--guide-border);
-	border-radius: 6px;
-	line-height: 1.45;
+	flex: 1;
+	margin: 0;
+	padding: 6px 10px;
+	overflow-y: auto;
+	list-style: none;
 }
 
-.GuideHeader {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	padding: 4px 6px 4px 10px;
-	border-bottom: 1px solid var(--guide-border);
-}
-
-.GuideAct {
-	font-weight: 600;
-}
-
+/* Leveling guide */
 .GuideTarget {
 	flex: 1;
 	min-width: 0;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	color: var(--guide-zone);
-}
-
-.GuideProgress,
-.GuideSource {
-	color: var(--guide-muted);
-	font-variant-numeric: tabular-nums;
-}
-
-.GuideIconButton,
-.GuideToggle {
-	min-width: 28px;
-	min-height: 28px;
-	padding: 2px 8px;
-	border: 1px solid var(--guide-border);
-	border-radius: 4px;
-	background: var(--guide-badge-bg);
-	color: var(--guide-text);
-	font-size: inherit;
-	cursor: pointer;
-}
-
-.GuideToggle[aria-pressed="false"] {
-	background: transparent;
-	color: var(--guide-muted);
+	color: var(--panel-accent);
 }
 
 .GuideSteps {
@@ -1314,26 +1246,26 @@ react-draggable {
 }
 
 .GuideStepOptional {
-	color: var(--guide-muted);
+	color: var(--panel-muted);
 }
 
 .GuideHint {
 	padding-left: 12px;
-	color: var(--guide-muted);
+	color: var(--panel-muted);
 	font-size: 0.92em;
 }
 
 .GuideZone {
-	color: var(--guide-zone);
+	color: var(--panel-accent);
 }
 
 .GuideBoss {
-	color: var(--guide-boss);
+	color: var(--panel-danger);
 	font-weight: 600;
 }
 
 .GuideQuest {
-	color: var(--guide-quest);
+	color: var(--panel-warning);
 }
 
 .GuideArena,
@@ -1345,26 +1277,13 @@ react-draggable {
 	display: inline-block;
 	padding: 0 4px;
 	border-radius: 3px;
-	background: var(--guide-badge-bg);
+	background: var(--panel-control-bg);
 	font-size: 0.85em;
 	line-height: 1.4;
 }
 
 .GuideSeparator {
-	color: var(--guide-muted);
-}
-
-.GuideFooter {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: 6px;
-	padding: 4px 6px;
-	border-top: 1px solid var(--guide-border);
-}
-
-.GuideSource {
-	margin-left: auto;
+	color: var(--panel-muted);
 }
 
 /* In-overlay confirmation dialog (replaces window.confirm, which opens a separate OS window) */
@@ -1381,10 +1300,10 @@ react-draggable {
 .ConfirmDialog {
 	max-width: 420px;
 	padding: 16px 18px;
-	border: 1px solid rgba(255, 255, 255, 0.12);
+	border: 1px solid var(--panel-border);
 	border-radius: 8px;
-	background: #1a1d25;
-	color: #e8e6e3;
+	background: var(--panel-bg-solid);
+	color: var(--panel-text);
 	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 }
 
@@ -1402,9 +1321,9 @@ react-draggable {
 	min-width: 72px;
 	min-height: 32px;
 	padding: 4px 12px;
-	border: 1px solid rgba(255, 255, 255, 0.12);
+	border: 1px solid var(--panel-border);
 	border-radius: 4px;
-	background: #353e54;
+	background: var(--panel-control-bg);
 	color: inherit;
 	font-size: inherit;
 	cursor: pointer;
@@ -1415,6 +1334,6 @@ react-draggable {
 }
 
 .ConfirmDialogButtons button:focus-visible {
-	outline: 2px solid #7fc8ff;
+	outline: 2px solid var(--panel-accent);
 	outline-offset: 2px;
 }

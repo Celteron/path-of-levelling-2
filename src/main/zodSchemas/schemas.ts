@@ -45,10 +45,25 @@ export type DeepValue<T, Path extends string> = Path extends `${infer K}.${infer
 // --- Type schemas for the GlobalSettings store --- //
 export const ProfileId = z.enum(["poe1", "poe2"]);
 
+/** Background opacity of the overlay windows; below 0.2 the panels get hard to read */
+export const OverlayOpacityZodSchema = z.number().min(0.2).max(1);
+const DEFAULT_OVERLAY_OPACITY = 0.85;
+const StoredOverlayOpacityZodSchema = OverlayOpacityZodSchema.catch(DEFAULT_OVERLAY_OPACITY);
+
+/**
+ * Reads the stored opacity. The settings migration does not write back values replaced by .catch,
+ * so a broken value stays in the store and has to be checked on every read.
+ */
+export function readOverlayOpacity(stored: unknown): number {
+	return StoredOverlayOpacityZodSchema.parse(stored);
+}
+
 export const GlobalSettingsZodSchema = z.object({
 	version: z.number().default(1),
 	selectedProfile: z.enum(["poe1", "poe2"]).default("poe2"),
-	fontSize: z.number().default(11)
+	fontSize: z.number().default(11),
+	// .catch: a broken opacity must not fail validation, which would reset all global settings
+	overlayOpacity: StoredOverlayOpacityZodSchema.default(DEFAULT_OVERLAY_OPACITY),
 });
 
 export type GlobalSettings = z.infer<typeof GlobalSettingsZodSchema>;

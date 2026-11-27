@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { GemSetup } from "../../../main/zodSchemas/schemas";
 import { useConfirmDiscardUnsavedChanges, useUnsavedChanges } from "./unsavedChanges";
-import { useConfirm } from "../ConfirmDialog";
+import { useConfirm } from "../useConfirm";
 
 export function GemSettingsComponent({ onUnsavedChangesChange }: { onUnsavedChangesChange?: (hasUnsavedChanges: boolean) => void }) {
 	const [selectedBuild, setSelectedBuild] = useState("");

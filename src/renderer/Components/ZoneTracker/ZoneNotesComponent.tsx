@@ -1,211 +1,58 @@
-import { useEffect, useRef, useState } from "react";
-import { Rnd } from "react-rnd";
+import { useEffect, useState } from "react";
+import { TrackerPanel } from "../TrackerPanel";
 
+export function ZoneNotesComponent({ guideShown }: { guideShown: boolean }) {
+	const [zone, setZone] = useState<ZoneDataDto | null>(null);
 
-export function ZoneNotesComponent(props: { sharedZoneCode: string; setSharedZoneCode: any }) {
-	// Create state for zone dropdown
-	const [zoneDropdown, setZoneDropdown] = useState({
-		actNameSelected: "",
-		zoneNameSelected: "",
-		allActNames: [""],
-		allZoneNames: [""],
-		currentActNotes: "",
-		currentZoneNotes: "",
-	});
-
-	const setZoneDropdownFromDto = (zoneTracker: ZoneDataDto) => {
-		setZoneDropdown({
-			actNameSelected: zoneTracker.act,
-			zoneNameSelected: zoneTracker.zone,
-			allActNames: zoneTracker.allActs,
-			allZoneNames: zoneTracker.allZonesInAct,
-			currentActNotes: zoneTracker.actNotes,
-			currentZoneNotes: zoneTracker.zoneNotes,
-		});
-	};
-
-	// Subscribe to the zone updates pushed from log tracker
 	useEffect(() => {
-		window.electron.subscribeToZoneNotesUpdates((zoneTracker) => {
-			props.setSharedZoneCode(zoneTracker.zoneCode);
-
-			setZoneDropdownFromDto(zoneTracker);
-		});
+		// The panel remounts whenever it is toggled, so the listener must not outlive it
+		const unsubscribe = window.electron.subscribeToZoneNotesUpdates(setZone);
+		window.electron.getZoneState().then(setZone);
+		return unsubscribe;
 	}, []);
 
-	// Get initial state for zone dropdown
-	useEffect(() => {
-		window.electron.getZoneState().then((zoneTracker) => {
-			props.setSharedZoneCode(zoneTracker.zoneCode);
+	const selectAct = (actName: string) => window.electron.postActSelected(actName).then(setZone);
+	const selectZone = (zoneName: string) =>
+		zone && window.electron.postZoneSelected({ zoneSelected: zoneName, actSelected: zone.act }).then(setZone);
 
-			setZoneDropdownFromDto(zoneTracker);
-		});
-	}, []);
-
-	// Handle user updates to zone dropdown
-	const handleZoneDropdownSelection = (event: React.ChangeEvent<HTMLSelectElement>) => {
-		// Post the change to main process and await
-		if (event.target.name == "actNameSelected") {
-			console.log("Posting act selected:", event.target.value);
-
-			window.electron.postActSelected(event.target.value).then((zoneDataDto) => {
-				console.log("Received zone data dto:", zoneDataDto);
-
-				props.setSharedZoneCode(zoneDataDto.zoneCode);
-				setZoneDropdownFromDto(zoneDataDto);
-			});
-		} else if (event.target.name == "zoneNameSelected") {
-			const zoneSelectedRequest: ZoneSelectedRequest = {
-				zoneSelected: event.target.value,
-				actSelected: zoneDropdown.actNameSelected,
-			};
-
-			console.log("Posting zoneSelectedRequest:", zoneSelectedRequest);
-
-			window.electron.postZoneSelected(zoneSelectedRequest).then((zoneDataDto) => {
-				console.log("Received zone data dto:", zoneDataDto);
-
-				props.setSharedZoneCode(zoneDataDto.zoneCode);
-				setZoneDropdownFromDto(zoneDataDto);
-			});
-		}
-
-		// Update the dropdown selection
-		setZoneDropdown({
-			...zoneDropdown,
-			[event.target.name]: event.target.value,
-		});
-	};
-
-	// Setting up the draggable/resizable state
-	const [moveMode, setMoveMode] = useState(false);
-	const [isHovered, setIsHovered] = useState(false);
-	const [rndState, setRndState] = useState({
-		x: 0,
-		y: 0,
-		height: "200",
-		width: "400",
-	});
-
-	// Get initial state for zone tracker position
-	useEffect(() => {
-		window.electron
-			.getZoneOverlayPositionSettings()
-			.then((zoneOverlayPositionSettings: any) => {
-				setRndState({
-					x: zoneOverlayPositionSettings.x,
-					y: zoneOverlayPositionSettings.y,
-					height: zoneOverlayPositionSettings.height,
-					width: zoneOverlayPositionSettings.width,
-				});
-			});
-	}, []);
-
-	const handleDrag = (e: any, d: any) => {
-		// Send new settings to client to be saved
-		window.electron.saveZoneOverlayPositionSettings({
-			...rndState,
-			x: d.x,
-			y: d.y,
-		});
-
-		setRndState({
-			...rndState,
-			x: d.x,
-			y: d.y,
-		});
-	};
-
-	// @ts-ignore
-	const handleResize = (e, direction, ref, delta, position) => {
-		// Send new settings to client to be saved
-		window.electron.saveZoneOverlayPositionSettings({
-			...position,
-			height: ref.style.height,
-			width: ref.style.width,
-		});
-
-		setRndState({
-			...position,
-			height: ref.style.height,
-			width: ref.style.width,
-		});
-	};
+	const showZoneNotes = zone && !(guideShown && zone.zoneNotesCoveredByGuide);
 
 	return (
-		<Rnd
-			size={{ width: rndState.width, height: rndState.height }}
-			position={{ x: rndState.x, y: rndState.y }}
-			onDragStop={(e, d) => handleDrag(e, d)}
-			onResizeStop={(e, direction, ref, delta, position) =>
-				handleResize(e, direction, ref, delta, position)
-			}
-			bounds="parent"
-			disableDragging={!moveMode}
-			enableResizing={moveMode}
-			onMouseEnter={() => setIsHovered(true)}
-			onMouseLeave={() => setIsHovered(false)}
-			resizeHandleComponent={
-				moveMode
-					? {
-							bottomRight: <div className="RndResizeCircleHandle"></div>,
-						}
-					: {}
-			}
+		<TrackerPanel
+			label="Act and zone notes"
+			loadPosition={window.electron.getZoneOverlayPositionSettings}
+			savePosition={window.electron.saveZoneOverlayPositionSettings}
 		>
-			{/* Move/Resize button just to the right */}
-			{isHovered && !moveMode && (
-				<div className="TrackerMoveResizeButtonContainer">
-					<button onClick={() => setMoveMode(true)}>Move/Resize</button>
-				</div>
-			)}
-			{moveMode && (
-				<div className="TrackerMoveResizeButtonContainer">
-					<button onClick={() => setMoveMode(false)}>Done</button>
-				</div>
-			)}
-			<div className="ZoneNotes">
-				<select
-					className="ZoneDropdown"
-					name="actNameSelected"
-					value={zoneDropdown.actNameSelected}
-					//defaultValue={ allActs[0] }
-					onChange={(act) => {
-						handleZoneDropdownSelection(act);
-					}}
-				>
-					{zoneDropdown.allActNames.map(function (act: any) {
-						return (
-							<option value={act} selected={act == zoneDropdown.actNameSelected}>
+			{zone && (
+				<>
+					<select
+						className="PanelSelect"
+						aria-label="Act"
+						value={zone.act}
+						onChange={(event) => selectAct(event.target.value)}
+					>
+						{zone.allActs.map((act) => (
+							<option key={act} value={act}>
 								{act}
 							</option>
-						);
-					})}
-				</select>
-				<p className="ZoneOrActNotes">{zoneDropdown.currentActNotes}</p>
-				<select
-					className="ZoneDropdown"
-					name="zoneNameSelected"
-					value={zoneDropdown.zoneNameSelected}
-					//defaultValue={ allzones[0] }
-					onChange={(zone) => {
-						handleZoneDropdownSelection(zone);
-					}}
-				>
-					{zoneDropdown.allZoneNames.map(function (zone: any) {
-						return (
-							<option
-								className="dropdownOption"
-								value={zone}
-								selected={zone == zoneDropdown.zoneNameSelected}
-							>
-								{zone}
+						))}
+					</select>
+					<p className="PanelNotes">{zone.actNotes}</p>
+					<select
+						className="PanelSelect"
+						aria-label="Zone"
+						value={zone.zone}
+						onChange={(event) => selectZone(event.target.value)}
+					>
+						{zone.allZonesInAct.map((zoneName) => (
+							<option key={zoneName} value={zoneName}>
+								{zoneName}
 							</option>
-						);
-					})}
-				</select>
-				<p className="ZoneOrActNotes">{zoneDropdown.currentZoneNotes}</p>
-			</div>
-		</Rnd>
+						))}
+					</select>
+					{showZoneNotes && <p className="PanelNotes">{zone.zoneNotes}</p>}
+				</>
+			)}
+		</TrackerPanel>
 	);
 }

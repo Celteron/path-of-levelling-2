@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { Rnd, RndDragCallback, RndResizeCallback } from "react-rnd";
-import { OverlayPosition } from "../../main/zodSchemas/schemas";
-import { useConfirm } from "./ConfirmDialog";
+import { useConfirm } from "./useConfirm";
+import { TrackerPanel } from "./TrackerPanel";
 
 type GuideStep = GuideDataDto["steps"][number];
 type GuideSegment = GuideStep["segments"][number];
@@ -76,15 +75,11 @@ function Segments({ segments }: { segments: GuideSegment[] }) {
 export function GuideTrackerComponent() {
 	const confirm = useConfirm();
 	const [guide, setGuide] = useState<GuideDataDto | null>(null);
-	const [moveMode, setMoveMode] = useState(false);
-	const [isHovered, setIsHovered] = useState(false);
-	const [position, setPosition] = useState<OverlayPosition>({ x: 0, y: 0, height: "300px", width: "520px" });
 
 	useEffect(() => {
 		// The panel remounts whenever it is toggled, so the listener must not outlive it
 		const unsubscribe = window.electron.subscribeToGuideUpdates(setGuide);
 		window.electron.getGuideState().then(setGuide);
-		window.electron.getGuideOverlayPositionSettings().then(setPosition);
 		return unsubscribe;
 	}, []);
 
@@ -99,79 +94,58 @@ export function GuideTrackerComponent() {
 		}
 	};
 
-	const savePosition = (newPosition: OverlayPosition) => {
-		setPosition(newPosition);
-		window.electron.saveGuideOverlayPositionSettings(newPosition);
-	};
-	const handleDrag: RndDragCallback = (_, d) => savePosition({ ...position, x: d.x, y: d.y });
-	const handleResize: RndResizeCallback = (_, __, ref, ___, newPosition) =>
-		savePosition({ ...newPosition, height: ref.style.height, width: ref.style.width });
-
 	return (
-		<Rnd
-			size={{ width: position.width, height: position.height }}
-			position={{ x: position.x, y: position.y }}
-			onDragStop={handleDrag}
-			onResizeStop={handleResize}
-			bounds="parent"
-			disableDragging={!moveMode}
-			enableResizing={moveMode}
-			onMouseEnter={() => setIsHovered(true)}
-			onMouseLeave={() => setIsHovered(false)}
-			resizeHandleComponent={moveMode ? { bottomRight: <div className="RndResizeCircleHandle"></div> } : {}}
+		<TrackerPanel
+			label="Leveling guide"
+			loadPosition={window.electron.getGuideOverlayPositionSettings}
+			savePosition={window.electron.saveGuideOverlayPositionSettings}
+			toolbar={
+				<>
+					<button
+						className="PanelButton"
+						aria-pressed={guide.leagueStart}
+						onClick={() => savePrefs({ ...prefs, leagueStart: !guide.leagueStart })}
+					>
+						League start
+					</button>
+					<button
+						className="PanelButton"
+						aria-pressed={guide.showOptional}
+						onClick={() => savePrefs({ ...prefs, showOptional: !guide.showOptional })}
+					>
+						Optional steps
+					</button>
+					<button className="PanelButton" onClick={restart}>
+						Restart guide
+					</button>
+					<span className="PanelMuted">Exile UI {guide.sourceVersion}</span>
+				</>
+			}
 		>
-			<section className="GuideTracker" aria-label="Leveling guide">
-				<header className="GuideHeader">
-					<span className="GuideAct">{guide.actName}</span>
-					{guide.targetZoneName && <span className="GuideTarget">→ {guide.targetZoneName}</span>}
-					<span className="GuideProgress">{`${guide.pageIndex + 1} / ${guide.pageCount}`}</span>
-					<button className="GuideIconButton" aria-label="Previous page" title="Previous page (Ctrl+Alt+B)" onClick={() => step(-1)}>
-						‹
-					</button>
-					<button className="GuideIconButton" aria-label="Next page" title="Next page (Ctrl+Alt+N)" onClick={() => step(1)}>
-						›
-					</button>
-				</header>
+			<header className="PanelHeader">
+				<span className="PanelTitle">{guide.actName}</span>
+				{guide.targetZoneName && <span className="GuideTarget">→ {guide.targetZoneName}</span>}
+				<span className="PanelMuted">{`${guide.pageIndex + 1} / ${guide.pageCount}`}</span>
+				<button className="PanelButton" aria-label="Previous page" title="Previous page (Ctrl+Alt+B)" onClick={() => step(-1)}>
+					‹
+				</button>
+				<button className="PanelButton" aria-label="Next page" title="Next page (Ctrl+Alt+N)" onClick={() => step(1)}>
+					›
+				</button>
+			</header>
 
-				<ol className="GuideSteps">
-					{guide.steps.map((guideStep, index) => (
-						<li key={index} className={guideStep.optional ? "GuideStep GuideStepOptional" : "GuideStep"}>
-							<Segments segments={guideStep.segments} />
-							{guideStep.hints.map((hint, hintIndex) => (
-								<div key={hintIndex} className="GuideHint">
-									<Segments segments={hint} />
-								</div>
-							))}
-						</li>
-					))}
-				</ol>
-
-				{(isHovered || moveMode) && (
-					<footer className="GuideFooter">
-						<button
-							className="GuideToggle"
-							aria-pressed={guide.leagueStart}
-							onClick={() => savePrefs({ ...prefs, leagueStart: !guide.leagueStart })}
-						>
-							League start
-						</button>
-						<button
-							className="GuideToggle"
-							aria-pressed={guide.showOptional}
-							onClick={() => savePrefs({ ...prefs, showOptional: !guide.showOptional })}
-						>
-							Optional steps
-						</button>
-						<button className="GuideToggle" onClick={restart}>
-							Restart guide
-						</button>
-						<button className="GuideToggle" onClick={() => setMoveMode(!moveMode)}>
-							{moveMode ? "Done" : "Move/Resize"}
-						</button>
-						<span className="GuideSource">Guide: Exile UI {guide.sourceVersion}</span>
-					</footer>
-				)}
-			</section>
-		</Rnd>
+			<ol className="GuideSteps">
+				{guide.steps.map((guideStep, index) => (
+					<li key={index} className={guideStep.optional ? "GuideStep GuideStepOptional" : "GuideStep"}>
+						<Segments segments={guideStep.segments} />
+						{guideStep.hints.map((hint, hintIndex) => (
+							<div key={hintIndex} className="GuideHint">
+								<Segments segments={hint} />
+							</div>
+						))}
+					</li>
+				))}
+			</ol>
+		</TrackerPanel>
 	);
 }

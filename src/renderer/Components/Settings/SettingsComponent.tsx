@@ -13,9 +13,13 @@ type SettingsPage = 'General' | 'Gems' | 'Act Notes' | 'Zone Notes' | 'About';
 export function SettingsComponent({
 	setFontSizeFunction,
 	fontSize,
+	overlayOpacity,
+	onOverlayOpacityChange,
 }: {
 	setFontSizeFunction: (n: number) => void;
 	fontSize: number;
+	overlayOpacity: number;
+	onOverlayOpacityChange: (overlayOpacity: number) => void;
 }) {
 	const [activePage, setActivePage] = useState<SettingsPage>('General');
 	// Pages unmount when switching, so their unsaved edits would be lost without a warning
@@ -121,17 +125,6 @@ export function SettingsComponent({
 					: {}
 			}
 		>
-			{/* Move/Resize button just to the right */}
-			{isHovered && !moveMode && (
-				<div className="TrackerMoveResizeButtonContainer">
-					<button onClick={() => setMoveMode(true)}>Move/Resize</button>
-				</div>
-			)}
-			{moveMode && (
-				<div className="TrackerMoveResizeButtonContainer">
-					<button onClick={() => setMoveMode(false)}>Done</button>
-				</div>
-			)}
 			<div className="SettingsOverlay">
 				{/* Banner */}
 				<div className="SettingsBanner">
@@ -185,7 +178,9 @@ export function SettingsComponent({
 				<div className="SettingsPageContent">
 					{activePage === 'General' && <GeneralSettingsComponent
 						fontSize={fontSize}
-						setFontSizeFunction={setFontSizeFunction} />}
+						setFontSizeFunction={setFontSizeFunction}
+						overlayOpacity={overlayOpacity}
+						onOverlayOpacityChange={onOverlayOpacityChange} />}
 					{activePage === 'Gems' && <GemSettingsComponent onUnsavedChangesChange={setPageHasUnsavedChanges} />}
 					{activePage === 'Act Notes' && <ActNotesSettingsComponent onUnsavedChangesChange={setPageHasUnsavedChanges} />}
 					{activePage === 'Zone Notes' && <ZoneNotesSettingsComponent onUnsavedChangesChange={setPageHasUnsavedChanges} />}

@@ -20,7 +20,7 @@ import { getProfile } from "./profiles/profiles.js";
 import { ipcMainHandle, ipcWebContentsSend } from "./ipc/ipcWrappers.js";
 import { toggleAllTrackers } from "./trackers/trackerVisibility.js";
 import { importPob } from "./pob/pobImport.js";
-import { GuidePrefsZodSchema } from "./zodSchemas/schemas.js";
+import { GuidePrefsZodSchema, OverlayOpacityZodSchema } from "./zodSchemas/schemas.js";
 
 // Only allow one instance of the app
 if (!app.requestSingleInstanceLock()) {
@@ -159,6 +159,15 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 	ipcMainHandle("saveFontSize", async (_, fontSize) => {
 		objectFactory.getSettingsService().saveFontSize(fontSize);
 		return objectFactory.getSettingsService().getFontSize();
+	});
+
+	ipcMainHandle("getOverlayOpacity", async () => {
+		return objectFactory.getSettingsService().getOverlayOpacity();
+	});
+
+	ipcMainHandle("saveOverlayOpacity", async (_, overlayOpacity) => {
+		const validOpacity = OverlayOpacityZodSchema.safeParse(overlayOpacity);
+		if (validOpacity.success) objectFactory.getSettingsService().saveOverlayOpacity(validOpacity.data);
 	});
 
 	// Handle events from the General Settings overlay

@@ -4,9 +4,13 @@ import { useEffect, useState } from 'react';
 export function GeneralSettingsComponent({
     fontSize,
     setFontSizeFunction,
+    overlayOpacity,
+    onOverlayOpacityChange,
 }: {
     fontSize: number;
     setFontSizeFunction: (n: number) => void;
+    overlayOpacity: number;
+    onOverlayOpacityChange: (overlayOpacity: number) => void;
 }) {
     // Setting up the Client Path inputs
     const [clientPath, setClientPath] = useState('');
@@ -33,6 +37,12 @@ export function GeneralSettingsComponent({
             window.electron.saveFontSize(parsed);
             setFontSizeFunction(parsed);
         }
+    };
+
+    const handleOverlayOpacityChange = (percent: string) => {
+        const opacity = Number(percent) / 100;
+        onOverlayOpacityChange(opacity);
+        window.electron.saveOverlayOpacity(opacity);
     };
 
     // Get initial state - this is required for the input to show the current client path.
@@ -94,6 +104,19 @@ export function GeneralSettingsComponent({
                 <button onClick={handleSaveFontSize} style={{ marginLeft: 8 }}>
                     Save
                 </button>
+            </div>
+            <div className="OverlayOpacityWrapper">
+                <label className="SettingsLabel" htmlFor="overlay-opacity">Window opacity</label>
+                <input
+                    id="overlay-opacity"
+                    type="range"
+                    min={20}
+                    max={100}
+                    step={5}
+                    value={Math.round(overlayOpacity * 100)}
+                    onChange={(e) => handleOverlayOpacityChange(e.target.value)}
+                />
+                <span>{Math.round(overlayOpacity * 100)}%</span>
             </div>
             <div className="HotkeysWrapper">
                 <h3>Hotkeys</h3>

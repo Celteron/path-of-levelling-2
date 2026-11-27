@@ -1,6 +1,6 @@
 import { BrowserWindow } from 'electron';
 import { LogWatcherService } from './LogWatcherService.js';
-import { OverlayPosition, UiSettings } from '../zodSchemas/schemas.js';
+import { OverlayPosition, readOverlayOpacity, UiSettings } from '../zodSchemas/schemas.js';
 import { objectFactory } from '../objectFactory.js';
 
 export class SettingsService {
@@ -15,6 +15,14 @@ export class SettingsService {
 
 	saveFontSize(fontSize: number) {
 		objectFactory.getStoreService().setGlobalSetting('fontSize', fontSize);
+	}
+
+	getOverlayOpacity(): number {
+		return readOverlayOpacity(objectFactory.getStoreService().getGlobalSetting('overlayOpacity'));
+	}
+
+	saveOverlayOpacity(overlayOpacity: number) {
+		objectFactory.getStoreService().setGlobalSetting('overlayOpacity', overlayOpacity);
 	}
 
 	getClientTxtPath(): string {

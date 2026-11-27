@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useConfirmDiscardUnsavedChanges, useUnsavedChanges } from "./unsavedChanges";
-import { useConfirm } from "../ConfirmDialog";
+import { useConfirm } from "../useConfirm";
 import { ActNote, LockNoteOption } from "../../../main/zodSchemas/schemas";
 
 function getLockButtonProps(lockNoteOption: LockNoteOption): {

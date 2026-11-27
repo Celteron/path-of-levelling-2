@@ -11,6 +11,8 @@ declare global {
 			getFontScalingFactor: () => Promise<number>;
 			getFontSize: () => Promise<number>;
 			saveFontSize: (fontSize: number) => void;
+			getOverlayOpacity: () => Promise<number>;
+			saveOverlayOpacity: (overlayOpacity: number) => void;
 
 			// Client.txt tracking
 			getIsClientWatcherActive: () => Promise<boolean>;
@@ -67,16 +69,19 @@ declare global {
 
 			/// --- TRACKERS --- //
 			// Zone Tracker
-			subscribeToZoneNotesUpdates: (callback: (zoneDataDto: ZoneDataDto) => void) => void;
+			/** Returns an unsubscribe function */
+			subscribeToZoneNotesUpdates: (callback: (zoneDataDto: ZoneDataDto) => void) => () => void;
 			getZoneState: () => Promise<ZoneDataDto>;
 			postActSelected: (actSelected: string) => Promise<ZoneDataDto>;
 			postZoneSelected: (zoneSelectedRequest: ZoneSelectedRequest) => Promise<ZoneDataDto>;
 
-			subscribeToZoneLayoutImageUpdates: (callback: (paths: string[]) => void) => void;
+			/** Returns an unsubscribe function */
+			subscribeToZoneLayoutImageUpdates: (callback: (paths: string[]) => void) => () => void;
 			getLayoutImagePaths: () => Promise<string[]>;
 
 			// Level Tracker
-			subscribeToLevelUpdates: (callback: (levelDataDto: LevelDataDto) => void) => void;
+			/** Returns an unsubscribe function */
+			subscribeToLevelUpdates: (callback: (levelDataDto: LevelDataDto) => void) => () => void;
 			/** Returns an unsubscribe function */
 			subscribeToGameWorldUpdates: (callback: (inGameWorld: boolean) => void) => () => void;
 			getInGameWorld: () => Promise<boolean>;
@@ -93,7 +98,8 @@ declare global {
 			getLevelState: () => Promise<LevelDataDto>;
 
 			// Gem Tracker
-			subscribeToGemUpdates: (callback: (gemDataDto: GemDataDto) => void) => void;
+			/** Returns an unsubscribe function */
+			subscribeToGemUpdates: (callback: (gemDataDto: GemDataDto) => void) => () => void;
 			getGemState: () => Promise<GemDataDto>;
 			postGemLevelSelected: (gemLevelSelected: number) => Promise<GemDataDto>;
 		};

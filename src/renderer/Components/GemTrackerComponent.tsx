@@ -1,192 +1,56 @@
-import { useEffect, useState } from 'react';
-import { Rnd } from 'react-rnd';
+import { useEffect, useState } from "react";
+import { TrackerPanel } from "./TrackerPanel";
+
+/** A setup is used from its level until the level before the next setup */
+function levelRangeLabel(levels: number[], index: number): string {
+	const level = levels[index];
+	const next = levels[index + 1];
+	if (next === undefined) return `Level ${level}+`;
+	return next - 1 > level ? `Level ${level}–${next - 1}` : `Level ${level}`;
+}
 
 export function GemTrackerComponent() {
-	const [gemDropdown, setGemDropdown] = useState({
-		selectedLevel: 0,
-		gemLinks: [''],
-		allGemSetupLevels: [0],
-	});
+	const [gems, setGems] = useState<GemDataDto | null>(null);
 
-	const setGemDropdownFromClientResponse = (response: GemDataDto) => {
-		setGemDropdown({
-			allGemSetupLevels: response.allGemSetupLevels,
-			selectedLevel: response.gemSetupLevel,
-			gemLinks: response.gemLinks,
-		});
-	};
-
-	// Subscribe to the gem updates pushed from main
 	useEffect(() => {
-		window.electron.subscribeToGemUpdates((reponse) => {
-			setGemDropdownFromClientResponse(reponse);
-		});
+		// The panel remounts whenever it is toggled, so the listener must not outlive it
+		const unsubscribe = window.electron.subscribeToGemUpdates(setGems);
+		window.electron.getGemState().then(setGems);
+		return unsubscribe;
 	}, []);
 
-	// Get initial state for gem dropdown
-	useEffect(() => {
-		window.electron.getGemState().then((reponse) => {
-			setGemDropdownFromClientResponse(reponse);
-		});
-	}, []);
-
-	// Handle user updates to gem dropdown
-	const handleGemDropdownSelection = (event: React.ChangeEvent<HTMLSelectElement>) => {
-		const level = Number(event.target.value);
-
-		if (isNaN(level)) {
-			console.log("Selected level is not  anumber! Was:", event.target.value);
-			return;
-		}
-
-		// Post the change to main process and await
-		window.electron.postGemLevelSelected(level).then((reponse) => {
-			setGemDropdownFromClientResponse(reponse);
-		});
+	const selectLevel = (value: string) => {
+		const level = Number(value);
+		if (Number.isFinite(level)) window.electron.postGemLevelSelected(level).then(setGems);
 	};
-
-	const getGemLevelDisplayString = (gemSetupLevel: any, index: number) => {
-		if (index == gemDropdown.allGemSetupLevels.length - 1) {
-			return 'Level: ' + gemSetupLevel.toString() + '+';
-		} else {
-			return (
-				'Level: ' +
-				gemSetupLevel.toString() +
-				' to ' +
-				gemDropdown.allGemSetupLevels[index + 1].toString()
-			);
-		}
-	};
-
-	//#region Draggable/Resizable
-	// Setting up the draggable/resizable state
-	const [moveMode, setMoveMode] = useState(false);
-	const [isHovered, setIsHovered] = useState(false);
-	const [rndState, setRndState] = useState({
-		x: 0,
-		y: 0,
-		height: '200',
-		width: '400',
-	});
-
-	// Get initial state for gem tracker position
-	useEffect(() => {
-		window.electron.getGemOverlayPositionSettings()
-			.then((gemOverlayPositionSettings) => {
-				setRndState({
-					x: gemOverlayPositionSettings.x,
-					y: gemOverlayPositionSettings.y,
-					height: gemOverlayPositionSettings.height,
-					width: gemOverlayPositionSettings.width,
-				});
-			});
-	}, []);
-
-	const handleDrag = (e: any, d: any) => {
-		// Send new settings to client to be saved
-		window.electron.saveGemOverlayPositionSettings({
-			...rndState,
-			x: d.x,
-			y: d.y,
-		});
-
-		setRndState({
-			...rndState,
-			x: d.x,
-			y: d.y,
-		});
-	};
-
-	// @ts-ignore
-	const handleResize = (e, direction, ref, delta, position) => {
-		// Send new settings to client to be saved
-		window.electron.saveGemOverlayPositionSettings({
-			...position,
-			height: ref.style.height,
-			width: ref.style.width,
-		});
-
-		setRndState({
-			...position,
-			height: ref.style.height,
-			width: ref.style.width,
-		});
-	};
-	//#endregion
 
 	return (
-		<Rnd
-			size={{ width: rndState.width, height: rndState.height }}
-			position={{ x: rndState.x, y: rndState.y }}
-			onDragStop={(e, d) => handleDrag(e, d)}
-			onResizeStop={(e, direction, ref, delta, position) =>
-				handleResize(e, direction, ref, delta, position)
-			}
-			bounds="parent"
-			disableDragging={!moveMode}
-			enableResizing={moveMode}
-			onMouseEnter={() => setIsHovered(true)}
-			onMouseLeave={() => setIsHovered(false)}
-			resizeHandleComponent={
-				moveMode
-					? {
-						bottomRight: (
-							<div className="RndResizeCircleHandle"></div>
-						),
-					}
-					: {}
-			}
+		<TrackerPanel
+			label="Gems"
+			loadPosition={window.electron.getGemOverlayPositionSettings}
+			savePosition={window.electron.saveGemOverlayPositionSettings}
 		>
-			{/* Move/Resize button just to the right */}
-			{isHovered && !moveMode && (
-				<div className="TrackerMoveResizeButtonContainer">
-					<button onClick={() => setMoveMode(true)}>Move/Resize</button>
-				</div>
-			)}
-			{moveMode && (
-				<div className="TrackerMoveResizeButtonContainer">
-					<button onClick={() => setMoveMode(false)}>Done</button>
-				</div>
-			)}
-			<div className="GemTracker">
-				<select
-					className="GemDropdown"
-					name="gemLevelSelected"
-					value={gemDropdown.selectedLevel}
-					onChange={(gemSetupLevel) => {
-						handleGemDropdownSelection(gemSetupLevel);
-					}}
-				>
-					{gemDropdown.allGemSetupLevels.map(function (
-						gemSetupLevel: any,
-						index: number
-					) {
-						return (
-							<option
-								value={gemSetupLevel}
-								selected={
-									gemSetupLevel == gemDropdown.selectedLevel
-								}
-							>
-								{getGemLevelDisplayString(gemSetupLevel, index)}
+			{gems && (
+				<>
+					<select
+						className="PanelSelect"
+						aria-label="Gem setup"
+						value={gems.gemSetupLevel}
+						onChange={(event) => selectLevel(event.target.value)}
+					>
+						{gems.allGemSetupLevels.map((level, index) => (
+							<option key={index} value={level}>
+								{levelRangeLabel(gems.allGemSetupLevels, index)}
 							</option>
-						);
-					})}
-				</select>
-				<div className="GemLinksDiv">
-					{gemDropdown.gemLinks?.map(function (gemLink: string) {
-						return <p className="GemLinks">{gemLink}</p>;
-					})}
-					<p className="GemLinks"> </p>
-					{/*  TODO: This is a newline basically, I proooobably shouldn't be doing this lol */}
-				</div>
-				{/* <div className="GemSourcesDiv">
-					{gemDropdown.gemSources?.map(function (gemSource: string) {
-						return <p className="GemSources">{gemSource}</p>;
-					})}
-				</div> */}
-			</div>
-		</Rnd>
-
+						))}
+					</select>
+					<ul className="GemLinks">
+						{gems.gemLinks.map((gemLink, index) => (
+							<li key={index}>{gemLink}</li>
+						))}
+					</ul>
+				</>
+			)}
+		</TrackerPanel>
 	);
 }
