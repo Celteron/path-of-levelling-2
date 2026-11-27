@@ -108,7 +108,10 @@ function CampaignTimer({ timer, now, showActs }: { timer: TimerDto; now: number;
 			{showActs && (
 				<ol className="CampaignTimerActs" aria-label="Time per act">
 					{acts.map((act) => (
-						<li key={act.act}>{`${act.act} ${formatDuration(act.ms)}`}</li>
+						<li key={act.act}>
+							{`${act.act} ${formatDuration(act.ms)}`}
+							{timer.bests[act.act] !== undefined && ` · PB ${formatDuration(timer.bests[act.act])}`}
+						</li>
 					))}
 				</ol>
 			)}

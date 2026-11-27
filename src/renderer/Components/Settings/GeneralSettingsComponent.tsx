@@ -66,6 +66,12 @@ export function GeneralSettingsComponent({
 		});
 	}, []);
 
+	// Folder of the CSV file that every finished campaign run is appended to
+	const [campaignRunsFolder, setCampaignRunsFolder] = useState("");
+	useEffect(() => {
+		window.electron.getCampaignRunsFolder().then(setCampaignRunsFolder);
+	}, []);
+
 	const getClientPathSaveButtonText = () => {
 		if (isClientPathSaveClicked) {
 			return "Saved!";
@@ -130,6 +136,26 @@ export function GeneralSettingsComponent({
 					<p>Show/hide all trackers: Ctrl+Alt+a</p>
 					<p>Pause/resume campaign timer: Ctrl+Alt+p</p>
 				</div>
+			</div>
+			<div className="CampaignRunsFolderWrapper">
+				<label className="SettingsLabel" htmlFor="campaign-runs-folder">
+					Campaign runs folder
+				</label>
+				<input
+					id="campaign-runs-folder"
+					className="ClientPathInput"
+					value={campaignRunsFolder}
+					onChange={(e) => setCampaignRunsFolder(e.target.value)}
+					title="Finished runs are added to a CSV file in this folder. Leave empty for Documents/PoL2."
+				/>
+				<button
+					aria-label="Save campaign runs folder"
+					onClick={() =>
+						window.electron.saveCampaignRunsFolder(campaignRunsFolder).then(setCampaignRunsFolder)
+					}
+				>
+					Save
+				</button>
 			</div>
 			<div className="ClientPathUpdaterWrapper">
 				<h3>Enter your Client.txt Path here</h3>

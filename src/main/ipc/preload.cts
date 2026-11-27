@@ -45,6 +45,8 @@ electron.contextBridge.exposeInMainWorld("electron", {
 	saveFontSize: async (fontSize: number) => ipcRendererInvokePost("saveFontSize", fontSize),
 	getOverlayOpacity: async () => ipcRendererInvokeGet("getOverlayOpacity"),
 	saveOverlayOpacity: async (overlayOpacity: number) => ipcRendererInvokePost("saveOverlayOpacity", overlayOpacity),
+	getCampaignRunsFolder: async () => ipcRendererInvokeGet("getCampaignRunsFolder"),
+	saveCampaignRunsFolder: async (folder: string) => ipcRendererInvokePost("saveCampaignRunsFolder", folder),
 
 	getIsClientWatcherActive: async () => ipcRendererInvokeGet("getIsClientWatcherActive"),
 	getClientPath: async () => ipcRendererInvokeGet("getClientPath"),

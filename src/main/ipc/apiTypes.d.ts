@@ -21,6 +21,8 @@ type channelReturnTypeMapping = {
 	saveFontSize: number;
 	getOverlayOpacity: number;
 	saveOverlayOpacity: void;
+	getCampaignRunsFolder: string;
+	saveCampaignRunsFolder: string;
 
 	getClientPath: string;
 	saveClientPath: boolean;
@@ -105,6 +107,7 @@ type channelRequestTypeMapping = {
 
 	saveFontSize: number;
 	saveOverlayOpacity: number;
+	saveCampaignRunsFolder: string;
 
 	saveClientPath: string;
 
@@ -246,4 +249,6 @@ type TimerDto = {
 	runningSince: number | null;
 	paused: boolean;
 	finished: boolean;
+	/** Best time per act over the finished runs */
+	bests: Record<string, number>;
 };
