@@ -13,11 +13,10 @@ export function GeneralSettingsComponent({
     const [isClientPathSaveClicked, setIsClientPathSaveClicked] = useState(false);
     const [isClientWatcherActive, setIsClientWatcherActive] = useState(Boolean);
 
-    // This basically just records keystrokes in the input component so that the text
-    // is actually stored.
+    // Records keystrokes in the input; an edited path is not saved yet, so the button says Save
     const handleClientPathChange = (event: any) => {
         setClientPath(event.target.value);
-        setIsClientPathSaveClicked(true);
+        setIsClientPathSaveClicked(false);
     };
 
     // Setting up the Font Size inputs
