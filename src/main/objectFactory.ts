@@ -103,10 +103,7 @@ class ObjectFactory {
 
 	getZoneTracker(): ZoneTracker {
 		return this.getOrCreateObject("zoneTracker", () => {
-			const storeService = this.getStoreService();
-			const settingsService = this.getSettingsService();
-			const stateTracker = this.getStateTracker();
-			return new ZoneTracker(storeService, stateTracker, settingsService);
+			return new ZoneTracker(this.getStoreService());
 		});
 	}
 
