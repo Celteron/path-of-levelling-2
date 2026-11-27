@@ -1,7 +1,8 @@
 /// <reference path="./apiTypes.d.ts" />
 const electron = require("electron");
 
-// Need to write some ipc wrappers here cuz can't import them
+// The preload script cannot import modules, so its typed IPC wrappers live here instead of in
+// ipcWrappers.ts.
 // The Window interface gives type safety in Renderer; channelReturnTypeMapping and
 // channelRequestTypeMapping gives type safety in Main, these ipcWrappers throw errors when the
 // type mappings and the Window interface don't line up. This ensures the type hints on either side

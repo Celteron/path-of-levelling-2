@@ -45,7 +45,7 @@ export class MigrationService {
 	}
 
 	private MigrateGlobalSettings() {
-		// First need to migrate unversioned files - should just have just added a version day 1 :(
+		// Files from before versioning have no version field and need their own migration first
 		this.MigrateGlobalSettingsUnversionedToV1();
 
 		// In future I can do this:

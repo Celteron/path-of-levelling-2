@@ -115,8 +115,7 @@ async function createWindow() {
 	log.info("Attaching to window:", getProfile().windowName);
 	OverlayController.attachByTitle(mainWindow, getProfile().windowName);
 
-	// This basically runs the loop of read lines, save state, post state to renderer,
-	// rinse and repeat.
+	// Reads new Client.txt lines, updates the trackers and pushes the new state to the renderer
 	objectFactory.getLogWatcherService().watchClientTxt(mainWindow);
 
 	createIPCEventListeners(mainWindow, objectFactory.getLogWatcherService());
