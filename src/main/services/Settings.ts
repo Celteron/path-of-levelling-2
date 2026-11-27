@@ -29,8 +29,10 @@ export class SettingsService {
 	}
 
 	saveClientTxtPath(newPath: string, mainWindow: BrowserWindow, logWatcher: LogWatcherService): boolean {
-		objectFactory.getStoreService().setGameSetting("clientTxtPath", newPath);
+		const unchanged = newPath === this.getClientTxtPath() && objectFactory.getStateTracker().logWatcherActive;
+		if (unchanged) return true; // a restart would skip the lines written since the last poll
 
+		objectFactory.getStoreService().setGameSetting("clientTxtPath", newPath);
 		// Also restart a running watcher: it still watches the previous file
 		logWatcher.watchClientTxt(mainWindow);
 
