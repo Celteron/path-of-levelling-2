@@ -192,11 +192,11 @@ export class ZoneTracker {
 	}
 
 	CopyActNotesFromBuild(buildName: string, buildToCopyName: string) {
+		// A missing build has no notes to copy; copying [] would erase the notes of buildName
 		const buildToCopy = objectFactory.getStoreService().getBuild(buildToCopyName);
+		if (!buildToCopy) return;
 
-		const actNotesToCopy = buildToCopy?.actNotes ?? [];
-
-		this.saveActNotes(buildName, actNotesToCopy);
+		this.saveActNotes(buildName, buildToCopy.actNotes);
 	}
 
 	saveZoneNotes(buildName: string, newZoneNotes: Array<ZoneNote>) {
@@ -241,10 +241,9 @@ export class ZoneTracker {
 
 	CopyZoneNotesFromBuild(buildName: string, buildToCopyName: string) {
 		const buildToCopy = objectFactory.getStoreService().getBuild(buildToCopyName);
+		if (!buildToCopy) return;
 
-		const zoneNotesToCopy = buildToCopy?.zoneNotes ?? [];
-
-		this.saveZoneNotes(buildName, zoneNotesToCopy);
+		this.saveZoneNotes(buildName, buildToCopy.zoneNotes);
 	}
 
 	// Remove the user's act note from the saved custom Act Notes
