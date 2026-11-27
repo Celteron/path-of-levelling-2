@@ -42,9 +42,9 @@ powershell -ExecutionPolicy Bypass -File $env:TEMP\pol2-setup.ps1
 
 ### Testversion neu starten
 
-Im Terminal `Ctrl+C`, dann `cd ~/pol2-test && npm run dev` (SteamOS: vorher
-`export PATH="$HOME/.local/share/pol2-test/node-v22.23.2/bin:$PATH"`, falls das Skript Node geladen hat;
-einfacher ist, das Setup-Skript erneut auszuführen).
+Im Terminal `Ctrl+C`, dann die zweite Setup-Zeile erneut ausführen (`bash /tmp/pol2-setup.sh` bzw. den
+`powershell …`-Befehl). Das dauert dank fertiger Installation nur einige Sekunden länger als ein
+direkter Start und funktioniert auch mit dem vom Skript geladenen Node.
 
 ## 2. Das eine, was man wissen muss
 
@@ -69,8 +69,10 @@ und die Zone.
 2. **Client.txt gefunden.** `Ctrl+Alt+S`, Seite General ansehen.
    *Erwartet:* Das Feld für den Client.txt-Pfad endet auf `logs/Client.txt` (bzw. `logs\Client.txt`),
    keine rote Fehlermeldung. Danach `Ctrl+Alt+S` zum Schließen.
-3. **Nur eine Instanz.** Während die Testversion läuft, ein zweites Terminal öffnen:
-   `cd ~/pol2-test && npx electron .` (SteamOS mit geladenem Node: erst den `export PATH=…` von oben).
+3. **Nur eine Instanz.** Während die Testversion läuft, ein zweites Terminal öffnen und Electron direkt
+   starten (braucht kein Node):
+   SteamOS/Linux `~/pol2-test/node_modules/electron/dist/electron ~/pol2-test`,
+   Windows `~\pol2-test\node_modules\electron\dist\electron.exe ~\pol2-test`.
    *Erwartet:* Der Befehl endet nach wenigen Sekunden von selbst, es erscheint kein zweites Overlay.
 
 ### B. Leveling-Guide
