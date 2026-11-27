@@ -388,27 +388,9 @@ export class ZoneTracker {
 	}
 
 	setZoneNotes() {
-		var actNotes = this.allActNotes.find((actNotes) => {
-			return actNotes.actName == this.actName;
-		});
-
-		if (actNotes == null) {
-			return;
-		}
-
-		this.actNotes = actNotes.notes;
-
-		var zoneNotes = this.allZoneNotes.find((zoneNote) => {
-			return zoneNote.zoneCode == this.zoneCode;
-		});
-
-		// This basically gives users the option to not set notes for a zone
-		// Dont know why they would but as a side effect missing notes don't cause error popups
-		if (zoneNotes == null) {
-			return;
-		}
-
-		this.zoneNotes = zoneNotes.notes;
+		// An act or zone without notes shows none, not the notes of the previous one
+		this.actNotes = this.allActNotes.find((actNote) => actNote.actName == this.actName)?.notes ?? "";
+		this.zoneNotes = this.allZoneNotes.find((zoneNote) => zoneNote.zoneCode == this.zoneCode)?.notes ?? "";
 	}
 
 	// Returns a boolean representing whether or not zone layout image paths were changed.
@@ -421,9 +403,10 @@ export class ZoneTracker {
 		log.info("Trying to get zone image paths for zone code", zoneCode);
 		const directories = fs.readdirSync(getZoneLayoutImagesAbsolutePath());
 
-		// Note we HAVE to use find since G1_1 also matches G1_15
+		// Folders are named "<zoneCode> <zone name>"; compare the code exactly, since G1_1 is
+		// also part of G1_15
 		const requiredDirectory = directories.find((directory) => {
-			return directory.includes(zoneCode);
+			return directory.split(" ")[0] === zoneCode;
 		});
 
 		// If we couldn't find layout images, clear the file paths (i.e. clear the layout images).
