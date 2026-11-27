@@ -2,6 +2,7 @@ import log from "electron-log";
 import { objectFactory } from "../objectFactory.js";
 import { StoreService } from "../services/StoreService.js";
 import { levelStatus } from "../levelingGuide.js";
+import { experienceMultiplier } from "../experience.js";
 
 export class LevelTracker {
 	playerLevel: number = 0;
@@ -47,60 +48,14 @@ export class LevelTracker {
 	}
 
 	recalculateEXPModifier() {
-		log.info("Recalculating EXP modifier with playerLevel", this.playerLevel, "monsterLevel", this.monsterLevel);
-		var safeZone = Math.floor(3 + this.playerLevel / 16);
-
-		// Don't want to modify this.monsterLevel so just make a placeholder
-		var monsterLevel = this.monsterLevel;
-		if (monsterLevel == 71) {
-			monsterLevel = 70.94;
-		} else if (monsterLevel == 72) {
-			monsterLevel = 71.82;
-		} else if (monsterLevel == 73) {
-			monsterLevel = 72.64;
-		} else if (monsterLevel == 74) {
-			monsterLevel = 73.4;
-		} else if (monsterLevel == 75) {
-			monsterLevel = 74.1;
-		} else if (monsterLevel == 76) {
-			monsterLevel = 74.74;
-		} else if (monsterLevel == 77) {
-			monsterLevel = 75.32;
-		} else if (monsterLevel == 78) {
-			monsterLevel = 75.84;
-		} else if (monsterLevel == 79) {
-			monsterLevel = 76.3;
-		} else if (monsterLevel == 80) {
-			monsterLevel = 76.7;
-		} else if (monsterLevel == 81) {
-			monsterLevel = 77.04;
-		} else if (monsterLevel == 82) {
-			monsterLevel = 77.32;
-		} else if (monsterLevel == 83) {
-			monsterLevel = 77.54;
-		} else if (monsterLevel == 84) {
-			monsterLevel = 77.7;
-		}
-
-		var effectiveDifference = Math.abs(this.playerLevel - monsterLevel) - safeZone;
-
-		if (effectiveDifference < 0) {
-			this.expMulti = 1;
-			return;
-		}
-
-		var expMulti = Math.sqrt(
-			((this.playerLevel + 5) / (this.playerLevel + 5 + Math.sqrt(effectiveDifference ** 5))) ** 3,
+		this.expMulti = experienceMultiplier(this.playerLevel, this.monsterLevel);
+		log.info(
+			"Experience multiplier",
+			this.expMulti,
+			"for level",
+			this.playerLevel,
+			"in area level",
+			this.monsterLevel,
 		);
-
-		if (this.playerLevel >= 95) {
-			expMulti = expMulti * (1 / (1 + 0.1 * (this.playerLevel - 94)));
-		}
-
-		if (expMulti < 0.01) {
-			expMulti = 0.01;
-		}
-
-		this.expMulti = Math.round(expMulti * 100) / 100;
 	}
 }
