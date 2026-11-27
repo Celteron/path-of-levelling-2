@@ -6,6 +6,7 @@ import path from "path";
 import { LogWatcherService } from "./services/LogWatcherService.js";
 import { getDesktopIconPath, getPreloadPath, getUIPath, isDev } from "./pathResolver.js";
 import { objectFactory } from "./objectFactory.js";
+import { activateBuild, createBuild, removeBuild, sendBuildState } from "./builds.js";
 import { getProfile } from "./profiles/profiles.js";
 import { ipcMainHandle, ipcWebContentsSend } from "./ipc/ipcWrappers.js";
 import { toggleAllTrackers } from "./trackers/trackerVisibility.js";
@@ -255,385 +256,109 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 		return objectFactory.getGemTracker().getGemSettingsDto();
 	});
 
+	// Every settings page can switch, add and delete builds. Each change also updates the gem and
+	// notes panels, since they show the current build.
+	const gemTracker = () => objectFactory.getGemTracker();
+	const zoneTracker = () => objectFactory.getZoneTracker();
+	const afterBuildChange = <T>(settingsDto: () => T): T => {
+		sendBuildState(mainWindow.webContents);
+		return settingsDto();
+	};
+
 	ipcMainHandle("postBuildSelected", async (_, buildName) => {
-		objectFactory.getSettingsService().saveBuildName(buildName);
-		objectFactory.getGemTracker().loadGemSetup(buildName);
-		objectFactory.getGemTracker().setGemSetupFromPlayerLevel(objectFactory.getLevelTracker().playerLevel);
-
-		// Send the updated state to the Gem Tracker component
-		ipcWebContentsSend(
-			"subscribeToGemUpdates",
-			mainWindow.webContents,
-			objectFactory.getGemTracker().getGemDataDto(),
-		);
-
-		// Send the updated state to the Zone Tracker component (zone tracker also cares about
-		// build change)
-		ipcWebContentsSend(
-			"zoneUpdatesFromLog",
-			mainWindow.webContents,
-			objectFactory.getZoneTracker().getZoneDataDto(),
-		);
-
-		// Return the updated state to Gem Tracker Settings component
-		return objectFactory.getGemTracker().getGemSettingsDto();
+		activateBuild(buildName);
+		return afterBuildChange(() => gemTracker().getGemSettingsDto());
 	});
 
 	ipcMainHandle("postAddNewBuild", async (_, buildName) => {
-		// Set the current build
-		objectFactory.getSettingsService().saveBuildName(buildName);
-
-		// Save the new build & load it
-		objectFactory.getGemTracker().saveNewBuild(buildName);
-		objectFactory.getGemTracker().loadGemSetup(buildName);
-		objectFactory.getGemTracker().setGemSetupFromPlayerLevel(objectFactory.getLevelTracker().playerLevel);
-
-		// Send the updated state to the Gem Tracker component
-		ipcWebContentsSend(
-			"subscribeToGemUpdates",
-			mainWindow.webContents,
-			objectFactory.getGemTracker().getGemDataDto(),
-		);
-
-		// Return the updated state to Gem Tracker Settings component
-		return objectFactory.getGemTracker().getGemSettingsDto();
+		createBuild(buildName);
+		return afterBuildChange(() => gemTracker().getGemSettingsDto());
 	});
 
 	ipcMainHandle("postDeleteBuild", async (_, buildName) => {
-		// Set to default
-		objectFactory.getSettingsService().saveBuildName("Default");
-
-		// Delete the build & load Default
-		objectFactory.getGemTracker().deleteBuild(buildName);
-		objectFactory.getGemTracker().loadGemSetup("Default");
-		objectFactory.getGemTracker().setGemSetupFromPlayerLevel(objectFactory.getLevelTracker().playerLevel);
-
-		// Send the updated state to the Gem Tracker component
-		ipcWebContentsSend(
-			"subscribeToGemUpdates",
-			mainWindow.webContents,
-			objectFactory.getGemTracker().getGemDataDto(),
-		);
-
-		// Return the updated state to Gem Tracker Settings component
-		return objectFactory.getGemTracker().getGemSettingsDto();
+		removeBuild(buildName);
+		return afterBuildChange(() => gemTracker().getGemSettingsDto());
 	});
 
 	// Only parses and returns the setups, the user reviews and saves them in the settings
 	ipcMainHandle("postImportPob", async (_, input) => importPob(input, downloadPobExport));
 
 	ipcMainHandle("saveGemSetupsForBuild", async (_, request) => {
-		// Set the current build
-		objectFactory.getSettingsService().saveBuildName(request.buildName);
-
-		// Save the new build
-		objectFactory.getGemTracker().saveGemBuild(request.buildName, request.allGemSetups);
-		objectFactory.getGemTracker().loadGemSetup(request.buildName);
-		objectFactory.getGemTracker().setGemSetupFromPlayerLevel(objectFactory.getLevelTracker().playerLevel);
-
-		// Send the updated state to the Gem Tracker component
-		ipcWebContentsSend(
-			"subscribeToGemUpdates",
-			mainWindow.webContents,
-			objectFactory.getGemTracker().getGemDataDto(),
-		);
-
-		// Return the updated state to Gem Tracker Settings component
-		return objectFactory.getGemTracker().getGemSettingsDto();
+		gemTracker().saveGemBuild(request.buildName, request.allGemSetups);
+		activateBuild(request.buildName);
+		return afterBuildChange(() => gemTracker().getGemSettingsDto());
 	});
 
 	// --- Handle events from the Act Notes SETTINGS --- //
 	ipcMainHandle("getActNotesSettingsState", async () => {
-		return objectFactory.getZoneTracker().getActNotesSettingsDto();
+		return zoneTracker().getActNotesSettingsDto();
 	});
 
 	ipcMainHandle("postBuildSelectedFromActNotes", async (_, buildName) => {
-		objectFactory.getSettingsService().saveBuildName(buildName);
-		objectFactory.getGemTracker().loadGemSetup(buildName);
-		objectFactory.getGemTracker().setGemSetupFromPlayerLevel(objectFactory.getLevelTracker().playerLevel);
-		objectFactory.getZoneTracker().loadActNotes();
-		objectFactory.getZoneTracker().loadZoneNotes();
-
-		// Send the updated state to the Gem Tracker component (gem tracker also cares about
-		// build change)
-		ipcWebContentsSend(
-			"subscribeToGemUpdates",
-			mainWindow.webContents,
-			objectFactory.getGemTracker().getGemDataDto(),
-		);
-
-		// Send the updated state to the Zone Tracker component
-		ipcWebContentsSend(
-			"zoneUpdatesFromLog",
-			mainWindow.webContents,
-			objectFactory.getZoneTracker().getZoneDataDto(),
-		);
-
-		// Return the updated state to Act Notes Settings component
-		return objectFactory.getZoneTracker().getActNotesSettingsDto();
+		activateBuild(buildName);
+		return afterBuildChange(() => zoneTracker().getActNotesSettingsDto());
 	});
 
 	ipcMainHandle("postAddNewBuildFromActNotes", async (_, buildName) => {
-		// Set the current build
-		objectFactory.getSettingsService().saveBuildName(buildName);
-
-		// Save the new build & load it
-		objectFactory.getGemTracker().saveNewBuild(buildName);
-		objectFactory.getGemTracker().loadGemSetup(buildName);
-		objectFactory.getGemTracker().setGemSetupFromPlayerLevel(objectFactory.getLevelTracker().playerLevel);
-		objectFactory.getZoneTracker().loadActNotes();
-		objectFactory.getZoneTracker().loadZoneNotes();
-
-		// Send the updated state to the Gem Tracker component (gem tracker also cares about
-		// build change)
-		ipcWebContentsSend(
-			"subscribeToGemUpdates",
-			mainWindow.webContents,
-			objectFactory.getGemTracker().getGemDataDto(),
-		);
-
-		// Send the updated state to the Zone Tracker component
-		ipcWebContentsSend(
-			"zoneUpdatesFromLog",
-			mainWindow.webContents,
-			objectFactory.getZoneTracker().getZoneDataDto(),
-		);
-
-		// Return the updated state to Act Notes Settings component
-		return objectFactory.getZoneTracker().getActNotesSettingsDto();
+		createBuild(buildName);
+		return afterBuildChange(() => zoneTracker().getActNotesSettingsDto());
 	});
 
 	ipcMainHandle("postDeleteBuildFromActNotes", async (_, buildName) => {
-		// Set to default
-		objectFactory.getSettingsService().saveBuildName("Default");
-
-		// Delete the build & load Default
-		objectFactory.getGemTracker().deleteBuild(buildName);
-		objectFactory.getGemTracker().loadGemSetup("Default");
-		objectFactory.getGemTracker().setGemSetupFromPlayerLevel(objectFactory.getLevelTracker().playerLevel);
-		objectFactory.getZoneTracker().loadActNotes();
-		objectFactory.getZoneTracker().loadZoneNotes();
-
-		// Send the updated state to the Gem Tracker component (gem tracker also cares about
-		// build change)
-		ipcWebContentsSend(
-			"subscribeToGemUpdates",
-			mainWindow.webContents,
-			objectFactory.getGemTracker().getGemDataDto(),
-		);
-
-		// Send the updated state to the Zone Tracker component
-		ipcWebContentsSend(
-			"zoneUpdatesFromLog",
-			mainWindow.webContents,
-			objectFactory.getZoneTracker().getZoneDataDto(),
-		);
-
-		// Return the updated state to Act Notes Settings component
-		return objectFactory.getZoneTracker().getActNotesSettingsDto();
+		removeBuild(buildName);
+		return afterBuildChange(() => zoneTracker().getActNotesSettingsDto());
 	});
 
 	ipcMainHandle("saveActNotesForBuild", async (_, request) => {
-		// Set the current build
-		objectFactory.getSettingsService().saveBuildName(request.buildName);
-
-		// Save the new build
-		objectFactory.getZoneTracker().saveActNotes(request.buildName, request.allActNotes);
-
-		// Send the updated state to the Gem Tracker component (gem tracker also cares about
-		// build change)
-		ipcWebContentsSend(
-			"subscribeToGemUpdates",
-			mainWindow.webContents,
-			objectFactory.getGemTracker().getGemDataDto(),
-		);
-
-		// Send the updated state to the Zone Tracker component
-		ipcWebContentsSend(
-			"zoneUpdatesFromLog",
-			mainWindow.webContents,
-			objectFactory.getZoneTracker().getZoneDataDto(),
-		);
-
-		// Return the updated state to Act Notes Settings component
-		return objectFactory.getZoneTracker().getActNotesSettingsDto();
+		activateBuild(request.buildName);
+		zoneTracker().saveActNotes(request.buildName, request.allActNotes);
+		return afterBuildChange(() => zoneTracker().getActNotesSettingsDto());
 	});
 
 	ipcMainHandle("postCopyActNotesFromBuild", async (_, request) => {
-		// Set the current build
-		objectFactory.getSettingsService().saveBuildName(request.buildName);
-
-		// Copy the act notes to the current build
-		objectFactory.getZoneTracker().CopyActNotesFromBuild(request.buildName, request.buildToCopyName);
-
-		// Send the updated state to the Gem Tracker component (gem tracker also cares about
-		// build change)
-		ipcWebContentsSend(
-			"subscribeToGemUpdates",
-			mainWindow.webContents,
-			objectFactory.getGemTracker().getGemDataDto(),
-		);
-
-		// Send the updated state to the Zone Tracker component
-		ipcWebContentsSend(
-			"zoneUpdatesFromLog",
-			mainWindow.webContents,
-			objectFactory.getZoneTracker().getZoneDataDto(),
-		);
-
-		// Return the updated state to Zone Notes Settings component
-		return objectFactory.getZoneTracker().getActNotesSettingsDto();
+		activateBuild(request.buildName);
+		zoneTracker().CopyActNotesFromBuild(request.buildName, request.buildToCopyName);
+		return afterBuildChange(() => zoneTracker().getActNotesSettingsDto());
 	});
 
 	ipcMainHandle("postResetActNoteForAct", async (_, actName) => {
-		return objectFactory.getZoneTracker().resetActNoteForAct(actName);
+		return zoneTracker().resetActNoteForAct(actName);
 	});
 
 	// --- Handle events from the Zone Notes SETTINGS --- //
 	ipcMainHandle("getZoneNotesSettingsState", async () => {
-		return objectFactory.getZoneTracker().getZoneNotesSettingsDto();
+		return zoneTracker().getZoneNotesSettingsDto();
 	});
 
 	ipcMainHandle("postBuildSelectedFromZoneNotes", async (_, buildName) => {
-		objectFactory.getSettingsService().saveBuildName(buildName);
-		objectFactory.getGemTracker().loadGemSetup(buildName);
-		objectFactory.getGemTracker().setGemSetupFromPlayerLevel(objectFactory.getLevelTracker().playerLevel);
-		objectFactory.getZoneTracker().loadActNotes();
-		objectFactory.getZoneTracker().loadZoneNotes();
-
-		// Send the updated state to the Gem Tracker component (gem tracker also cares about
-		// build change)
-		ipcWebContentsSend(
-			"subscribeToGemUpdates",
-			mainWindow.webContents,
-			objectFactory.getGemTracker().getGemDataDto(),
-		);
-
-		// Send the updated state to the Zone Tracker component
-		ipcWebContentsSend(
-			"zoneUpdatesFromLog",
-			mainWindow.webContents,
-			objectFactory.getZoneTracker().getZoneDataDto(),
-		);
-
-		// Return the updated state to Zone Notes Settings component
-		return objectFactory.getZoneTracker().getZoneNotesSettingsDto();
+		activateBuild(buildName);
+		return afterBuildChange(() => zoneTracker().getZoneNotesSettingsDto());
 	});
 
 	ipcMainHandle("postAddNewBuildFromZoneNotes", async (_, buildName) => {
-		// Set the current build
-		objectFactory.getSettingsService().saveBuildName(buildName);
-
-		// Save the new build & load it
-		objectFactory.getGemTracker().saveNewBuild(buildName);
-		objectFactory.getGemTracker().loadGemSetup(buildName);
-		objectFactory.getGemTracker().setGemSetupFromPlayerLevel(objectFactory.getLevelTracker().playerLevel);
-		objectFactory.getZoneTracker().loadActNotes();
-		objectFactory.getZoneTracker().loadZoneNotes();
-
-		// Send the updated state to the Gem Tracker component (gem tracker also cares about
-		// build change)
-		ipcWebContentsSend(
-			"subscribeToGemUpdates",
-			mainWindow.webContents,
-			objectFactory.getGemTracker().getGemDataDto(),
-		);
-
-		// Send the updated state to the Zone Tracker component
-		ipcWebContentsSend(
-			"zoneUpdatesFromLog",
-			mainWindow.webContents,
-			objectFactory.getZoneTracker().getZoneDataDto(),
-		);
-
-		// Return the updated state to Zone Notes Settings component
-		return objectFactory.getZoneTracker().getZoneNotesSettingsDto();
+		createBuild(buildName);
+		return afterBuildChange(() => zoneTracker().getZoneNotesSettingsDto());
 	});
 
 	ipcMainHandle("postDeleteBuildFromZoneNotes", async (_, buildName) => {
-		// Set to default
-		objectFactory.getSettingsService().saveBuildName("Default");
-
-		// Delete the build & load Default
-		objectFactory.getGemTracker().deleteBuild(buildName);
-		objectFactory.getGemTracker().loadGemSetup("Default");
-		objectFactory.getGemTracker().setGemSetupFromPlayerLevel(objectFactory.getLevelTracker().playerLevel);
-		objectFactory.getZoneTracker().loadActNotes();
-		objectFactory.getZoneTracker().loadZoneNotes();
-
-		// Send the updated state to the Gem Tracker component (gem tracker also cares about
-		// build change)
-		ipcWebContentsSend(
-			"subscribeToGemUpdates",
-			mainWindow.webContents,
-			objectFactory.getGemTracker().getGemDataDto(),
-		);
-
-		// Send the updated state to the Zone Tracker component
-		ipcWebContentsSend(
-			"zoneUpdatesFromLog",
-			mainWindow.webContents,
-			objectFactory.getZoneTracker().getZoneDataDto(),
-		);
-
-		// Return the updated state to Zone Notes Settings component
-		return objectFactory.getZoneTracker().getZoneNotesSettingsDto();
+		removeBuild(buildName);
+		return afterBuildChange(() => zoneTracker().getZoneNotesSettingsDto());
 	});
 
 	ipcMainHandle("saveZoneNotesForBuild", async (_, request) => {
-		// Set the current build
-		objectFactory.getSettingsService().saveBuildName(request.buildName);
-
-		// Save the new build
-		objectFactory.getZoneTracker().saveZoneNotes(request.buildName, request.allZoneNotes);
-
-		// Send the updated state to the Gem Tracker component (gem tracker also cares about
-		// build change)
-		ipcWebContentsSend(
-			"subscribeToGemUpdates",
-			mainWindow.webContents,
-			objectFactory.getGemTracker().getGemDataDto(),
-		);
-
-		// Send the updated state to the Zone Tracker component
-		ipcWebContentsSend(
-			"zoneUpdatesFromLog",
-			mainWindow.webContents,
-			objectFactory.getZoneTracker().getZoneDataDto(),
-		);
-
-		// Return the updated state to Zone Notes Settings component
-		return objectFactory.getZoneTracker().getZoneNotesSettingsDto();
+		activateBuild(request.buildName);
+		zoneTracker().saveZoneNotes(request.buildName, request.allZoneNotes);
+		return afterBuildChange(() => zoneTracker().getZoneNotesSettingsDto());
 	});
 
 	ipcMainHandle("postCopyZoneNotesFromBuild", async (_, request) => {
-		// Set the current build
-		objectFactory.getSettingsService().saveBuildName(request.buildName);
-
-		// Copy the zone notes to the current build
-		objectFactory.getZoneTracker().CopyZoneNotesFromBuild(request.buildName, request.buildToCopyName);
-
-		// Send the updated state to the Gem Tracker component (gem tracker also cares about
-		// build change)
-		ipcWebContentsSend(
-			"subscribeToGemUpdates",
-			mainWindow.webContents,
-			objectFactory.getGemTracker().getGemDataDto(),
-		);
-
-		// Send the updated state to the Zone Tracker component
-		ipcWebContentsSend(
-			"zoneUpdatesFromLog",
-			mainWindow.webContents,
-			objectFactory.getZoneTracker().getZoneDataDto(),
-		);
-
-		// Return the updated state to Zone Notes Settings component
-		return objectFactory.getZoneTracker().getZoneNotesSettingsDto();
+		activateBuild(request.buildName);
+		zoneTracker().CopyZoneNotesFromBuild(request.buildName, request.buildToCopyName);
+		return afterBuildChange(() => zoneTracker().getZoneNotesSettingsDto());
 	});
 
 	ipcMainHandle("postResetZoneNoteForZone", async (_, zoneCode) => {
-		return objectFactory.getZoneTracker().resetZoneNoteForZone(zoneCode);
+		return zoneTracker().resetZoneNoteForZone(zoneCode);
 	});
 
 	// Handle UI window position events
