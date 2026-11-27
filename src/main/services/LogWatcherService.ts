@@ -36,7 +36,7 @@ export class LogWatcherService {
 			// update their client txt path.
 			objectFactory.getStateTracker().logWatcherActive = false;
 
-			if ((e.code = "ENOENT")) {
+			if (e.code === "ENOENT") {
 				//@ts-ignore
 				log.error(
 					`Could not subscribe to client txt changes, wrong client path! ${filePathGuess}`
@@ -110,12 +110,6 @@ export class LogWatcherService {
 			}
 
 			if (shouldUpdateGemTracker) {
-				ipcWebContentsSend(
-					"subscribeToGemUpdates",
-					mainWindow.webContents,
-					objectFactory.getGemTracker().getGemDataDto()
-				);
-
 				ipcWebContentsSend(
 					"subscribeToGemUpdates",
 					mainWindow.webContents,
