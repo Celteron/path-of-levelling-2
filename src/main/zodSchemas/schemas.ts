@@ -76,12 +76,36 @@ export const UiSettingsZodSchema = z.object({
 	gemTrackerPosition: OverlayPositionZodSchema,
 });
 
+// Guide progress and panel position. A top-level game setting on purpose: migrations merge
+// settings shallowly, a new key nested in uiSettings would reset existing users' settings.
+export const LevelingGuideSettingsZodSchema = z.object({
+	pageIndex: z.number().int().nonnegative(),
+	/** Target zone of the saved page, finds the page again after guide updates */
+	pageTarget: z.string().nullable(),
+	leagueStart: z.boolean(),
+	showOptional: z.boolean(),
+	overlayPosition: OverlayPositionZodSchema,
+});
+
+/** Validates guide preferences coming from the renderer */
+export const GuidePrefsZodSchema = LevelingGuideSettingsZodSchema.pick({ leagueStart: true, showOptional: true });
+
+const defaultLevelingGuideSettings = {
+	pageIndex: 0,
+	pageTarget: null,
+	leagueStart: true,
+	showOptional: true,
+	// Right of the other default windows, but inside a 1280x800 window (Steam Deck, 1366x768)
+	overlayPosition: { x: 740, y: 24, height: "300px", width: "520px" },
+};
+
 export const GameSettingsZodSchema = z.object({
 	version: z.number(),
 	clientTxtPath: z.string(),
 	buildName: z.string(),
 	lastSessionState: LastSessionStateZodSchema,
 	uiSettings: UiSettingsZodSchema,
+	levelingGuide: LevelingGuideSettingsZodSchema,
 });
 
 // Default settings for each profile
@@ -104,6 +128,7 @@ export const DefaultPoE1GameSettings = GameSettingsZodSchema.extend({
 		levelTrackerPosition: { x: 61, y: 632, height: "19px", width: "335px" },
 		gemTrackerPosition: { x: 0, y: 377, height: "53px", width: "516px" },
 	}),
+	levelingGuide: LevelingGuideSettingsZodSchema.default(defaultLevelingGuideSettings),
 });
 
 export const DefaultPoE2GameSettings = GameSettingsZodSchema.extend({
@@ -124,6 +149,7 @@ export const DefaultPoE2GameSettings = GameSettingsZodSchema.extend({
 		levelTrackerPosition: { x: 61, y: 632, height: "19px", width: "335px" },
 		gemTrackerPosition: { x: 0, y: 377, height: "53px", width: "516px" },
 	}),
+	levelingGuide: LevelingGuideSettingsZodSchema.default(defaultLevelingGuideSettings),
 });
 
 export type GameSettings = z.infer<typeof GameSettingsZodSchema>;
@@ -215,3 +241,63 @@ export const DefaultZoneNotesZodSchema = z.object({
 });
 
 export type DefaultActAndZoneNotes = z.infer<typeof DefaultZoneNotesZodSchema>;
+
+// --- Leveling Guide (converted from Exile UI, see scripts/exileUiGuide) --- //
+
+export const GuideSegmentZodSchema = z.discriminatedUnion("kind", [
+	z.object({ kind: z.literal("text"), text: z.string(), color: z.string().optional() }),
+	z.object({ kind: z.literal("icon"), icon: z.string() }),
+	z.object({ kind: z.literal("zone"), code: z.string(), name: z.string() }),
+	z.object({ kind: z.literal("quest"), item: z.string() }),
+	z.object({ kind: z.literal("boss"), name: z.string() }),
+	z.object({ kind: z.literal("arena"), name: z.string() }),
+	z.object({ kind: z.literal("tag"), value: z.string() }),
+	z.object({ kind: z.literal("separator") }),
+]);
+
+/** "leaguestart" steps/pages only show on league start, "twinkrun" ones only on later runs */
+export const GuideVariantZodSchema = z.enum(["all", "leaguestart", "twinkrun"]);
+
+export const GuideStepZodSchema = z.object({
+	segments: z.array(GuideSegmentZodSchema),
+	/** Sub-lines shown below the step, filtered together with it */
+	hints: z.array(z.array(GuideSegmentZodSchema)),
+	optional: z.boolean(),
+	variant: GuideVariantZodSchema,
+});
+
+export const GuidePageZodSchema = z.object({
+	/** Index into LevelingGuide.acts */
+	act: z.number().int().nonnegative(),
+	variant: GuideVariantZodSchema,
+	steps: z.array(GuideStepZodSchema),
+});
+
+export const RecommendedLevelZodSchema = z.object({
+	min: z.number(),
+	max: z.number(),
+	/** Original text, e.g. "12 | 13+" */
+	label: z.string(),
+});
+
+export const GuideAreaZodSchema = z.object({
+	name: z.string(),
+	recommendedLevel: RecommendedLevelZodSchema.optional(),
+});
+
+export const LevelingGuideZodSchema = z.object({
+	schemaVersion: z.literal(1),
+	source: z.object({ name: z.string(), version: z.string(), license: z.string() }),
+	acts: z.array(z.object({ name: z.string() })),
+	pages: z.array(GuidePageZodSchema),
+	/** Keyed by uppercase zone code, e.g. "G1_TOWN" */
+	areas: z.record(z.string(), GuideAreaZodSchema),
+});
+
+export type GuideSegment = z.infer<typeof GuideSegmentZodSchema>;
+export type GuideVariant = z.infer<typeof GuideVariantZodSchema>;
+export type GuideStep = z.infer<typeof GuideStepZodSchema>;
+export type GuidePage = z.infer<typeof GuidePageZodSchema>;
+export type RecommendedLevel = z.infer<typeof RecommendedLevelZodSchema>;
+export type GuideArea = z.infer<typeof GuideAreaZodSchema>;
+export type LevelingGuide = z.infer<typeof LevelingGuideZodSchema>;

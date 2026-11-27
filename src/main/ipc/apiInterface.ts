@@ -78,6 +78,16 @@ declare global {
 			// Level Tracker
 			subscribeToLevelUpdates: (callback: (levelDataDto: LevelDataDto) => void) => void;
 			subscribeToGameWorldUpdates: (callback: (inGameWorld: boolean) => void) => void;
+
+			// Leveling guide
+			/** Returns an unsubscribe function */
+			subscribeToGuideUpdates: (callback: (guideDataDto: GuideDataDto) => void) => () => void;
+			getGuideState: () => Promise<GuideDataDto>;
+			postGuideStep: (delta: 1 | -1) => Promise<GuideDataDto>;
+			postGuideReset: () => Promise<GuideDataDto>;
+			saveGuidePrefs: (prefs: GuidePrefsRequest) => Promise<GuideDataDto>;
+			getGuideOverlayPositionSettings: () => Promise<OverlayPosition>;
+			saveGuideOverlayPositionSettings: (guideSettings: OverlayPosition) => void;
 			getLevelState: () => Promise<LevelDataDto>;
 
 			// Gem Tracker

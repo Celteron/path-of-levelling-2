@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./App.css";
 import { GemTrackerComponent } from "./Components/GemTrackerComponent";
+import { GuideTrackerComponent } from "./Components/GuideTrackerComponent";
 import { LevelTrackerComponent } from "./Components/LevelTrackerComponent";
 import { SettingsComponent } from "./Components/Settings/SettingsComponent";
 import { ZoneNotesComponent } from "./Components/ZoneTracker/ZoneNotesComponent";
@@ -12,6 +13,7 @@ function App() {
 	const [layoutImagesActive, setLayoutImagesActive] = useState(true);
 	const [levelTrackerActive, setLevelTrackerActive] = useState(true);
 	const [gemTrackerActive, setGemTrackerActive] = useState(true);
+	const [guideActive, setGuideActive] = useState(true);
 	// Trackers are hidden on the login/character select screen, but stay visible while the
 	// settings are open so they can still be moved and resized there.
 	const [inGameWorld, setInGameWorld] = useState(true);
@@ -37,6 +39,9 @@ function App() {
 					break;
 				case "ToggleGemTracker":
 					setGemTrackerActive(hotkeyEvent.value);
+					break;
+				case "ToggleGuide":
+					setGuideActive(hotkeyEvent.value);
 					break;
 				default:
 					console.log("Unrecognised hotkey!", hotkeyEvent.hotkey);
@@ -83,6 +88,7 @@ function App() {
 			/>
 			{conditionalRenderLevelTracker()}
 			{conditionalRenderGemTracker()}
+			{guideActive && showTrackers && <GuideTrackerComponent />}
 		</div>
 	);
 }

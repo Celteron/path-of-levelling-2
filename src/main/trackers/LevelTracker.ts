@@ -21,7 +21,8 @@ export class LevelTracker {
 		return {
 			playerLevel: this.playerLevel,
 			monsterLevel: this.monsterLevel,
-			expMulti: this.expMulti
+			expMulti: this.expMulti,
+			recommendedLevel: objectFactory.getGuideTracker().getRecommendedLevel(),
 		}
 	}
 

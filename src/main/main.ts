@@ -20,6 +20,7 @@ import { getProfile } from "./profiles/profiles.js";
 import { ipcMainHandle, ipcWebContentsSend } from "./ipc/ipcWrappers.js";
 import { toggleAllTrackers } from "./trackers/trackerVisibility.js";
 import { importPob } from "./pob/pobImport.js";
+import { GuidePrefsZodSchema } from "./zodSchemas/schemas.js";
 
 // Only allow one instance of the app
 if (!app.requestSingleInstanceLock()) {
@@ -220,6 +221,25 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 
 	ipcMainHandle("getLayoutImagePaths", async (_) => {
 		return objectFactory.getZoneTracker().zoneImageFilePaths;
+	});
+
+	// Handle events from the leveling guide
+	ipcMainHandle("getGuideState", async () => objectFactory.getGuideTracker().getGuideView());
+
+	ipcMainHandle("postGuideStep", async (_, delta) => {
+		objectFactory.getGuideTracker().step(delta);
+		return objectFactory.getGuideTracker().getGuideView();
+	});
+
+	ipcMainHandle("postGuideReset", async () => {
+		objectFactory.getGuideTracker().reset();
+		return objectFactory.getGuideTracker().getGuideView();
+	});
+
+	ipcMainHandle("saveGuidePrefs", async (_, prefs) => {
+		const validPrefs = GuidePrefsZodSchema.safeParse(prefs);
+		if (validPrefs.success) objectFactory.getGuideTracker().savePrefs(validPrefs.data);
+		return objectFactory.getGuideTracker().getGuideView();
 	});
 
 	// Handle events from the level tracker
@@ -677,6 +697,14 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 	ipcMainHandle("saveGemOverlayPositionSettings", async (_, gemSettings) => {
 		objectFactory.getSettingsService().saveGemOverlayPositionSettings(gemSettings);
 	});
+
+	ipcMainHandle("getGuideOverlayPositionSettings", async () => {
+		return objectFactory.getGuideTracker().getOverlayPosition();
+	});
+
+	ipcMainHandle("saveGuideOverlayPositionSettings", async (_, guideSettings) => {
+		objectFactory.getGuideTracker().saveOverlayPosition(guideSettings);
+	});
 }
 
 function registerGlobalHotkeys(mainWindow: BrowserWindow) {
@@ -733,6 +761,24 @@ function registerGlobalHotkeys(mainWindow: BrowserWindow) {
 			value: objectFactory.getStateTracker().gemTrackerOpen,
 		});
 	});
+	//Show/hide leveling guide - default shown
+	globalShortcut.register("Ctrl+Alt+j", () => {
+		// Without a guide (PoE1) the hidden flag would break Ctrl+Alt+A's "all shown" check
+		if (!objectFactory.getGuideTracker().getGuideView().enabled) return;
+		objectFactory.getStateTracker().guideOpen = !objectFactory.getStateTracker().guideOpen;
+
+		ipcWebContentsSend("Hotkeys", mainWindow.webContents, {
+			hotkey: "ToggleGuide",
+			value: objectFactory.getStateTracker().guideOpen,
+		});
+	});
+	//Leveling guide: next/previous page
+	const stepGuide = (delta: 1 | -1) => {
+		objectFactory.getGuideTracker().step(delta);
+		ipcWebContentsSend("guideUpdates", mainWindow.webContents, objectFactory.getGuideTracker().getGuideView());
+	};
+	globalShortcut.register("Ctrl+Alt+n", () => stepGuide(1));
+	globalShortcut.register("Ctrl+Alt+b", () => stepGuide(-1));
 	//Show/hide all trackers at once (#3)
 	globalShortcut.register("Ctrl+Alt+a", () => {
 		const stateTracker = objectFactory.getStateTracker();
@@ -744,6 +790,7 @@ function registerGlobalHotkeys(mainWindow: BrowserWindow) {
 		ipcWebContentsSend("Hotkeys", webContents, { hotkey: "ToggleLayoutImages", value: visibility.layoutImagesOpen });
 		ipcWebContentsSend("Hotkeys", webContents, { hotkey: "ToggleLevelTracker", value: visibility.levelTrackerOpen });
 		ipcWebContentsSend("Hotkeys", webContents, { hotkey: "ToggleGemTracker", value: visibility.gemTrackerOpen });
+		ipcWebContentsSend("Hotkeys", webContents, { hotkey: "ToggleGuide", value: visibility.guideOpen });
 	});
 }
 

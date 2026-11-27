@@ -67,6 +67,15 @@ type channelReturnTypeMapping = {
 
 	// Login/character select vs. game world
 	gameWorldUpdates: boolean;
+
+	// Leveling Guide
+	guideUpdates: GuideDataDto;
+	getGuideState: GuideDataDto;
+	postGuideStep: GuideDataDto;
+	postGuideReset: GuideDataDto;
+	saveGuidePrefs: GuideDataDto;
+	getGuideOverlayPositionSettings: OverlayPosition;
+	saveGuideOverlayPositionSettings: void;
 	getLevelState: LevelDataDto;
 
 	// Gem Tracker
@@ -116,6 +125,11 @@ type channelRequestTypeMapping = {
 
 	// Gem Tracker
 	postGemLevelSelected: number;
+
+	// Leveling Guide
+	postGuideStep: 1 | -1;
+	saveGuidePrefs: GuidePrefsRequest;
+	saveGuideOverlayPositionSettings: OverlayPosition;
 };
 
 // --- Settings --- //
@@ -125,7 +139,8 @@ type HotkeyEvent = {
 	| "ToggleZoneNotes"
 	| "ToggleLayoutImages"
 	| "ToggleLevelTracker"
-	| "ToggleGemTracker";
+	| "ToggleGemTracker"
+	| "ToggleGuide";
 	value: boolean;
 };
 
@@ -198,7 +213,12 @@ type LevelDataDto = {
 	playerLevel: number;
 	monsterLevel: number;
 	expMulti: number;
+	/** Recommended character level for the current zone, from the leveling guide */
+	recommendedLevel?: import("../zodSchemas/schemas.js").RecommendedLevel;
 };
+
+type GuideDataDto = import("../levelingGuide.js").GuideView;
+type GuidePrefsRequest = import("../levelingGuide.js").GuidePrefs;
 
 type GemDataDto = {
 	allGemSetupLevels: number[];

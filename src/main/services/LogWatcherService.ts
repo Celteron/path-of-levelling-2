@@ -80,7 +80,16 @@ export class LogWatcherService {
 				objectFactory.getGemTracker().setGemSetupFromPlayerLevel(data.playerLevel);
 			}
 
+			// The guide checks every zone change, also towns/interludes unknown to the ZoneTracker
+			const guideChanged = data.zoneCodes
+				.map((zoneCode) => objectFactory.getGuideTracker().onZoneEntered(zoneCode))
+				.some(Boolean);
+
 			//send data to the renderer
+			if (guideChanged) {
+				ipcWebContentsSend("guideUpdates", mainWindow.webContents, objectFactory.getGuideTracker().getGuideView());
+			}
+
 			if (data.atLoginScreen !== undefined) {
 				ipcWebContentsSend("gameWorldUpdates", mainWindow.webContents, !data.atLoginScreen);
 			}

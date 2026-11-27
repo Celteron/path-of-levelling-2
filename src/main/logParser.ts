@@ -7,6 +7,8 @@ export interface LogChunkData {
 	monsterLevel: number;
 	/** "" if no zone change was found */
 	zoneCode: string;
+	/** Every zone change in order; the leveling guide must not miss a target zone passed quickly */
+	zoneCodes: string[];
 	/** true at the login/character select screen, false in the game world, undefined if unknown */
 	atLoginScreen?: boolean;
 }
@@ -22,7 +24,7 @@ const loginScreenRegex = /connected to .*\.login\.|\*\*\*\*\*/i;
  * can contain several zone changes or level ups; the latest one is the current state.
  */
 export function parseLogChunk(newLines: string): LogChunkData {
-	const data: LogChunkData = { playerLevel: 0, monsterLevel: 0, zoneCode: "" };
+	const data: LogChunkData = { playerLevel: 0, monsterLevel: 0, zoneCode: "", zoneCodes: [] };
 
 	for (const line of newLines.split(/\r?\n/)) {
 		const levelUp = line.match(levelUpRegex);
@@ -35,6 +37,7 @@ export function parseLogChunk(newLines: string): LogChunkData {
 		if (newZone) {
 			data.monsterLevel = parseInt(newZone[1]);
 			data.zoneCode = newZone[2];
+			data.zoneCodes.push(newZone[2]);
 			data.atLoginScreen = false;
 			continue;
 		}

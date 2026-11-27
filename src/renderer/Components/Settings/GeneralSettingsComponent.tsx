@@ -103,6 +103,8 @@ export function GeneralSettingsComponent({
                     <p>Show/hide layout images: Ctrl+Alt+i</p>
                     <p>Show/hide level tracker: Ctrl+Alt+l</p>
                     <p>Show/hide gem tracker: Ctrl+Alt+g</p>
+                    <p>Show/hide leveling guide: Ctrl+Alt+j</p>
+                    <p>Leveling guide next/previous page: Ctrl+Alt+n / Ctrl+Alt+b</p>
                     <p>Show/hide all trackers: Ctrl+Alt+a</p>
                 </div>
             </div>

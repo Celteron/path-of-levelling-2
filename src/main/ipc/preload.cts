@@ -100,6 +100,22 @@ electron.contextBridge.exposeInMainWorld("electron", {
 		});
 	},
 
+	// Leveling guide
+	subscribeToGuideUpdates: (callback) => {
+		const listener = (_: Electron.IpcRendererEvent, args: GuideDataDto) => callback(args);
+		electron.ipcRenderer.on("guideUpdates", listener);
+		return () => {
+			electron.ipcRenderer.removeListener("guideUpdates", listener);
+		};
+	},
+	getGuideState: async () => ipcRendererInvokeGet("getGuideState"),
+	postGuideStep: async (delta: 1 | -1) => ipcRendererInvokePost("postGuideStep", delta),
+	postGuideReset: async () => ipcRendererInvokeGet("postGuideReset"),
+	saveGuidePrefs: async (prefs: GuidePrefsRequest) => ipcRendererInvokePost("saveGuidePrefs", prefs),
+	getGuideOverlayPositionSettings: async () => ipcRendererInvokeGet("getGuideOverlayPositionSettings"),
+	saveGuideOverlayPositionSettings: async (guideSettings) =>
+		ipcRendererInvokePost("saveGuideOverlayPositionSettings", guideSettings),
+
 	// Methods for the level tracker
 	subscribeToLevelUpdates: (callback) => {
 		return ipcRendererOn("subscribeToLevelUpdates", (_, args) => {

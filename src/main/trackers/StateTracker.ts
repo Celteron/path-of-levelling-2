@@ -8,6 +8,7 @@ export class StateTracker {
 	layoutImagesOpen: boolean = true;
 	levelTrackerOpen: boolean = true;
 	gemTrackerOpen: boolean = true;
+	guideOpen: boolean = true;
 
 	logWatcherActive: boolean = false;
 

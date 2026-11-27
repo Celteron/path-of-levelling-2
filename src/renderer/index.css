@@ -1230,3 +1230,139 @@ react-draggable {
 .GemLinks {
 	background-color: rgb(0, 0, 0, 0);
 }
+.RecommendedLevel {
+	text-align: center;
+}
+
+/* Leveling Guide - local tokens, to be lifted into global ones by the design pass */
+.GuideTracker {
+	--guide-bg: rgba(20, 22, 28, 0.82);
+	--guide-border: rgba(255, 255, 255, 0.08);
+	--guide-text: #e8e6e3;
+	--guide-muted: #9a9ea8;
+	--guide-zone: #7fc8ff;
+	--guide-boss: #ff8a80;
+	--guide-quest: #ffd27f;
+	--guide-badge-bg: #353e54;
+
+	position: absolute;
+	inset: 0;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	color: var(--guide-text);
+	background: var(--guide-bg);
+	border: 1px solid var(--guide-border);
+	border-radius: 6px;
+	line-height: 1.45;
+}
+
+.GuideHeader {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 4px 6px 4px 10px;
+	border-bottom: 1px solid var(--guide-border);
+}
+
+.GuideAct {
+	font-weight: 600;
+}
+
+.GuideTarget {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	color: var(--guide-zone);
+}
+
+.GuideProgress,
+.GuideSource {
+	color: var(--guide-muted);
+	font-variant-numeric: tabular-nums;
+}
+
+.GuideIconButton,
+.GuideToggle {
+	min-width: 28px;
+	min-height: 28px;
+	padding: 2px 8px;
+	border: 1px solid var(--guide-border);
+	border-radius: 4px;
+	background: var(--guide-badge-bg);
+	color: var(--guide-text);
+	font-size: inherit;
+	cursor: pointer;
+}
+
+.GuideToggle[aria-pressed="false"] {
+	background: transparent;
+	color: var(--guide-muted);
+}
+
+.GuideSteps {
+	flex: 1;
+	margin: 0;
+	padding: 6px 10px 6px 28px;
+	overflow-y: auto;
+}
+
+.GuideStep + .GuideStep {
+	margin-top: 4px;
+}
+
+.GuideStepOptional {
+	color: var(--guide-muted);
+}
+
+.GuideHint {
+	padding-left: 12px;
+	color: var(--guide-muted);
+	font-size: 0.92em;
+}
+
+.GuideZone {
+	color: var(--guide-zone);
+}
+
+.GuideBoss {
+	color: var(--guide-boss);
+	font-weight: 600;
+}
+
+.GuideQuest {
+	color: var(--guide-quest);
+}
+
+.GuideArena,
+.GuideTag {
+	font-style: italic;
+}
+
+.GuideBadge {
+	display: inline-block;
+	padding: 0 4px;
+	border-radius: 3px;
+	background: var(--guide-badge-bg);
+	font-size: 0.85em;
+	line-height: 1.4;
+}
+
+.GuideSeparator {
+	color: var(--guide-muted);
+}
+
+.GuideFooter {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+	padding: 4px 6px;
+	border-top: 1px solid var(--guide-border);
+}
+
+.GuideSource {
+	margin-left: auto;
+}

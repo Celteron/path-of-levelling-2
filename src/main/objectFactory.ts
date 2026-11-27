@@ -5,6 +5,7 @@ import { MigrationService } from "./services/MigrationService.js";
 import { SettingsService } from "./services/Settings.js";
 import { StoreService } from "./services/StoreService.js";
 import { GemTracker } from "./trackers/GemTracker.js";
+import { GuideTracker } from "./trackers/GuideTracker.js";
 import { LevelTracker } from "./trackers/LevelTracker.js";
 import { StateTracker } from "./trackers/StateTracker.js";
 import { ZoneTracker } from "./trackers/ZoneTracker.js";
@@ -23,6 +24,7 @@ type Trackers = {
 	zoneTracker: ZoneTracker;
 	levelTracker: LevelTracker;
 	gemTracker: GemTracker;
+	guideTracker: GuideTracker;
 };
 
 // Union type for ObjectFactory's getOrCreate
@@ -106,6 +108,10 @@ class ObjectFactory {
 			const stateTracker = this.getStateTracker();
 			return new ZoneTracker(storeService, stateTracker, settingsService);
 		});
+	}
+
+	getGuideTracker(): GuideTracker {
+		return this.getOrCreateObject("guideTracker", () => new GuideTracker(this.getStoreService()));
 	}
 
 	getLevelTracker(): LevelTracker {
