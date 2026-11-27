@@ -21,6 +21,7 @@ import {
 	isReadableFile,
 } from "../pathResolver.js";
 import { objectFactory } from "../objectFactory.js";
+import { migrateBuildsV1ToV2 } from "./buildMigrations.js";
 
 // Used on startup to migrate any old configuration files to new schemas
 export class MigrationService {
@@ -295,88 +296,37 @@ export class MigrationService {
 		// 1. Change "version": 1 -> "version": 2
 		// 2. Add lockNoteOption: "lockedCannotUnlock" to each act note
 		// 3. Add zoneNotes: [] to each build
-		const poe2NewBuildStore = new Store({
-			name: "poe2-builds",
-			accessPropertiesByDotNotation: false,
-		});
+		for (const profileId of ["poe2", "poe1"] as const) {
+			const buildStore = new Store({ name: `${profileId}-builds`, accessPropertiesByDotNotation: false });
+			if (buildStore.get("version") !== 1) continue;
 
-		// Only migrate if we're on version 1
-		if (poe2NewBuildStore.get("version") == 1) {
-			// Backup
-			const poe2BackupBuildStore = new Store({
-				name: "poe2-builds-v1-backup",
-				defaults: poe2NewBuildStore.store,
+			// Creating the store writes the backup file
+			new Store({
+				name: `${profileId}-builds-v1-backup`,
+				defaults: buildStore.store,
 				accessPropertiesByDotNotation: false,
 			});
 
-			poe2NewBuildStore.set("version", 2);
-
-			// Add zoneNotes to each build
-			const poe2MigratedBuilds: Record<string, object> = {};
-
-			const builds = poe2NewBuildStore.get("builds") as Record<string, object>;
-			for (const buildName in builds) {
-				poe2MigratedBuilds[buildName] = {
-					...builds[buildName],
-					// @ts-ignore
-					actNotes: builds[buildName].actNotes.map((actNote) => ({
-						lockNoteOption: "lockedCannotUnlock",
-						...actNote,
-					})),
-					zoneNotes: [],
-				};
-			}
-
-			poe2NewBuildStore.set("builds", poe2MigratedBuilds);
-		}
-
-		const poe1NewBuildStore = new Store({
-			name: "poe1-builds",
-			accessPropertiesByDotNotation: false,
-		});
-
-		if (poe1NewBuildStore.get("version") == 1) {
-			// Backup
-			const poe1BackupBuildStore = new Store({
-				name: "poe1-builds-v1-backup",
-				defaults: poe1NewBuildStore.store,
-				accessPropertiesByDotNotation: false,
-			});
-
-			poe1NewBuildStore.set("version", 2);
-
-			// Add zoneNotes to each build
-			const poe1MigratedBuilds: Record<string, object> = {};
-
-			const builds = poe1NewBuildStore.get("builds") as Record<string, object>;
-			for (const buildName in builds) {
-				poe1MigratedBuilds[buildName] = {
-					...builds[buildName],
-					// @ts-ignore
-					actNotes: builds[buildName].actNotes.map((actNote) => ({
-						lockNoteOption: "lockedCannotUnlock",
-						...actNote,
-					})),
-					zoneNotes: [],
-				};
-			}
-
-			poe1NewBuildStore.set("builds", poe1MigratedBuilds);
+			buildStore.set("version", 2);
+			buildStore.set(
+				"builds",
+				migrateBuildsV1ToV2(buildStore.get("builds") as Parameters<typeof migrateBuildsV1ToV2>[0]),
+			);
 		}
 	}
 
 	/** Checks existing settings, trims extra keys and fills defaults.
 	 * Returns undefined if no changes are required.
 	 */
-	private FillWithDefaultsAndStrip<T extends z.ZodObject<any>>(
+	private FillWithDefaultsAndStrip<T extends z.ZodObject<z.ZodRawShape>>(
 		schema: T,
 		defaults: z.infer<T>,
 		current: object,
 	): z.ZodSafeParseResult<z.infer<T>> | undefined {
 		// First check that there are missing settings at all, or any extra keys
-		var alreadyValidCheck = schema.safeParse(current);
+		const alreadyValidCheck = schema.safeParse(current);
 		if (alreadyValidCheck.success && Object.keys(alreadyValidCheck.data).length === Object.keys(current).length)
-			return; // No missing settings or extra keys. yeah returning undefined is yuck, whatever
+			return; // No missing settings and no extra keys
 
 		log.warn(
 			"Failed schema validation on Global Settings:",
