@@ -720,8 +720,16 @@ function registerGlobalHotkeys(mainWindow: BrowserWindow) {
 			value: objectFactory.getStateTracker().settingsOpen,
 		});
 
-		// Enable clicks on overlay
-		mainWindow.setIgnoreMouseEvents(!objectFactory.getStateTracker().settingsOpen);
+		// The overlay library hides the overlay when another app gets focus, but only if it knows
+		// whether the overlay or the game should be focused next. Toggling mouse events alone
+		// left the overlay focused: it stayed on top of other apps and showed up in Alt+Tab.
+		if (mainWindow.isVisible()) {
+			if (objectFactory.getStateTracker().settingsOpen) OverlayController.activateOverlay();
+			else OverlayController.focusTarget();
+		} else {
+			// Game not attached: focusing would show a detached overlay window
+			mainWindow.setIgnoreMouseEvents(!objectFactory.getStateTracker().settingsOpen);
+		}
 	});
 	//Show/hide zone notes - default shown
 	globalShortcut.register("Ctrl+Alt+z", () => {
