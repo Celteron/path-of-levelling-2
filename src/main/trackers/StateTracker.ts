@@ -8,6 +8,8 @@ export class StateTracker {
 	layoutImagesOpen: boolean = true;
 	levelTrackerOpen: boolean = true;
 	gemTrackerOpen: boolean = true;
+	/** false at login/character select; true until Client.txt says otherwise */
+	inGameWorld: boolean = true;
 
 	logWatcherActive: boolean = false;
 
