@@ -252,7 +252,7 @@ export class ZoneTracker {
 		const currentBuildName = objectFactory.getSettingsService().getBuildName();
 		const currentBuild = objectFactory.getStoreService().getBuild(currentBuildName);
 
-		// If there is no build selected, idk, we have other problems just send the default note
+		// Without a saved build there is no custom note to remove
 		if (!currentBuild)
 			return this.defaultActAndZoneNotes.actNotes.find((defaultActNote) => defaultActNote.actName == actName)!;
 
@@ -272,7 +272,7 @@ export class ZoneTracker {
 			(defaultZoneNote) => defaultZoneNote.zoneCode == zoneCode,
 		)!;
 
-		// If there is no build selected, idk, we have other problems just send the default note
+		// Without a saved build there is no custom note to remove
 		if (!currentBuild) return defaultZoneNote;
 
 		objectFactory.getStoreService().setBuild(currentBuildName, {
@@ -283,9 +283,7 @@ export class ZoneTracker {
 		return defaultZoneNote;
 	}
 
-	// This is called when someone selects an act in the dropdown in the UI
-	// We basically need to switch to that act, then set everything based on the first zone
-	// in that act as a default.
+	/** Act picked in the UI: shows the first zone of that act */
 	saveZoneFromActName(actName: string) {
 		log.info("Saving zone from act name:", actName);
 
@@ -312,8 +310,7 @@ export class ZoneTracker {
 		objectFactory.getStateTracker().saveSessionState();
 	}
 
-	// This is called when someone selects a zone in the dropdown in the UI
-	// In this case the act + name is enough to get the exact zone they want.
+	/** Zone picked in the UI; zone names repeat across acts, so the act is needed too */
 	saveZoneFromZoneNameAndActName(zoneName: string, actName: string) {
 		log.info("Saving zone from act name:", actName, "and zone name:", zoneName);
 
@@ -342,9 +339,10 @@ export class ZoneTracker {
 		objectFactory.getStateTracker().saveSessionState();
 	}
 
-	// This method takes a zoneCode and uses it to update the current state
-	// Returns a boolean representing whether or not there was actually a change in zone
-	// !If a zone is not found with that code we just clear the images and do nothing!
+	/**
+	 * Zone entered in the game. Returns false for codes without zone data (towns, hideouts): then
+	 * only the layout images are cleared and the notes stay. updateOnly skips saving the session.
+	 */
 	saveZoneFromCode(zoneCode: string, updateOnly: boolean = false): boolean {
 		const zoneExists = this.setZoneFromCode(zoneCode);
 

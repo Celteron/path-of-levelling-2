@@ -124,7 +124,7 @@ export const GameSettingsZodSchema = z.object({
 });
 
 // Default settings for each profile
-// ! These need to basically be exactly the same shape as GameSettingsZodSchema !
+// Must have exactly the shape of GameSettingsZodSchema, only with profile-specific defaults
 export const DefaultPoE1GameSettings = GameSettingsZodSchema.extend({
 	version: z.number().default(1),
 	clientTxtPath: z.string().default("C:/SteamLibrary/steamapps/common/Path of Exile/logs/Client.txt"),

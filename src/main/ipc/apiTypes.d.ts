@@ -1,5 +1,5 @@
-// Have to register all of these types globally so that I can use them in preload.cts
-// I tried many things and this was the only way :(
+// Ambient (global) types: preload.cts is a CommonJS script that cannot import TypeScript modules,
+// so preload, main and renderer all reach the IPC types through this declaration file.
 
 /** Mapping from channel name to return type sent from Main->Renderer */
 type channelReturnTypeMapping = {

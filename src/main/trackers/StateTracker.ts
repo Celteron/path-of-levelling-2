@@ -1,7 +1,7 @@
 import { objectFactory } from "../objectFactory.js";
 
-// Class to basically track state that shows in the front end, eg the current zone,
-// current player/monster level, current gem setup, etc.
+// Session state shared by the main process modules, e.g. which windows are open and whether the log
+// watcher runs. saveSessionState persists zone and levels for the next app start.
 export class StateTracker {
 	settingsOpen: boolean = false;
 	zoneNotesOpen: boolean = true;
