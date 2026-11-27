@@ -22,7 +22,7 @@
 		"preview": "vite preview",
 		"dist:win": "npm run transpile:electron && npm run build && electron-builder --win --x64 -p always",
 		"dist:linux": "npm run transpile:electron && npm run build && electron-builder --linux --x64 -p always",
-		"postInstall": "patch-package",
+		"postinstall": "patch-package",
 		"docs:dev": "VITE_APP_VERSION=$(npm pkg get version | sed 's/\"//g') vitepress dev docs",
 		"docs:build": "VITE_APP_VERSION=$(npm pkg get version | sed 's/\"//g') vitepress build docs",
 		"docs:preview": "VITE_APP_VERSION=$(npm pkg get version | sed 's/\"//g') vitepress preview docs"
