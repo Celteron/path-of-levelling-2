@@ -76,12 +76,36 @@ export const UiSettingsZodSchema = z.object({
 	gemTrackerPosition: OverlayPositionZodSchema,
 });
 
+// Guide progress and panel position. A top-level game setting on purpose: migrations merge
+// settings shallowly, a new key nested in uiSettings would reset existing users' settings.
+export const LevelingGuideSettingsZodSchema = z.object({
+	pageIndex: z.number().int().nonnegative(),
+	/** Target zone of the saved page, finds the page again after guide updates */
+	pageTarget: z.string().nullable(),
+	leagueStart: z.boolean(),
+	showOptional: z.boolean(),
+	overlayPosition: OverlayPositionZodSchema,
+});
+
+/** Validates guide preferences coming from the renderer */
+export const GuidePrefsZodSchema = LevelingGuideSettingsZodSchema.pick({ leagueStart: true, showOptional: true });
+
+const defaultLevelingGuideSettings = {
+	pageIndex: 0,
+	pageTarget: null,
+	leagueStart: true,
+	showOptional: true,
+	// Right of the other default windows, but inside a 1280x800 window (Steam Deck, 1366x768)
+	overlayPosition: { x: 740, y: 24, height: "300px", width: "520px" },
+};
+
 export const GameSettingsZodSchema = z.object({
 	version: z.number(),
 	clientTxtPath: z.string(),
 	buildName: z.string(),
 	lastSessionState: LastSessionStateZodSchema,
 	uiSettings: UiSettingsZodSchema,
+	levelingGuide: LevelingGuideSettingsZodSchema,
 });
 
 // Default settings for each profile
@@ -104,6 +128,7 @@ export const DefaultPoE1GameSettings = GameSettingsZodSchema.extend({
 		levelTrackerPosition: { x: 61, y: 632, height: "19px", width: "335px" },
 		gemTrackerPosition: { x: 0, y: 377, height: "53px", width: "516px" },
 	}),
+	levelingGuide: LevelingGuideSettingsZodSchema.default(defaultLevelingGuideSettings),
 });
 
 export const DefaultPoE2GameSettings = GameSettingsZodSchema.extend({
@@ -124,6 +149,7 @@ export const DefaultPoE2GameSettings = GameSettingsZodSchema.extend({
 		levelTrackerPosition: { x: 61, y: 632, height: "19px", width: "335px" },
 		gemTrackerPosition: { x: 0, y: 377, height: "53px", width: "516px" },
 	}),
+	levelingGuide: LevelingGuideSettingsZodSchema.default(defaultLevelingGuideSettings),
 });
 
 export type GameSettings = z.infer<typeof GameSettingsZodSchema>;

@@ -34,6 +34,10 @@ export function getZoneNotesPath(profileId: ProfileId): string {
 	return path.join(getProfilePath(profileId), "referenceData", "zoneNotes.json");
 }
 
+export function getLevelingGuidePath(profileId: ProfileId): string {
+	return path.join(getProfilePath(profileId), "referenceData", "levelingGuide.json");
+}
+
 export function getZoneReferenceDataPath(profileId: ProfileId): string {
 	return path.join(getProfilePath(profileId), "referenceData", "zoneReferenceData.json");
 }

@@ -3,6 +3,7 @@ export interface TrackerVisibility {
 	layoutImagesOpen: boolean;
 	levelTrackerOpen: boolean;
 	gemTrackerOpen: boolean;
+	guideOpen: boolean;
 }
 
 /**
@@ -11,12 +12,13 @@ export interface TrackerVisibility {
  */
 export function toggleAllTrackers(visibility: TrackerVisibility): TrackerVisibility {
 	// Named fields instead of Object.values: callers pass the whole StateTracker
-	const { zoneNotesOpen, layoutImagesOpen, levelTrackerOpen, gemTrackerOpen } = visibility;
-	const open = !(zoneNotesOpen && layoutImagesOpen && levelTrackerOpen && gemTrackerOpen);
+	const { zoneNotesOpen, layoutImagesOpen, levelTrackerOpen, gemTrackerOpen, guideOpen } = visibility;
+	const open = !(zoneNotesOpen && layoutImagesOpen && levelTrackerOpen && gemTrackerOpen && guideOpen);
 	return {
 		zoneNotesOpen: open,
 		layoutImagesOpen: open,
 		levelTrackerOpen: open,
 		gemTrackerOpen: open,
+		guideOpen: open,
 	};
 }
