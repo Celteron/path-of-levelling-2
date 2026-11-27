@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { GemSetup } from "../../../main/zodSchemas/schemas";
-import { confirmDiscardUnsavedChanges, useUnsavedChanges } from "./unsavedChanges";
+import { useConfirmDiscardUnsavedChanges, useUnsavedChanges } from "./unsavedChanges";
+import { useConfirm } from "../ConfirmDialog";
 
 export function GemSettingsComponent({ onUnsavedChangesChange }: { onUnsavedChangesChange?: (hasUnsavedChanges: boolean) => void }) {
 	const [selectedBuild, setSelectedBuild] = useState("");
@@ -13,6 +14,8 @@ export function GemSettingsComponent({ onUnsavedChangesChange }: { onUnsavedChan
 	const [pobInput, setPobInput] = useState("");
 	const [pobImportError, setPobImportError] = useState("");
 	// allGemSetups is the last state loaded from/saved to main
+	const confirm = useConfirm();
+	const confirmDiscard = useConfirmDiscardUnsavedChanges();
 	const hasUnsavedChanges = useUnsavedChanges(allGemSetups, editableGemSetups, onUnsavedChangesChange);
 
 	// Get initial state for gem dropdown
@@ -34,10 +37,9 @@ export function GemSettingsComponent({ onUnsavedChangesChange }: { onUnsavedChan
 		});
 	}, []);
 
-	const handleBuildDropdownSelection = (event: React.ChangeEvent<HTMLSelectElement>) => { 
-		if (!confirmDiscardUnsavedChanges(hasUnsavedChanges)) return;
-
+	const handleBuildDropdownSelection = async (event: React.ChangeEvent<HTMLSelectElement>) => {
 		const value = event.target.value;
+		if (!(await confirmDiscard(hasUnsavedChanges))) return;
 		if (value === "__add__") {
 			setAddingBuild(true);
 			setNewBuildName("");
@@ -96,10 +98,10 @@ export function GemSettingsComponent({ onUnsavedChangesChange }: { onUnsavedChan
 		});
 	};
 
-	const handleDeleteBuild = () => {
+	const handleDeleteBuild = async () => {
 		if (
 			selectedBuild &&
-			window.confirm(`Are you sure you want to delete build "${selectedBuild}"?`)
+			(await confirm(`Delete build "${selectedBuild}"? This cannot be undone.`, "Delete"))
 		) {
 			window.electron.postDeleteBuild(selectedBuild).then((response) => {
 				setSelectedBuild(response.buildName);

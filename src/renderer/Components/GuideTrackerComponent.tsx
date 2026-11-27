@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Rnd, RndDragCallback, RndResizeCallback } from "react-rnd";
 import { OverlayPosition } from "../../main/zodSchemas/schemas";
+import { useConfirm } from "./ConfirmDialog";
 
 type GuideStep = GuideDataDto["steps"][number];
 type GuideSegment = GuideStep["segments"][number];
@@ -73,6 +74,7 @@ function Segments({ segments }: { segments: GuideSegment[] }) {
 }
 
 export function GuideTrackerComponent() {
+	const confirm = useConfirm();
 	const [guide, setGuide] = useState<GuideDataDto | null>(null);
 	const [moveMode, setMoveMode] = useState(false);
 	const [isHovered, setIsHovered] = useState(false);
@@ -91,8 +93,8 @@ export function GuideTrackerComponent() {
 	const step = (delta: 1 | -1) => window.electron.postGuideStep(delta).then(setGuide);
 	const savePrefs = (prefs: GuidePrefsRequest) => window.electron.saveGuidePrefs(prefs).then(setGuide);
 	const prefs = { leagueStart: guide.leagueStart, showOptional: guide.showOptional };
-	const restart = () => {
-		if (window.confirm("Restart the leveling guide from the beginning, e.g. for a new character?")) {
+	const restart = async () => {
+		if (await confirm("Restart the leveling guide from page 1, e.g. for a new character?", "Restart")) {
 			window.electron.postGuideReset().then(setGuide);
 		}
 	};
