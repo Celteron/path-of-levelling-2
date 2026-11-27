@@ -26,14 +26,15 @@ export class SettingsService {
 		mainWindow: BrowserWindow,
 		logWatcher: LogWatcherService
 	): boolean {
+		// Saving the same path again keeps the watcher: a restart skips the lines written since
+		// its last poll
+		const unchanged = newPath === this.getClientTxtPath() && objectFactory.getStateTracker().logWatcherActive;
+		if (unchanged) return true;
+
 		objectFactory.getStoreService().setGameSetting('clientTxtPath', newPath);
 
-		// Attempt to subscribe to the log watcher again.
-		//TODO there is a case here when someone has a valid path, changes it, then their
-		//TODO app still works until they log in next time. IDK what to do about that
-		if (!objectFactory.getStateTracker().logWatcherActive) {
-			logWatcher.watchClientTxt(mainWindow);
-		}
+		// Also restart a running watcher, it still watches the previous file
+		logWatcher.watchClientTxt(mainWindow);
 
 		//Return the result
 		return objectFactory.getStateTracker().logWatcherActive;

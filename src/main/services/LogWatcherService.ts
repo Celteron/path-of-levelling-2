@@ -25,6 +25,8 @@ export class LogWatcherService {
 
 	// The fs.watchFile is the watcher that gets changes from client.txt
 	watchClientTxt(mainWindow: BrowserWindow) {
+		// A new path replaces the file watched so far
+		this.stopWatching();
 		log.info("Trying to subscribe to Client.txt");
 		const filePathGuess = objectFactory.getSettingsService().getClientTxtPath();
 
@@ -120,7 +122,9 @@ export class LogWatcherService {
 	}
 
 	stopWatching() {
+		if (!this.watchedFilePath) return;
 		fs.unwatchFile(this.watchedFilePath);
+		this.watchedFilePath = "";
 	}
 
 	readNewLines(current: fs.Stats, previous: fs.Stats) {
