@@ -188,6 +188,12 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 		if (validOpacity.success) objectFactory.getSettingsService().saveOverlayOpacity(validOpacity.data);
 	});
 
+	ipcMainHandle("getCampaignRunsFolder", async () => objectFactory.getSettingsService().getCampaignRunsFolder());
+
+	ipcMainHandle("saveCampaignRunsFolder", async (_, folder) =>
+		objectFactory.getSettingsService().saveCampaignRunsFolder(folder),
+	);
+
 	// Handle events from the General Settings overlay
 	ipcMainHandle("getClientPath", async () => {
 		return objectFactory.getSettingsService().getClientTxtPath();

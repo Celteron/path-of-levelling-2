@@ -1,4 +1,5 @@
-import { BrowserWindow } from "electron";
+import { app, BrowserWindow } from "electron";
+import path from "path";
 import { LogWatcherService } from "./LogWatcherService.js";
 import { OverlayPosition, readOverlayOpacity } from "../zodSchemas/schemas.js";
 import { objectFactory } from "../objectFactory.js";
@@ -22,6 +23,20 @@ export class SettingsService {
 
 	saveOverlayOpacity(overlayOpacity: number) {
 		objectFactory.getStoreService().setGlobalSetting("overlayOpacity", overlayOpacity);
+	}
+
+	getCampaignRunsFolder(): string {
+		const folder = objectFactory.getStoreService().getGlobalSetting("campaignRunsFolder");
+		return folder || path.join(app.getPath("documents"), "PoL2");
+	}
+
+	/** Saves an absolute folder, or the default for an empty one; anything else keeps the folder */
+	saveCampaignRunsFolder(folder: unknown): string {
+		const trimmed = typeof folder === "string" ? folder.trim() : undefined;
+		if (trimmed === "" || (trimmed && path.isAbsolute(trimmed))) {
+			objectFactory.getStoreService().setGlobalSetting("campaignRunsFolder", trimmed);
+		}
+		return this.getCampaignRunsFolder();
 	}
 
 	getClientTxtPath(): string {

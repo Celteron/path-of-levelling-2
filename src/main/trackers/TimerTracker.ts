@@ -1,6 +1,9 @@
 import log from "electron-log";
 import { objectFactory } from "../objectFactory.js";
+import path from "path";
 import { StoreService } from "../services/StoreService.js";
+import { getProfile } from "../profiles/profiles.js";
+import { appendCampaignRun, bestActTimes } from "../campaignRunLog.js";
 import {
 	CampaignTimer,
 	campaignTimer,
@@ -20,8 +23,11 @@ export class TimerTracker {
 	init() {}
 
 	apply(event: TimerEvent) {
+		const wasFinished = this.timer.finished;
 		this.timer = campaignTimer(this.timer, event);
 		objectFactory.getStoreService().setGameSetting("campaignTimer", storedCampaignTimer(this.timer));
+		// Only a zone entry (the endgame town) finishes a run
+		if (event.type === "zoneEntered" && this.timer.finished && !wasFinished) this.recordRun(event.at);
 		log.info("Campaign timer", event.type, this.timer.acts.at(-1), this.timer.pauseReasons);
 	}
 
@@ -33,12 +39,24 @@ export class TimerTracker {
 		);
 	}
 
+	private recordRun(finishedAt: number) {
+		const run = { finishedAt, acts: this.timer.acts };
+		objectFactory.getStoreService().setGameSetting("campaignRuns", [...this.runs(), run]);
+		const folder = objectFactory.getSettingsService().getCampaignRunsFolder();
+		appendCampaignRun(path.join(folder, `pol2-campaign-runs-${getProfile().Id}.csv`), run);
+	}
+
+	private runs() {
+		return objectFactory.getStoreService().getGameSetting("campaignRuns") ?? [];
+	}
+
 	getTimerDto(): TimerDto {
 		return {
 			acts: this.timer.acts,
 			runningSince: this.timer.runningSince,
 			paused: this.timer.pauseReasons.length > 0,
 			finished: this.timer.finished,
+			bests: bestActTimes(this.runs()),
 		};
 	}
 }

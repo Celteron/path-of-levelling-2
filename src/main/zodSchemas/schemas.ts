@@ -64,6 +64,8 @@ export const GlobalSettingsZodSchema = z.object({
 	fontSize: z.number().default(11),
 	// .catch: a broken opacity must not fail validation, which would reset all global settings
 	overlayOpacity: StoredOverlayOpacityZodSchema.default(DEFAULT_OVERLAY_OPACITY),
+	/** Folder for the CSV file of finished campaign runs; empty means Documents/PoL2 */
+	campaignRunsFolder: z.string().catch("").default(""),
 });
 
 export type GlobalSettings = z.infer<typeof GlobalSettingsZodSchema>;
@@ -121,6 +123,11 @@ export const StoredCampaignTimerZodSchema = z.object({
 });
 const defaultCampaignTimer = { acts: [], finished: false };
 
+/** Finished runs, for the best time per act */
+export const CampaignRunsZodSchema = z.array(
+	z.object({ finishedAt: z.number(), acts: StoredCampaignTimerZodSchema.shape.acts }),
+);
+
 export const GameSettingsZodSchema = z.object({
 	version: z.number(),
 	clientTxtPath: z.string(),
@@ -129,6 +136,7 @@ export const GameSettingsZodSchema = z.object({
 	uiSettings: UiSettingsZodSchema,
 	levelingGuide: LevelingGuideSettingsZodSchema,
 	campaignTimer: StoredCampaignTimerZodSchema,
+	campaignRuns: CampaignRunsZodSchema,
 });
 
 // Default settings for each profile
@@ -151,6 +159,7 @@ export const DefaultPoE1GameSettings = GameSettingsZodSchema.extend({
 	}),
 	levelingGuide: LevelingGuideSettingsZodSchema.default(defaultLevelingGuideSettings),
 	campaignTimer: StoredCampaignTimerZodSchema.default(defaultCampaignTimer),
+	campaignRuns: CampaignRunsZodSchema.default([]),
 });
 
 export const DefaultPoE2GameSettings = GameSettingsZodSchema.extend({
@@ -171,6 +180,7 @@ export const DefaultPoE2GameSettings = GameSettingsZodSchema.extend({
 	}),
 	levelingGuide: LevelingGuideSettingsZodSchema.default(defaultLevelingGuideSettings),
 	campaignTimer: StoredCampaignTimerZodSchema.default(defaultCampaignTimer),
+	campaignRuns: CampaignRunsZodSchema.default([]),
 });
 
 export type GameSettings = z.infer<typeof GameSettingsZodSchema>;

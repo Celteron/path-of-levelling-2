@@ -13,6 +13,9 @@ declare global {
 			saveFontSize: (fontSize: number) => void;
 			getOverlayOpacity: () => Promise<number>;
 			saveOverlayOpacity: (overlayOpacity: number) => void;
+			getCampaignRunsFolder: () => Promise<string>;
+			/** Returns the folder in use afterwards: the default for an empty one, the old one for an invalid one */
+			saveCampaignRunsFolder: (folder: string) => Promise<string>;
 
 			// Client.txt tracking
 			getIsClientWatcherActive: () => Promise<boolean>;
