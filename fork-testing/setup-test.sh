@@ -41,11 +41,20 @@ echo "Node $(node --version), npm $(npm --version)"
 
 step "Laufendes PoL2 beenden"
 # Installed app (AppImage) and earlier test runs share the app name and would block the test build.
-# Match only real app processes: a broad name pattern would also hit shells whose command line
-# contains the repo URL.
+# Command line patterns alone also match shells that merely mention a path or the repo URL, so
+# shells are skipped by process name.
 stopped=0
-pkill -f -i 'levelling[^ /]*\.appimage|/\.mount_path' && stopped=1
-pkill -f "$TEST_DIR/node_modules/" && stopped=1
+stop_matching() {
+	local pid comm
+	for pid in $(pgrep -f -i "$1" || true); do
+		[ "$pid" = "$$" ] && continue
+		comm="$(cat "/proc/$pid/comm" 2>/dev/null)" || continue
+		case "$comm" in bash | sh | dash | zsh | fish | pgrep) continue ;; esac
+		kill "$pid" 2>/dev/null && stopped=1 && echo "beendet: $comm ($pid)"
+	done
+}
+stop_matching 'levelling[^ /]*\.appimage|/\.mount_path'
+stop_matching "$TEST_DIR/node_modules/"
 if [ "$stopped" = 1 ]; then sleep 2; else echo "nichts zu beenden"; fi
 
 step "Einstellungen sichern"
