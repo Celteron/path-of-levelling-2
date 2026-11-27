@@ -93,6 +93,13 @@ electron.contextBridge.exposeInMainWorld("electron", {
 	},
 	getLayoutImagePaths: async () => ipcRendererInvokeGet("getLayoutImagePaths"),
 
+	// Login/character select vs. game world
+	subscribeToGameWorldUpdates: (callback) => {
+		return ipcRendererOn("gameWorldUpdates", (_, args) => {
+			callback(args);
+		});
+	},
+
 	// Methods for the level tracker
 	subscribeToLevelUpdates: (callback) => {
 		return ipcRendererOn("subscribeToLevelUpdates", (_, args) => {
