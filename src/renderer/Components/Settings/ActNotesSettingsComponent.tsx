@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { confirmDiscardUnsavedChanges, useUnsavedChanges } from "./unsavedChanges";
 import { ActNote, LockNoteOption } from "../../../main/zodSchemas/schemas";
 
 function getLockButtonProps(lockNoteOption: LockNoteOption): {
@@ -32,7 +33,7 @@ function getLockButtonProps(lockNoteOption: LockNoteOption): {
     }
 }
 
-export function ActNotesSettingsComponent() {
+export function ActNotesSettingsComponent({ onUnsavedChangesChange }: { onUnsavedChangesChange?: (hasUnsavedChanges: boolean) => void }) {
     const [selectedBuild, setSelectedBuild] = useState("");
     const [allBuildNames, setAllBuildNames] = useState<string[]>([]);
     const [addingBuild, setAddingBuild] = useState(false);
@@ -40,6 +41,14 @@ export function ActNotesSettingsComponent() {
     const [buildToCopyName, setBuildToCopyName] = useState<string>("");
 
     const [editableActNotes, setEditableActNotes] = useState<ActNote[]>([]);
+    // Last state loaded from/saved to main, to detect unsaved edits
+    const [savedActNotes, setSavedActNotes] = useState<ActNote[]>([]);
+    const hasUnsavedChanges = useUnsavedChanges(savedActNotes, editableActNotes, onUnsavedChangesChange);
+
+    const loadActNotes = (actNotes: ActNote[]) => {
+        setEditableActNotes(actNotes);
+        setSavedActNotes(actNotes);
+    };
 
     // Load initial act names & notes from main
     useEffect(() => {
@@ -51,11 +60,13 @@ export function ActNotesSettingsComponent() {
             setSelectedBuild(response.buildName);
             setAllBuildNames(response.allBuildNames);
 
-            setEditableActNotes(response.allActNotes || []);
+            loadActNotes(response.allActNotes || []);
         });
     }, []);
 
     const handleBuildDropdownSelection = (event: React.ChangeEvent<HTMLSelectElement>) => {
+        if (!confirmDiscardUnsavedChanges(hasUnsavedChanges)) return;
+
         const value = event.target.value;
         if (value === "__add__") {
             setAddingBuild(true);
@@ -67,7 +78,7 @@ export function ActNotesSettingsComponent() {
                 setSelectedBuild(response.buildName);
                 setAllBuildNames(response.allBuildNames);
 
-                setEditableActNotes(response.allActNotes || []);
+                loadActNotes(response.allActNotes || []);
             });
         }
     };
@@ -80,7 +91,7 @@ export function ActNotesSettingsComponent() {
             setAddingBuild(false);
             setNewBuildName("");
 
-            setEditableActNotes(response.allActNotes || []);
+            loadActNotes(response.allActNotes || []);
         });
     };
 
@@ -92,7 +103,7 @@ export function ActNotesSettingsComponent() {
             window.electron.postDeleteBuildFromActNotes(selectedBuild).then((response) => {
                 setSelectedBuild(response.buildName);
                 setAllBuildNames(response.allBuildNames);
-                setEditableActNotes(response.allActNotes || []);
+                loadActNotes(response.allActNotes || []);
             });
         }
     };
@@ -104,7 +115,7 @@ export function ActNotesSettingsComponent() {
         };
         // Save notes in main process and use returned state to refresh local state
         window.electron.saveActNotesForBuild(payload).then((response) => {
-            setEditableActNotes(response.allActNotes || editableActNotes);
+            loadActNotes(response.allActNotes || editableActNotes);
         });
     };
 
@@ -117,7 +128,7 @@ export function ActNotesSettingsComponent() {
         };
 
         window.electron.postCopyActNotesFromBuild(payload).then((response) => {
-            setEditableActNotes(response.allActNotes || []);
+            loadActNotes(response.allActNotes || []);
         });
     };
 
