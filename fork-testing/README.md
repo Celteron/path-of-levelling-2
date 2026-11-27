@@ -7,9 +7,12 @@ aus `main`).
 ## 1. Setup
 
 Die Skripte beenden ein laufendes PoL2, sichern die Einstellungen, holen bzw. aktualisieren die
-Testversion in `~/pol2-test`, installieren alles und starten die App mit `npm run dev`. Das Terminal
-bleibt offen, solange getestet wird; beenden mit `Ctrl+C`. Für ein Update dasselbe Skript erneut
-ausführen.
+Testversion in `~/pol2-test`, installieren alles, **bauen die App wie ein Release** (ohne Dev-Server,
+ohne DevTools; dauert etwa eine Minute) und starten sie. Beenden über das Tray-Symbol → Quit oder
+`Ctrl+C` im Terminal. Für ein Update dasselbe Skript erneut ausführen. Die Terminal-Ausgaben sind
+englisch.
+
+Die Skripte sind reine Test-Helfer im Fork und gehören in keinen PR.
 
 **Wichtig:** Die Testversion nutzt denselben Einstellungsordner `Path Of Levelling 2` wie die
 installierte App. Deshalb das Backup; dafür werden die echten Notizen und Builds gleich mitgetestet.
@@ -22,12 +25,16 @@ nach `~/.local/share/pol2-test/` und nutzt sie nur für sich selbst. Git, curl, 
 
 1. In den **Desktop-Modus** wechseln. Im Spielmodus (Gaming Mode) zeigt SteamOS nur ein Fenster an,
    das Overlay ist dort unsichtbar.
+   Das Skript startet die App über XWayland (`--ozone-platform=x11`). Als native Wayland-App lässt
+   sich das Overlay nicht durchklicken und blockiert Maus und Tastatur des Spiels.
 2. Konsole (Konsole-App) öffnen und einfügen:
    ```bash
    curl -fsSL https://raw.githubusercontent.com/Celteron/path-of-levelling-2/develop/fork-testing/setup-test.sh -o /tmp/pol2-setup.sh
    bash /tmp/pol2-setup.sh
    ```
 3. PoE2 im Desktop-Modus über Steam starten.
+4. KDE (SteamOS-Desktop): die zwei Fensterregeln aus `docs/index.md` → „Additional Linux Setup Steps“
+   anlegen, falls noch nicht geschehen (Overlay über Vollbild-Spiel, kein blinkendes Taskleisten-Symbol).
 
 Andere Linux-Desktops mit Wayland/Hyprland: Fensterregeln aus `docs/common-issues.md` beachten.
 
@@ -40,11 +47,16 @@ irm https://raw.githubusercontent.com/Celteron/path-of-levelling-2/develop/fork-
 powershell -ExecutionPolicy Bypass -File $env:TEMP\pol2-setup.ps1
 ```
 
-### Testversion neu starten
+### Testversion neu starten (ohne neu zu bauen)
 
-Im Terminal `Ctrl+C`, dann die zweite Setup-Zeile erneut ausführen (`bash /tmp/pol2-setup.sh` bzw. den
-`powershell …`-Befehl). Das dauert dank fertiger Installation nur einige Sekunden länger als ein
-direkter Start und funktioniert auch mit dem vom Skript geladenen Node.
+Beenden (Tray → Quit oder `Ctrl+C`), dann direkt starten:
+- SteamOS/Linux: `~/pol2-test/dist/linux-unpacked/path-of-levelling-2 --ozone-platform=x11`
+- Windows: `& "$HOME\pol2-test\dist\win-unpacked\Path Of Levelling 2.exe"`
+
+### Notausgang
+
+Blockiert das Overlay Maus oder Tastatur: mit `Alt+Tab` ins Terminal und `Ctrl+C`. Geht das nicht,
+in einer anderen Konsole bzw. per SSH `pkill -f pol2-test/` ausführen.
 
 ## 2. Das eine, was man wissen muss
 
@@ -69,10 +81,8 @@ und die Zone.
 2. **Client.txt gefunden.** `Ctrl+Alt+S`, Seite General ansehen.
    *Erwartet:* Das Feld für den Client.txt-Pfad endet auf `logs/Client.txt` (bzw. `logs\Client.txt`),
    keine rote Fehlermeldung. Danach `Ctrl+Alt+S` zum Schließen.
-3. **Nur eine Instanz.** Während die Testversion läuft, ein zweites Terminal öffnen und Electron direkt
-   starten (braucht kein Node):
-   SteamOS/Linux `~/pol2-test/node_modules/electron/dist/electron ~/pol2-test`,
-   Windows `~\pol2-test\node_modules\electron\dist\electron.exe ~\pol2-test`.
+3. **Nur eine Instanz.** Während die Testversion läuft, ein zweites Terminal öffnen und den
+   Start-Befehl aus „Testversion neu starten“ ausführen.
    *Erwartet:* Der Befehl endet nach wenigen Sekunden von selbst, es erscheint kein zweites Overlay.
 
 ### B. Leveling-Guide
@@ -107,7 +117,8 @@ und die Zone.
     *Erwartet:* Ausgeschaltet (späterer Durchlauf) fallen einzelne Schritte oder ganze Seiten weg;
     eingeschaltet ist alles wieder da. Danach auf die passende Einstellung stellen
     (frische Liga = an).
-14. **Fortschritt bleibt.** Testversion beenden (`Ctrl+C` im Terminal) und neu starten (siehe oben).
+14. **Fortschritt bleibt.** Testversion beenden (Tray → Quit) und neu starten (siehe „Testversion neu
+    starten“).
     *Erwartet:* Guide auf derselben Seite, Fenster an derselben Position und in derselben Größe.
 15. **Guide neu beginnen.** `Ctrl+Alt+S`, Maus über den Guide, `Restart guide`; im Dialog erst
     Abbrechen, dann nochmal und OK.
