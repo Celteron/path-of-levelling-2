@@ -114,6 +114,13 @@ const defaultLevelingGuideSettings = {
 	overlayPosition: { x: 740, y: 24, height: "300px", width: "520px" },
 };
 
+/** Campaign timer as stored: settled time per act in order of first entry */
+export const StoredCampaignTimerZodSchema = z.object({
+	acts: z.array(z.object({ act: z.string(), ms: z.number().nonnegative() })),
+	finished: z.boolean(),
+});
+const defaultCampaignTimer = { acts: [], finished: false };
+
 export const GameSettingsZodSchema = z.object({
 	version: z.number(),
 	clientTxtPath: z.string(),
@@ -121,6 +128,7 @@ export const GameSettingsZodSchema = z.object({
 	lastSessionState: LastSessionStateZodSchema,
 	uiSettings: UiSettingsZodSchema,
 	levelingGuide: LevelingGuideSettingsZodSchema,
+	campaignTimer: StoredCampaignTimerZodSchema,
 });
 
 // Default settings for each profile
@@ -142,6 +150,7 @@ export const DefaultPoE1GameSettings = GameSettingsZodSchema.extend({
 		gemTrackerPosition: { x: 0, y: 377, height: "53px", width: "516px" },
 	}),
 	levelingGuide: LevelingGuideSettingsZodSchema.default(defaultLevelingGuideSettings),
+	campaignTimer: StoredCampaignTimerZodSchema.default(defaultCampaignTimer),
 });
 
 export const DefaultPoE2GameSettings = GameSettingsZodSchema.extend({
@@ -161,12 +170,14 @@ export const DefaultPoE2GameSettings = GameSettingsZodSchema.extend({
 		gemTrackerPosition: { x: 0, y: 377, height: "53px", width: "516px" },
 	}),
 	levelingGuide: LevelingGuideSettingsZodSchema.default(defaultLevelingGuideSettings),
+	campaignTimer: StoredCampaignTimerZodSchema.default(defaultCampaignTimer),
 });
 
 export type GameSettings = z.infer<typeof GameSettingsZodSchema>;
 export type LastSessionState = z.infer<typeof LastSessionStateZodSchema>;
 export type UiSettings = z.infer<typeof UiSettingsZodSchema>;
 export type OverlayPosition = z.infer<typeof OverlayPositionZodSchema>;
+export type StoredCampaignTimer = z.infer<typeof StoredCampaignTimerZodSchema>;
 
 // --- Type schemas for the Builds store --- //
 export const GemSetupZodSchema = z.object({

@@ -50,6 +50,8 @@ export function TrackerPanel({
 			position={{ x: position.x, y: position.y }}
 			onDragStop={onDragStop}
 			onResizeStop={onResizeStop}
+			// Panels may overlap; the one in use must not be covered by its neighbours
+			style={{ zIndex: isHovered || hasFocus || moveMode ? 1 : "auto" }}
 			bounds="parent"
 			disableDragging={!moveMode}
 			enableResizing={moveMode}

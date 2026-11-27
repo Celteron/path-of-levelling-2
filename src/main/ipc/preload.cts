@@ -94,6 +94,12 @@ electron.contextBridge.exposeInMainWorld("electron", {
 		ipcRendererOn("gameWorldUpdates", (_, inGameWorld) => callback(inGameWorld)),
 	getInGameWorld: async () => ipcRendererInvokeGet("getInGameWorld"),
 
+	// Campaign timer
+	subscribeToTimerUpdates: (callback) => ipcRendererOn("timerUpdates", (_, timer) => callback(timer)),
+	getTimerState: async () => ipcRendererInvokeGet("getTimerState"),
+	postTimerToggle: async () => ipcRendererInvokeGet("postTimerToggle"),
+	postTimerReset: async () => ipcRendererInvokeGet("postTimerReset"),
+
 	// Leveling guide
 	subscribeToGuideUpdates: (callback) => ipcRendererOn("guideUpdates", (_, guide) => callback(guide)),
 	getGuideState: async () => ipcRendererInvokeGet("getGuideState"),

@@ -952,6 +952,27 @@ react-draggable {
 	color: var(--panel-accent);
 }
 
+.CampaignTimer {
+	margin: 0;
+	padding: 2px 10px 4px;
+	font-variant-numeric: tabular-nums;
+}
+
+.CampaignTimer[data-state="paused"] {
+	color: var(--panel-muted);
+}
+
+.CampaignTimer[data-state="finished"] {
+	color: var(--panel-success);
+}
+
+.CampaignTimerActs {
+	margin: 0;
+	padding: 0 10px 6px 28px;
+	color: var(--panel-muted);
+	font-variant-numeric: tabular-nums;
+}
+
 /* Gem tracker */
 .GemLinks {
 	flex: 1;

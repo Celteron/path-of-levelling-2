@@ -71,6 +71,12 @@ type channelReturnTypeMapping = {
 	gameWorldUpdates: boolean;
 	getInGameWorld: boolean;
 
+	// Campaign timer
+	timerUpdates: TimerDto;
+	getTimerState: TimerDto;
+	postTimerToggle: TimerDto;
+	postTimerReset: TimerDto;
+
 	// Leveling Guide
 	guideUpdates: GuideDataDto;
 	getGuideState: GuideDataDto;
@@ -231,4 +237,13 @@ type GemDataDto = {
 	allGemSetupLevels: number[];
 	gemSetupLevel: number;
 	gemLinks: string[];
+};
+
+/** Campaign timer; the current act's time is acts' last ms plus the time since runningSince */
+type TimerDto = {
+	acts: { act: string; ms: number }[];
+	/** Date.now() at the start of the running interval; null while not counting */
+	runningSince: number | null;
+	paused: boolean;
+	finished: boolean;
 };

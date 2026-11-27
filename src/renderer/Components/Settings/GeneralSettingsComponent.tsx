@@ -128,6 +128,7 @@ export function GeneralSettingsComponent({
 					<p>Show/hide leveling guide: Ctrl+Alt+j</p>
 					<p>Leveling guide next/previous page: Ctrl+Alt+n / Ctrl+Alt+b</p>
 					<p>Show/hide all trackers: Ctrl+Alt+a</p>
+					<p>Pause/resume campaign timer: Ctrl+Alt+p</p>
 				</div>
 			</div>
 			<div className="ClientPathUpdaterWrapper">

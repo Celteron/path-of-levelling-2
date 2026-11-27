@@ -80,6 +80,12 @@ declare global {
 			subscribeToGameWorldUpdates: (callback: (inGameWorld: boolean) => void) => () => void;
 			getInGameWorld: () => Promise<boolean>;
 
+			// Campaign timer
+			subscribeToTimerUpdates: (callback: (timerDto: TimerDto) => void) => () => void;
+			getTimerState: () => Promise<TimerDto>;
+			postTimerToggle: () => Promise<TimerDto>;
+			postTimerReset: () => Promise<TimerDto>;
+
 			// Leveling guide
 			/** Returns an unsubscribe function */
 			subscribeToGuideUpdates: (callback: (guideDataDto: GuideDataDto) => void) => () => void;
