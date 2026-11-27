@@ -40,8 +40,13 @@ fi
 echo "Node $(node --version), npm $(npm --version)"
 
 step "Laufendes PoL2 beenden"
-# Installed app (AppImage) and earlier test runs share the app name and would block the test build
-pkill -f -i "path.of.levelling|pol2-test/node_modules/electron" && sleep 1 || echo "nichts zu beenden"
+# Installed app (AppImage) and earlier test runs share the app name and would block the test build.
+# Match only real app processes: a broad name pattern would also hit shells whose command line
+# contains the repo URL.
+stopped=0
+pkill -f -i 'levelling[^ /]*\.appimage|/\.mount_path' && stopped=1
+pkill -f "$TEST_DIR/node_modules/" && stopped=1
+if [ "$stopped" = 1 ]; then sleep 2; else echo "nichts zu beenden"; fi
 
 step "Einstellungen sichern"
 settings="$HOME/.config/Path Of Levelling 2"
