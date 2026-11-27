@@ -80,7 +80,7 @@ export function ActNotesSettingsComponent({
 		} else {
 			setAddingBuild(false);
 			// Post the change to main process and get back the new build selected
-			window.electron.postBuildSelectedFromActNotes(event.target.value).then((response) => {
+			window.electron.postBuildSelectedFromActNotes(value).then((response) => {
 				setSelectedBuild(response.buildName);
 				setAllBuildNames(response.allBuildNames);
 
