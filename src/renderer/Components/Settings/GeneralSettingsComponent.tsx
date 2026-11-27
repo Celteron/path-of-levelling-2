@@ -1,5 +1,4 @@
-import { electron } from "process";
-import { useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 
 export function GeneralSettingsComponent({
 	fontSize,
@@ -15,13 +14,12 @@ export function GeneralSettingsComponent({
 	// Setting up the Client Path inputs
 	const [clientPath, setClientPath] = useState("");
 	const [isClientPathSaveClicked, setIsClientPathSaveClicked] = useState(false);
-	const [isClientWatcherActive, setIsClientWatcherActive] = useState(Boolean);
+	const [isClientWatcherActive, setIsClientWatcherActive] = useState(false);
 
-	// This basically just records keystrokes in the input component so that the text
-	// is actually stored.
-	const handleClientPathChange = (event: any) => {
+	// An edited path is not saved yet, so the button goes back to "Save"
+	const handleClientPathChange = (event: ChangeEvent<HTMLInputElement>) => {
 		setClientPath(event.target.value);
-		setIsClientPathSaveClicked(true);
+		setIsClientPathSaveClicked(false);
 	};
 
 	// Setting up the Font Size inputs
@@ -54,7 +52,7 @@ export function GeneralSettingsComponent({
 
 	// Post the clientPath provided by the user and get a bool saying whether or not the
 	// log watcher was activated.
-	const handleSaveClientPathClicked = (event: any) => {
+	const handleSaveClientPathClicked = () => {
 		window.electron.saveClientPath(clientPath).then((isWatcherActive) => {
 			setIsClientWatcherActive(isWatcherActive);
 			setIsClientPathSaveClicked(true);
