@@ -69,8 +69,8 @@ run `pkill -f pol2-test/` in another console or via SSH.
 Go through it in order, ideally with a new character so the guide fits from the start. For every
 failure note: number, what happened, for the guide also the page (e.g. `12 / 136`) and the zone.
 
-**Round 2 (after the 2026-11-27 fixes):** run the setup script again, then retest 1, 4 and 10, test
-the new item 19 and the open items 16–18.
+**Round 3 (after the 2026-11-27 focus and dialog fixes):** run the setup script again, then test 16,
+17, 19 and the new item 20.
 
 ### A. Start and login
 
@@ -131,13 +131,20 @@ the new item 19 and the open items 16–18.
     nonsense and import once more.
     *Expected:* Gem setups appear sorted by level and are only kept after saving. Nonsense shows a red
     error and the old setups stay.
-17. **Unsaved changes.** Settings → Act Notes: type something, then click another page on the left.
-    *Expected:* A confirmation dialog. Cancel stays on the page, OK discards the change.
+17. **Unsaved changes, asked inside the overlay.** Settings → Act Notes: type something, then click
+    another page on the left.
+    *Expected:* A dark dialog appears inside the overlay (no separate KDE window). `Cancel` is
+    preselected and keeps the text, `Discard` drops it, `Esc` cancels.
 18. **No scrollbar (Linux only).** Look at the bottom edge of the screen while the overlay runs.
     *Expected:* No horizontal scrollbar.
-19. **Alt+Tab skips the overlay (KDE).** With the "Skip switcher" window rule from setup step 4, press
-    `Alt+Tab` in game.
-    *Expected:* The switcher goes straight to other windows (browser, terminal), never to the overlay.
+19. **Overlay hides when you leave the game.** First without the "Skip switcher" rule: open and close
+    the settings once (`Ctrl+Alt+S` twice), then switch to the browser with `Alt+Tab` or the taskbar.
+    *Expected:* The overlay disappears while the browser is in front and comes back with the game.
+    If `Alt+Tab` still stops on the overlay, add the "Skip switcher" rule from setup step 4 and retry.
+20. **Game gets the keyboard back after the settings.** Open the settings with `Ctrl+Alt+S`, type
+    something in a notes field, close them with `Ctrl+Alt+S` and move or use a skill right away.
+    *Expected:* Typing in the settings works, and after closing them the game reacts to the keyboard
+    immediately without clicking into it.
 
 ## 4. Reporting
 
