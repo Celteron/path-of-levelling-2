@@ -1,154 +1,154 @@
-# Fork-Testlauf (nur im Fork, nicht für Upstream)
+# Fork test run (fork only, not for upstream)
 
-Anleitung, um den Stand von `develop` im eigenen Spiel zu testen. Dieser Ordner existiert nur im Fork
-`Celteron/path-of-levelling-2` auf `develop` und gehört in keinen Upstream-PR (PR-Branches entstehen
-aus `main`).
+How to test the `develop` state in your own game. This folder only exists in the fork
+`Celteron/path-of-levelling-2` on `develop` and is never part of an upstream PR (PR branches start
+from `main`). It is a personal test guide, not project documentation.
 
 ## 1. Setup
 
-Die Skripte beenden ein laufendes PoL2, sichern die Einstellungen, holen bzw. aktualisieren die
-Testversion in `~/pol2-test`, installieren alles, **bauen die App wie ein Release** (ohne Dev-Server,
-ohne DevTools; dauert etwa eine Minute) und starten sie. Beenden über das Tray-Symbol → Quit oder
-`Ctrl+C` im Terminal. Für ein Update dasselbe Skript erneut ausführen. Die Terminal-Ausgaben sind
-englisch.
+The scripts stop a running PoL2, back up the settings, fetch or update the test build in
+`~/pol2-test`, install everything, **build the app like a release** (no dev server, no DevTools; takes
+about a minute) and start it. Stop it via the tray icon → Quit or `Ctrl+C` in the terminal. To update,
+run the same script again.
 
-Die Skripte sind reine Test-Helfer im Fork und gehören in keinen PR.
-
-**Wichtig:** Die Testversion nutzt denselben Einstellungsordner `Path Of Levelling 2` wie die
-installierte App. Deshalb das Backup; dafür werden die echten Notizen und Builds gleich mitgetestet.
+**Important:** the test build uses the same settings folder `Path Of Levelling 2` as the installed app.
+That is why the script makes a backup; in return your real notes and builds are tested as well.
 
 ### SteamOS / Linux
 
-SteamOS hat ein schreibgeschütztes System und kein Node.js. Das Skript braucht trotzdem kein Root und
-kein `pacman`: Fehlt Node.js 22+, lädt es eine fest gepinnte Node-Version (Prüfsumme wird geprüft)
-nach `~/.local/share/pol2-test/` und nutzt sie nur für sich selbst. Git, curl, tar und xz bringt SteamOS mit.
+SteamOS has a read-only system and no Node.js. The script still needs neither root nor `pacman`: if
+Node.js 22+ is missing, it downloads a pinned Node build (checksum verified) to
+`~/.local/share/pol2-test/` and only uses it for itself. SteamOS ships Git, curl, tar and xz.
 
-1. In den **Desktop-Modus** wechseln. Im Spielmodus (Gaming Mode) zeigt SteamOS nur ein Fenster an,
-   das Overlay ist dort unsichtbar.
-   Das Skript startet die App über XWayland (`--ozone-platform=x11`). Als native Wayland-App lässt
-   sich das Overlay nicht durchklicken und blockiert Maus und Tastatur des Spiels.
-2. Konsole (Konsole-App) öffnen und einfügen:
+1. Switch to **Desktop Mode**. Game Mode only shows one window, the overlay is invisible there.
+   The script starts the app through XWayland (`--ozone-platform=x11`). As a native Wayland app the
+   overlay cannot be clicked through and blocks mouse and keyboard of the game.
+2. Open Konsole and paste:
    ```bash
    curl -fsSL https://raw.githubusercontent.com/Celteron/path-of-levelling-2/develop/fork-testing/setup-test.sh -o /tmp/pol2-setup.sh
    bash /tmp/pol2-setup.sh
    ```
-3. PoE2 im Desktop-Modus über Steam starten.
-4. KDE (SteamOS-Desktop): die zwei Fensterregeln aus `docs/index.md` → „Additional Linux Setup Steps“
-   anlegen, falls noch nicht geschehen (Overlay über Vollbild-Spiel, kein blinkendes Taskleisten-Symbol).
+   The line `Version:` shows the tested commit. GitHub may serve a new script a few minutes late.
+3. Start PoE2 in Desktop Mode through Steam.
+4. KDE (SteamOS desktop): create the two window rules from `docs/index.md` → "Additional Linux Setup
+   Steps" if not done yet (overlay above the fullscreen game, no flashing taskbar icon). In the
+   taskbar rule, also set **Skip switcher: Force, Yes**, so `Alt+Tab` never lands on the overlay.
 
-Andere Linux-Desktops mit Wayland/Hyprland: Fensterregeln aus `docs/common-issues.md` beachten.
+Other Linux desktops with Wayland/Hyprland: see the window rules in `docs/common-issues.md`.
 
 ### Windows
 
-Vorher [Git](https://git-scm.com) und [Node.js 22 LTS oder neuer](https://nodejs.org) installieren.
-Dann in PowerShell:
+Install [Git](https://git-scm.com) and [Node.js 22 LTS or newer](https://nodejs.org) first. Then in
+PowerShell:
 ```powershell
 irm https://raw.githubusercontent.com/Celteron/path-of-levelling-2/develop/fork-testing/setup-test.ps1 -OutFile $env:TEMP\pol2-setup.ps1
 powershell -ExecutionPolicy Bypass -File $env:TEMP\pol2-setup.ps1
 ```
 
-### Testversion neu starten (ohne neu zu bauen)
+### Restart the test build (without rebuilding)
 
-Beenden (Tray → Quit oder `Ctrl+C`), dann direkt starten:
+Quit (tray → Quit or `Ctrl+C`), then start it directly:
 - SteamOS/Linux: `~/pol2-test/dist/linux-unpacked/path-of-levelling-2 --ozone-platform=x11`
 - Windows: `& "$HOME\pol2-test\dist\win-unpacked\Path Of Levelling 2.exe"`
 
-### Notausgang
+### Emergency exit
 
-Blockiert das Overlay Maus oder Tastatur: mit `Alt+Tab` ins Terminal und `Ctrl+C`. Geht das nicht,
-in einer anderen Konsole bzw. per SSH `pkill -f pol2-test/` ausführen.
+If the overlay blocks mouse or keyboard: `Alt+Tab` to the terminal and `Ctrl+C`. If that does not work,
+run `pkill -f pol2-test/` in another console or via SSH.
 
-## 2. Das eine, was man wissen muss
+## 2. The one thing to know
 
-- **Im Spiel ignoriert das Overlay die Maus.** Für Klicks oder Hover in einem PoL2-Fenster zuerst
-  `Ctrl+Alt+S` drücken (Settings öffnen), danach wieder `Ctrl+Alt+S`.
-- Hotkeys: `Ctrl+Alt+N` / `Ctrl+Alt+B` Guide vor/zurück, `Ctrl+Alt+J` Guide ein/aus,
-  `Ctrl+Alt+A` alle Fenster ein/aus, `Ctrl+Alt+S` Settings.
-- Die App liest die Client.txt etwa alle 5 Sekunden. Reaktionen auf Zonenwechsel kommen also mit
-  bis zu 5 Sekunden Verzögerung.
+- **In game the overlay ignores the mouse.** To click or hover in a PoL2 window, press `Ctrl+Alt+S`
+  first (opens the settings), and `Ctrl+Alt+S` again afterwards.
+- Hotkeys: `Ctrl+Alt+N` / `Ctrl+Alt+B` next/previous guide page, `Ctrl+Alt+J` show/hide guide,
+  `Ctrl+Alt+A` show/hide all windows, `Ctrl+Alt+S` settings.
+- The app reads Client.txt about every 5 seconds, so reactions to zone changes take up to 5 seconds.
 
-## 3. Checkliste
+## 3. Checklist
 
-Der Reihe nach durchgehen. Am besten mit einem neuen Charakter, dann passt der Guide von Anfang an.
-Bei jedem Fehler notieren: Nummer, was passiert ist, beim Guide zusätzlich die Seite (z. B. `12 / 136`)
-und die Zone.
+Go through it in order, ideally with a new character so the guide fits from the start. For every
+failure note: number, what happened, for the guide also the page (e.g. `12 / 136`) and the zone.
 
-### A. Start und Login
+**Round 2 (after the 2026-11-27 fixes):** run the setup script again, then retest 1, 4 and 10, test
+the new item 19 and the open items 16–18.
 
-1. **Overlay im Login versteckt.** PoE2 starten und im Login-Bildschirm, danach in der
-   Charakterauswahl warten.
-   *Erwartet:* Keine PoL2-Fenster sichtbar.
-2. **Client.txt gefunden.** `Ctrl+Alt+S`, Seite General ansehen.
-   *Erwartet:* Das Feld für den Client.txt-Pfad endet auf `logs/Client.txt` (bzw. `logs\Client.txt`),
-   keine rote Fehlermeldung. Danach `Ctrl+Alt+S` zum Schließen.
-3. **Nur eine Instanz.** Während die Testversion läuft, ein zweites Terminal öffnen und den
-   Start-Befehl aus „Testversion neu starten“ ausführen.
-   *Erwartet:* Der Befehl endet nach wenigen Sekunden von selbst, es erscheint kein zweites Overlay.
+### A. Start and login
 
-### B. Leveling-Guide
+1. **Overlay hidden at login, also right after starting.** Start the test build while PoE2 is at the
+   login or character select screen (and once while you are in game).
+   *Expected:* At login/character select no PoL2 windows are visible, not even right after the start.
+   In game they appear within a few seconds.
+2. **Client.txt found.** `Ctrl+Alt+S`, look at the General page.
+   *Expected:* The Client.txt path ends with `logs/Client.txt` (or `logs\Client.txt`), no red error.
+   Close with `Ctrl+Alt+S`.
+3. **Single instance.** While the test build runs, open a second terminal and run the start command
+   from "Restart the test build".
+   *Expected:* The command ends by itself after a few seconds, no second overlay appears.
 
-4. **Guide erscheint.** Charakter einloggen.
-   *Erwartet:* Die Overlay-Fenster erscheinen. Das Guide-Fenster zeigt oben `Act 1`, rechts daneben
-   `→ <Zielzone>` und den Zähler `1 / 136`, darunter nummerierte Schritte. Kürzel wie `CP`
-   (Checkpoint), `WP` (Waypoint) oder `!` (Quest) sind Platzhalter für Symbole.
-5. **Fenster platzieren.** `Ctrl+Alt+S`, Maus über das Guide-Fenster: unten erscheint eine Leiste.
-   Dort `Move/Resize` klicken, Fenster ziehen und an der Ecke rechts unten die Größe ändern,
-   `Done` klicken, `Ctrl+Alt+S`.
-   *Erwartet:* Verschieben und Größe ändern klappen (Prüfung nach Neustart in Schritt 14).
-6. **Automatisch weiter.** Die Zielzone hinter `→` merken, normal spielen und diese Zone betreten.
-   *Erwartet:* Spätestens nach 5 Sekunden springt der Zähler um eins weiter und die nächsten Schritte
-   erscheinen.
-7. **Bleibt stehen.** Zwischendurch Zonen betreten, die nicht das Ziel sind (z. B. Stadt, Nebengebiet).
-   *Erwartet:* Seite und Zähler ändern sich nicht.
-8. **Kurzer Durchgang.** Eine Zielzone mit Waypoint betreten und sofort per Waypoint weiterreisen.
-   *Erwartet:* Der Guide springt trotzdem weiter.
-9. **Level-Empfehlung.** Den Level-Tracker ansehen (`Level Diff …`, `Exp Multi …`).
-   *Erwartet:* In Kampfgebieten steht zusätzlich `Zone: x | y` (empfohlenes Charakterlevel, z. B.
-   `Zone: 2 | 2` im Grelwood), in Städten nicht.
-10. **Blättern.** `Ctrl+Alt+N`, danach `Ctrl+Alt+B`.
-    *Erwartet:* Zähler eins vor, dann wieder zurück.
-11. **Ein- und ausblenden.** `Ctrl+Alt+J` zweimal, danach `Ctrl+Alt+A` zweimal.
-    *Erwartet:* Erst verschwindet nur der Guide und kommt wieder; dann verschwinden alle Fenster
-    gemeinsam und kommen gemeinsam wieder.
-12. **Optionale Schritte.** `Ctrl+Alt+S`, Maus über den Guide, `Optional steps` klicken; nochmal klicken.
-    *Erwartet:* Die grauen (optionalen) Schritte verschwinden und der Button wird blass; beim zweiten
-    Klick ist alles wieder da.
-13. **League Start.** Ebenso `League start` aus- und wieder einschalten.
-    *Erwartet:* Ausgeschaltet (späterer Durchlauf) fallen einzelne Schritte oder ganze Seiten weg;
-    eingeschaltet ist alles wieder da. Danach auf die passende Einstellung stellen
-    (frische Liga = an).
-14. **Fortschritt bleibt.** Testversion beenden (Tray → Quit) und neu starten (siehe „Testversion neu
-    starten“).
-    *Erwartet:* Guide auf derselben Seite, Fenster an derselben Position und in derselben Größe.
-15. **Guide neu beginnen.** `Ctrl+Alt+S`, Maus über den Guide, `Restart guide`; im Dialog erst
-    Abbrechen, dann nochmal und OK.
-    *Erwartet:* Abbrechen ändert nichts, OK setzt auf `1 / 136`. Danach mit `Ctrl+Alt+N` zur
-    aktuellen Seite zurückblättern.
+### B. Leveling guide
 
-### C. Übrige Änderungen
+4. **Guide appears together with the other windows.** Log in a character, do not press any hotkey.
+   *Expected:* The guide window appears at the same time as the other PoL2 windows: `Act 1` at the
+   top, next to it `→ <target zone>` and the counter `1 / 136`, numbered steps below. Badges like `CP`
+   (checkpoint), `WP` (waypoint) or `!` (quest) stand for icons.
+5. **Place the window.** `Ctrl+Alt+S`, hover the guide window: a bar appears at the bottom. Click
+   `Move/Resize`, drag the window and resize it at the bottom right corner, click `Done`,
+   `Ctrl+Alt+S`.
+   *Expected:* Moving and resizing work (persistence is checked in step 14).
+6. **Advances by itself.** Remember the target zone after `→`, play normally and enter that zone.
+   *Expected:* Within 5 seconds the counter goes up by one and the next steps appear.
+7. **Stays put.** Enter zones that are not the target (town, side areas).
+   *Expected:* Page and counter do not change.
+8. **Quick pass.** Enter a target zone with a waypoint and travel on by waypoint right away.
+   *Expected:* The guide still advances.
+9. **Level recommendation.** Look at the level tracker (`Level Diff …`, `Exp Multi …`).
+   *Expected:* In combat zones it also shows `Zone: x | y` (recommended character level, e.g.
+   `Zone: 2 | 2` in the Grelwood), not in towns.
+10. **Change pages by hotkey.** Without opening the settings, press `Ctrl+Alt+N` (next page), then
+    `Ctrl+Alt+B` (previous page) and watch the counter at the top right of the guide window.
+    *Expected:* `4 / 136` becomes `5 / 136`, then `4 / 136` again (numbers depend on your progress).
+    With the settings open, the `‹` `›` buttons next to the counter do the same.
+11. **Show and hide.** Press `Ctrl+Alt+J` twice, then `Ctrl+Alt+A` twice.
+    *Expected:* First only the guide disappears and comes back; then all windows disappear and come
+    back together.
+12. **Optional steps.** `Ctrl+Alt+S`, hover the guide, click `Optional steps`, then click again.
+    *Expected:* The grey (optional) steps disappear and the button turns pale; after the second click
+    everything is back.
+13. **League start.** Turn `League start` off and on again the same way.
+    *Expected:* Off (later playthrough) some steps or whole pages disappear; on brings them back. Set it
+    to what fits you afterwards (fresh league = on).
+14. **Progress is kept.** Play a few pages further, quit the test build (tray → Quit) and restart it.
+    *Expected:* Guide on the same page, window at the same position and size.
+15. **Restart the guide.** `Ctrl+Alt+S`, hover the guide, `Restart guide`; cancel the dialog first,
+    then again and confirm.
+    *Expected:* Cancel changes nothing, OK sets the guide to `1 / 136`. Page back to your progress with
+    `Ctrl+Alt+N` afterwards.
 
-16. **PoB-Import.** In Path of Building einen Build als Code exportieren oder einen pobb.in-Link
-    kopieren. In PoL2: `Ctrl+Alt+S` → Gems → in das Feld neben `Import from PoB` einfügen → klicken.
-    Zusätzlich einmal Unsinn einfügen und importieren.
-    *Erwartet:* Die Gem-Setups erscheinen nach Level sortiert und werden erst mit Speichern übernommen.
-    Bei Unsinn erscheint eine rote Fehlermeldung und die alten Setups bleiben.
-17. **Ungespeicherte Änderungen.** Settings → Act Notes: etwas tippen, dann links eine andere Seite
-    anklicken.
-    *Erwartet:* Rückfrage wegen ungespeicherter Änderungen. Abbrechen bleibt auf der Seite,
-    OK verwirft die Änderung.
-18. **Kein Scrollbalken (nur Linux).** Unteren Bildschirmrand ansehen, während das Overlay läuft.
-    *Erwartet:* Kein horizontaler Scrollbalken.
+### C. Other changes
 
-## 4. Ergebnis melden
+16. **PoB import.** In Path of Building export the build as code or copy a pobb.in link. In PoL2:
+    `Ctrl+Alt+S` → Gems → paste into the field next to `Import from PoB` → click. Then paste some
+    nonsense and import once more.
+    *Expected:* Gem setups appear sorted by level and are only kept after saving. Nonsense shows a red
+    error and the old setups stay.
+17. **Unsaved changes.** Settings → Act Notes: type something, then click another page on the left.
+    *Expected:* A confirmation dialog. Cancel stays on the page, OK discards the change.
+18. **No scrollbar (Linux only).** Look at the bottom edge of the screen while the overlay runs.
+    *Expected:* No horizontal scrollbar.
+19. **Alt+Tab skips the overlay (KDE).** With the "Skip switcher" window rule from setup step 4, press
+    `Alt+Tab` in game.
+    *Expected:* The switcher goes straight to other windows (browser, terminal), never to the overlay.
 
-- Nummern mit Fehler plus kurze Beschreibung (Guide: Seite und Zone).
-- Bei Abstürzen die Log-Datei: Linux/SteamOS `~/.config/Path Of Levelling 2/logs/main.log`,
+## 4. Reporting
+
+- Failed numbers with a short description (guide: page and zone). A screenshot helps.
+- On crashes, the log file: Linux/SteamOS `~/.config/Path Of Levelling 2/logs/main.log`,
   Windows `%APPDATA%\Path Of Levelling 2\logs\main.log`.
-- Fehlgeschlagenes Setup: die Terminal-Ausgabe ab der letzten `==>`-Zeile.
+- Failed setup: the terminal output from the last `==>` line on.
 
-## 5. Zurück zur normalen App
+## 5. Back to the normal app
 
-Terminal mit `Ctrl+C` beenden und die installierte App wie gewohnt starten. Die Testversion ergänzt
-nur eigene Einstellungen, die die alte App ignoriert. Wer trotzdem zurück will: den Ordner
-`Path Of Levelling 2` löschen und das neueste `Path Of Levelling 2-backup-…` in
-`Path Of Levelling 2` umbenennen (Linux/SteamOS unter `~/.config`, Windows unter `%APPDATA%`).
+Quit the test build and start the installed app as usual. The test build only adds its own settings,
+which the old app ignores. To go back anyway: delete the folder `Path Of Levelling 2` and rename the
+newest `Path Of Levelling 2-backup-…` to `Path Of Levelling 2` (Linux/SteamOS in `~/.config`, Windows in
+`%APPDATA%`).
