@@ -12,7 +12,9 @@
 
 html {
 	height: 100%;
-	overflow: visible;
+	/* The overlay covers the game window and must never scroll: a panel dragged past the edge
+	   would otherwise add a horizontal scrollbar (the rule above only hides vertical ones) */
+	overflow: hidden;
 }
 
 body {
