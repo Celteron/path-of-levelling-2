@@ -13,7 +13,7 @@ import { getProfile } from "./profiles/profiles.js";
 import { ipcMainHandle, ipcWebContentsSend } from "./ipc/ipcWrappers.js";
 import { toggleAllTrackers } from "./trackers/trackerVisibility.js";
 import { HotkeyAction, registerHotkeys } from "./hotkeys.js";
-import { importPob } from "./pob/pobImport.js";
+import { importPob, readPobDownload } from "./pob/pobImport.js";
 import { GuidePrefsZodSchema, SaveNoteZodSchema, OverlayOpacityZodSchema } from "./zodSchemas/schemas.js";
 
 // Only allow one instance of the app
@@ -597,7 +597,7 @@ function hotkeyHandlers(mainWindow: BrowserWindow): Record<HotkeyAction, () => v
 async function downloadPobExport(url: string): Promise<string> {
 	const response = await net.fetch(url, { signal: AbortSignal.timeout(10_000) });
 	if (!response.ok) throw new Error(`PoB download failed with HTTP ${response.status}: ${url}`);
-	return response.text();
+	return readPobDownload(response);
 }
 
 //-----------------------testing

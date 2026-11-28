@@ -4,13 +4,16 @@ import type { GemSetup } from "../zodSchemas/schemas.js";
 // Pure Path of Building import without Electron imports, so it can be unit tested.
 // PoB's XML is flat and machine-written, so a few regexes are enough and avoid an XML dependency.
 
+/** Far above any real build (a few hundred KB); a crafted code could otherwise unpack to gigabytes */
+const MAX_POB_XML_BYTES = 16 * 1024 * 1024;
+
 /** Decodes a PoB export code (URL-safe base64 of zlib-deflated XML). Undefined if invalid. */
 export function decodePobCode(code: string): string | undefined {
 	const base64 = code.replace(/\s/g, "").replace(/-/g, "+").replace(/_/g, "/");
 	if (!base64) return undefined;
 
 	try {
-		return inflateSync(Buffer.from(base64, "base64")).toString("utf-8");
+		return inflateSync(Buffer.from(base64, "base64"), { maxOutputLength: MAX_POB_XML_BYTES }).toString("utf-8");
 	} catch {
 		return undefined;
 	}
@@ -25,14 +28,15 @@ export function decodePobCode(code: string): string | undefined {
 export function gemSetupsFromPobXml(xml: string): GemSetup[] | undefined {
 	if (!xml.includes("<PathOfBuilding2>")) return undefined;
 
-	const skillSets = Array.from(xml.matchAll(/<SkillSet\b([^>]*)>([\s\S]*?)<\/SkillSet>/g));
+	// Empty skill sets may be self-closing; matching them separately keeps them from swallowing the next set
+	const skillSets = Array.from(xml.matchAll(/<SkillSet\b([^>]*?)(?:\/>|>([\s\S]*?)<\/SkillSet>)/g));
 	let previousLevel = 0;
 
 	const gemSetups = skillSets
 		.map(([, attributes, body]) => {
 			const level = levelFromTitle(readAttributes(attributes).title ?? "") ?? previousLevel + 1;
 			previousLevel = level;
-			return { level, gemLinks: gemLinksFromSkillSet(body), gemSources: [] };
+			return { level, gemLinks: gemLinksFromSkillSet(body ?? ""), gemSources: [] };
 		})
 		.filter((gemSetup) => gemSetup.gemLinks.length > 0)
 		.sort((a, b) => a.level - b.level);
@@ -47,10 +51,10 @@ function levelFromTitle(title: string): number | undefined {
 }
 
 function gemLinksFromSkillSet(skillSetBody: string): string[] {
-	return Array.from(skillSetBody.matchAll(/<Skill\b([^>]*)>([\s\S]*?)<\/Skill>/g))
+	return Array.from(skillSetBody.matchAll(/<Skill\b([^>]*?)(?:\/>|>([\s\S]*?)<\/Skill>)/g))
 		.filter(([, attributes]) => readAttributes(attributes).enabled !== "false")
 		.map(([, , skillBody]) => {
-			const gems = Array.from(skillBody.matchAll(/<Gem\b([^>]*?)\/?>/g))
+			const gems = Array.from((skillBody ?? "").matchAll(/<Gem\b([^>]*?)\/?>/g))
 				.map(([, attributes]) => readAttributes(attributes))
 				.filter((gem) => gem.enabled !== "false" && gem.nameSpec);
 			// Active gem first, then its supports, regardless of the order in PoB. Support ids are
@@ -81,6 +85,27 @@ const pasteSites: { pattern: RegExp; rawUrl: (id: string) => string }[] = [
 		rawUrl: (id) => `https://pastebin.com/raw/${id}`,
 	},
 ];
+
+/** Export codes are a few hundred KB at most; a larger download is not a PoB export */
+const MAX_POB_DOWNLOAD_BYTES = 2 * 1024 * 1024;
+
+/** The text of a PoB download, read in chunks so an endless or huge response can't exhaust memory */
+export async function readPobDownload(response: Response): Promise<string> {
+	const reader = response.body?.getReader();
+	if (!reader) return "";
+
+	const chunks: Uint8Array[] = [];
+	let size = 0;
+	for (let chunk = await reader.read(); !chunk.done; chunk = await reader.read()) {
+		size += chunk.value.byteLength;
+		if (size > MAX_POB_DOWNLOAD_BYTES) {
+			await reader.cancel();
+			throw new Error(`PoB download too large: more than ${MAX_POB_DOWNLOAD_BYTES} bytes`);
+		}
+		chunks.push(chunk.value);
+	}
+	return Buffer.concat(chunks).toString("utf-8");
+}
 
 /** Raw export URL for a pobb.in/pastebin link, undefined for anything else */
 export function pobDownloadUrl(input: string): string | undefined {
