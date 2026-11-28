@@ -2,6 +2,7 @@ import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { useConfirmDiscardUnsavedChanges, useUnsavedChanges } from "./unsavedChanges";
 import { useConfirm } from "../useConfirm";
 import { LockNoteOption } from "../../../main/zodSchemas/schemas";
+import { BUILD_NAME_MAX_LENGTH, parseBuildName } from "../../../main/buildName";
 
 type EditableNote = { lockNoteOption: LockNoteOption; notes: string };
 
@@ -102,8 +103,8 @@ export function NotesSettingsPage<Note extends EditableNote>({
 		});
 	}, []);
 
-	const trimmedNewBuildName = newBuildName.trim();
-	const canAddBuild = trimmedNewBuildName !== "" && !allBuildNames.includes(trimmedNewBuildName);
+	const parsedNewBuildName = parseBuildName(newBuildName);
+	const canAddBuild = parsedNewBuildName !== undefined && !allBuildNames.includes(parsedNewBuildName);
 	const notesName = title.toLowerCase();
 	const canCopy = buildToCopyName !== selectedBuild && allBuildNames.includes(buildToCopyName);
 
@@ -121,8 +122,8 @@ export function NotesSettingsPage<Note extends EditableNote>({
 	};
 
 	const handleAddBuild = () => {
-		if (!canAddBuild) return;
-		api.addBuild(trimmedNewBuildName).then((state) => {
+		if (parsedNewBuildName === undefined || !canAddBuild) return;
+		api.addBuild(parsedNewBuildName).then((state) => {
 			loadState(state);
 			setAddingBuild(false);
 			setNewBuildName("");
@@ -283,6 +284,7 @@ export function NotesSettingsPage<Note extends EditableNote>({
 						value={newBuildName}
 						onChange={(event) => setNewBuildName(event.target.value)}
 						placeholder="Enter new build name"
+						maxLength={BUILD_NAME_MAX_LENGTH}
 						className="NotesSettingsAddBuildInput"
 					/>
 					<button

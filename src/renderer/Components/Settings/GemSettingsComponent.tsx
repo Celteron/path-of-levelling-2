@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { GemSetup } from "../../../main/zodSchemas/schemas";
+import { BUILD_NAME_MAX_LENGTH, parseBuildName } from "../../../main/buildName";
 import { useConfirmDiscardUnsavedChanges, useUnsavedChanges } from "./unsavedChanges";
 import { useConfirm } from "../useConfirm";
 
@@ -64,9 +65,12 @@ export function GemSettingsComponent({
 		}
 	};
 
+	const parsedNewBuildName = parseBuildName(newBuildName);
+	const canAddBuild = parsedNewBuildName !== undefined && !allBuildNames.includes(parsedNewBuildName);
+
 	const handleAddBuild = () => {
-		if (!newBuildName.trim() || allBuildNames.includes(newBuildName.trim())) return;
-		window.electron.postAddNewBuild(newBuildName.trim()).then((response) => {
+		if (parsedNewBuildName === undefined || !canAddBuild) return;
+		window.electron.postAddNewBuild(parsedNewBuildName).then((response) => {
 			setSelectedBuild(response.buildName);
 			setAllBuildNames(response.allBuildNames);
 			setallGemSetups(response.allGemSetups);
@@ -188,13 +192,10 @@ export function GemSettingsComponent({
 						value={newBuildName}
 						onChange={(e) => setNewBuildName(e.target.value)}
 						placeholder="Enter new build name"
+						maxLength={BUILD_NAME_MAX_LENGTH}
 						className="GemSettingsAddBuildInput"
 					/>
-					<button
-						className="GemSettingsAddBuildButton"
-						onClick={handleAddBuild}
-						disabled={!newBuildName.trim() || allBuildNames.includes(newBuildName.trim())}
-					>
+					<button className="GemSettingsAddBuildButton" onClick={handleAddBuild} disabled={!canAddBuild}>
 						Create
 					</button>
 				</div>
