@@ -1,7 +1,7 @@
 import { GuidePage, GuideStep, LevelingGuide, LevelingGuideZodSchema, RecommendedLevel } from "./zodSchemas/schemas.js";
 
 // Pure leveling guide logic without Electron imports, so it can be unit tested.
-// Page targets and auto-advance follow Exile UI, where the guide data comes from.
+// The guide data is optional (a local file); without it the guide is disabled.
 
 export interface GuidePrefs {
 	/** League start shows "leaguestart" pages/steps, later runs show "twinkrun" ones */
@@ -27,7 +27,7 @@ export function visibleSteps(page: GuidePage, prefs: GuidePrefs): GuideStep[] {
 
 /**
  * The zone that completes a page: the last zone link in its steps (hints excluded). Optional
- * steps count, like in Exile UI, so hiding them does not change where the guide advances.
+ * steps count too, so hiding them does not change where the guide advances.
  */
 export function pageTarget(page: GuidePage, leagueStart: boolean): string | null {
 	let target: string | null = null;
@@ -118,7 +118,6 @@ export interface GuideView extends GuidePrefs {
 	actName: string;
 	steps: GuideStep[];
 	targetZoneName: string | null;
-	sourceVersion: string;
 }
 
 export function guideView(guide: LevelingGuide | null, pageIndex: number, prefs: GuidePrefs): GuideView {
@@ -131,7 +130,6 @@ export function guideView(guide: LevelingGuide | null, pageIndex: number, prefs:
 			actName: "",
 			steps: [],
 			targetZoneName: null,
-			sourceVersion: "",
 			...prefs,
 		};
 	}
@@ -144,7 +142,6 @@ export function guideView(guide: LevelingGuide | null, pageIndex: number, prefs:
 		actName: guide.acts[page.act]?.name ?? "",
 		steps: visibleSteps(page, prefs),
 		targetZoneName: target ? (guide.areas[target]?.name ?? target) : null,
-		sourceVersion: guide.source.version,
 		...prefs,
 	};
 }

@@ -13,10 +13,6 @@ export function AboutSettingsComponent() {
 			<p>Version 0.1.36</p>
 			<p>Created by Kami Guru</p>
 			<p>Special thanks to Lolcohol for the layout images, and RayOfSunshine for the additional assets.</p>
-			<p>
-				PoE2 leveling guide and zone level recommendations from{" "}
-				<a href="https://github.com/Lailloken/Exile-UI">Exile UI</a> by Lailloken (MIT License).
-			</p>
 		</div>
 	);
 }

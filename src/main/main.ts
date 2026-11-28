@@ -147,7 +147,7 @@ function updateTimer(mainWindow: BrowserWindow, event: TimerEvent) {
 	ipcWebContentsSend("timerUpdates", mainWindow.webContents, objectFactory.getTimerTracker().getTimerDto());
 }
 
-/** Like Exile UI, the campaign timer does not count while the player is in another app */
+/** The campaign timer does not count while the player is in another app */
 function pauseTimerWhileAway(mainWindow: BrowserWindow) {
 	// The settings take the focus from the game on purpose; that is still playing time
 	OverlayController.events.addListener("blur", () => {

@@ -300,7 +300,7 @@ export const DefaultZoneNotesZodSchema = z.object({
 
 export type DefaultActAndZoneNotes = z.infer<typeof DefaultZoneNotesZodSchema>;
 
-// --- Leveling Guide (converted from Exile UI, see scripts/exileUiGuide) --- //
+// --- Leveling Guide (optional local data file, see getLevelingGuidePath) --- //
 
 export const GuideSegmentZodSchema = z.discriminatedUnion("kind", [
 	z.object({ kind: z.literal("text"), text: z.string(), color: z.string().optional() }),

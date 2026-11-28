@@ -80,7 +80,7 @@ export function LevelTrackerComponent() {
 						<p
 							className="LevelAdvice"
 							data-status={level.levelStatus}
-							title="Recommended character level for this zone (Exile UI)"
+							title="Recommended character level for this zone"
 						>
 							Recommended {level.recommendedLevel.label.replace(/\s*\|\s*/, "–")} ·{" "}
 							{STATUS_TEXT[level.levelStatus]}
@@ -102,7 +102,7 @@ function CampaignTimer({ timer, now, showActs }: { timer: TimerDto; now: number;
 
 	return (
 		<>
-			<p className="CampaignTimer" role="timer" data-state={state} title="Campaign timer, like Exile UI's">
+			<p className="CampaignTimer" role="timer" data-state={state} title="Campaign timer">
 				{`${current.act} ${formatDuration(current.ms)} · Total ${formatDuration(total)}${suffix}`}
 			</p>
 			{showActs && (

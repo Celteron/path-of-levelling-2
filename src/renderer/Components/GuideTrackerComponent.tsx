@@ -5,7 +5,7 @@ import { TrackerPanel } from "./TrackerPanel";
 type GuideStep = GuideDataDto["steps"][number];
 type GuideSegment = GuideStep["segments"][number];
 
-// Exile UI uses game images for these; PoL2 shows short text badges instead (no GGG assets).
+// The guide marks steps with icon names; PoL2 shows short text badges instead (no GGG assets).
 const ICON_BADGES: Record<string, { label: string; title: string }> = {
 	checkpoint: { label: "CP", title: "Checkpoint" },
 	waypoint: { label: "WP", title: "Waypoint" },
@@ -124,7 +124,6 @@ export function GuideTrackerComponent({ renderNotes }: { renderNotes?: (inGuide:
 					<button className="PanelButton" onClick={restart}>
 						Restart guide
 					</button>
-					<span className="PanelMuted">Exile UI {guide.sourceVersion}</span>
 				</>
 			}
 		>
