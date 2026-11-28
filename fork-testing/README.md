@@ -70,9 +70,9 @@ run `pkill -f pol2-test/` in another console or via SSH.
 Go through it in order, ideally with a new character so the guide fits from the start. For every
 failure note: number, what happened, for the guide also the page (e.g. `12 / 136`) and the zone.
 
-**Round 6 (2026-11-28, hotkeys as Ctrl+Alt plus a key, layout images in a small window):** run the
-setup script again (`Version:` must show `6f26113` or newer) and test 35 and 36. 34 passed in
-round 5; 16, 24 and 26 stay untested for now.
+**Round 7 (2026-11-28, zone rewards in the guide, notes inside the guide and editable in the
+overlay):** run the setup script again (`Version:` must show `85a417d` or newer) and test 35 to 39.
+16, 24 and 26 stay untested for now.
 
 ### A. Start and login
 
@@ -229,6 +229,21 @@ round 5; 16, 24 and 26 stay untested for now.
 36. **Layout images in a small window.** Enter Ogham Manor (three layout images) or any zone with
     layouts. Ctrl+Alt+S, hover the layout window, `Move/Resize`, and make it narrow, then low.
     *Expected:* The images shrink with the window and stay whole, none is cut off.
+37. **Zone rewards in the guide.** Enter Clearfell (or any zone with a boss reward, e.g. Hunting
+    Grounds), then a town. With the build "Default", look at the Act 1 note.
+    *Expected:* In Clearfell a green line "Beira: +10% Cold Res" below the guide header; in town it
+    is gone. The Act 1 note shows only the vendor tips, no reward list and no "Ctrl+Alt+S" line.
+    Notes you changed yourself and the creator builds keep their text.
+38. **Edit notes in the overlay.** Ctrl+Alt+S, look at the notes below the guide: click
+    `Edit zone note`, type a line, `Save note`. Then `Edit act note`, type, `Cancel`. Close the
+    settings, restart the test build, and open Settings → Zone Notes.
+    *Expected:* The zone note turns into a text field and shows your line after saving; Cancel keeps
+    the act note unchanged. After the restart your zone note is still there, also on the settings page.
+39. **Notes inside the guide.** With the guide shown look for the notes window, then hide the guide
+    with Ctrl+Alt+J, then press Ctrl+Alt+Z twice.
+    *Expected:* While the guide is shown there is no separate notes window; act and zone notes sit
+    below the guide steps (the notes part scrolls if long). With the guide hidden the notes window
+    is back at its old place. Ctrl+Alt+Z hides and shows the notes in both cases.
 
 ## 4. Reporting
 
