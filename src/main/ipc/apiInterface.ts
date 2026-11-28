@@ -10,7 +10,7 @@ declare global {
 			subscribeToHotkeys: (callback: (hotkeyEvent: HotkeyEvent) => void) => void;
 			getFontScalingFactor: () => Promise<number>;
 			getFontSize: () => Promise<number>;
-			saveFontSize: (fontSize: number) => void;
+			saveFontSize: (fontSize: number) => Promise<number>;
 			getOverlayOpacity: () => Promise<number>;
 			saveOverlayOpacity: (overlayOpacity: number) => void;
 			getCampaignRunsFolder: () => Promise<string>;

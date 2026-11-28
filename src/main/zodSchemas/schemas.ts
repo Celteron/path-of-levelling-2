@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isValidFontSize } from "../fontSize.js";
 
 // We define Zod schemas here becuase it makes validation & defaults easy,
 // and we also export types based on these schemas so that we can add type safety
@@ -61,7 +62,7 @@ export function readOverlayOpacity(stored: unknown): number {
 export const GlobalSettingsZodSchema = z.object({
 	version: z.number().default(1),
 	selectedProfile: z.enum(["poe1", "poe2"]).default("poe2"),
-	fontSize: z.number().default(11),
+	fontSize: z.number().refine(isValidFontSize).catch(11).default(11),
 	// .catch: a broken opacity must not fail validation, which would reset all global settings
 	overlayOpacity: StoredOverlayOpacityZodSchema.default(DEFAULT_OVERLAY_OPACITY),
 	/** Folder for the CSV file of finished campaign runs; empty means Documents/PoL2 */

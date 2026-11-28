@@ -3,6 +3,7 @@ import path from "path";
 import { LogWatcherService } from "./LogWatcherService.js";
 import { OverlayPosition, readOverlayOpacity } from "../zodSchemas/schemas.js";
 import { objectFactory } from "../objectFactory.js";
+import { isValidFontSize } from "../fontSize.js";
 import {
 	DEFAULT_HOTKEYS,
 	effectiveHotkeys,
@@ -23,8 +24,9 @@ export class SettingsService {
 		return objectFactory.getStoreService().getGlobalSetting("fontSize");
 	}
 
-	saveFontSize(fontSize: number) {
-		objectFactory.getStoreService().setGlobalSetting("fontSize", fontSize);
+	/** Sizes outside the bounds are ignored */
+	saveFontSize(fontSize: unknown) {
+		if (isValidFontSize(fontSize)) objectFactory.getStoreService().setGlobalSetting("fontSize", fontSize);
 	}
 
 	getOverlayOpacity(): number {

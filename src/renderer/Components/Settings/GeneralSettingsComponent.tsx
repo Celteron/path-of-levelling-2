@@ -1,5 +1,6 @@
 import { ChangeEvent, useEffect, useState } from "react";
 import { HotkeySettings } from "./HotkeySettings";
+import { FONT_SIZE_MAX, FONT_SIZE_MIN } from "../../../main/fontSize";
 
 export function GeneralSettingsComponent({
 	fontSize,
@@ -32,10 +33,12 @@ export function GeneralSettingsComponent({
 
 	const handleSaveFontSize = () => {
 		const parsed = parseInt(fontSizeInput, 10);
-		if (!isNaN(parsed)) {
-			window.electron.saveFontSize(parsed);
-			setFontSizeFunction(parsed);
-		}
+		if (isNaN(parsed)) return;
+		// Main keeps the old size for sizes out of bounds, so apply what it saved
+		window.electron.saveFontSize(parsed).then((saved) => {
+			setFontSizeFunction(saved);
+			setFontSizeInput(String(saved));
+		});
 	};
 
 	const handleOverlayOpacityChange = (percent: string) => {
@@ -96,16 +99,20 @@ export function GeneralSettingsComponent({
 		<div className="GeneralSettingsComponent">
 			<h3>General Settings</h3>
 			<div className="FontSizeUpdaterWrapper">
-				<label className="SettingsLabel">Font Size:</label>
+				<label className="SettingsLabel" htmlFor="font-size">
+					Font Size:
+				</label>
 				<input
-					autoComplete={fontSize.toString()}
+					id="font-size"
 					className="FontSizeInput"
 					name="fontSize"
 					value={fontSizeInput}
 					onChange={(e) => setFontSizeInput(e.target.value)}
 					type="number"
+					min={FONT_SIZE_MIN}
+					max={FONT_SIZE_MAX}
 				/>
-				<button onClick={handleSaveFontSize} style={{ marginLeft: 8 }}>
+				<button onClick={handleSaveFontSize} style={{ marginLeft: 8 }} aria-label="Save font size">
 					Save
 				</button>
 			</div>
