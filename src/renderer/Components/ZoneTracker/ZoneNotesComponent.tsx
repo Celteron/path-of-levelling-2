@@ -1,7 +1,13 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { TrackerPanel } from "../TrackerPanel";
+import { OverlayInteractiveContext } from "../overlayInteractive";
 
-export function ZoneNotesComponent({ guideShown }: { guideShown: boolean }) {
+/**
+ * Act and zone notes. Inside the leveling guide they have no window of their own, and the guide
+ * already gives the shipped zone tips; otherwise they are a window like the other trackers.
+ */
+export function ZoneNotesComponent({ inGuide }: { inGuide: boolean }) {
+	const interactive = useContext(OverlayInteractiveContext);
 	const [zone, setZone] = useState<ZoneDataDto | null>(null);
 	// The note being edited in the overlay, bound to its act or zone when editing started
 	const [draft, setDraft] = useState<SaveNoteRequest | null>(null);
@@ -17,7 +23,7 @@ export function ZoneNotesComponent({ guideShown }: { guideShown: boolean }) {
 	const selectZone = (zoneName: string) =>
 		zone && window.electron.postZoneSelected({ zoneSelected: zoneName, actSelected: zone.act }).then(setZone);
 
-	const showZoneNotes = zone && !(guideShown && zone.zoneNotesCoveredByGuide);
+	const showZoneNotes = zone && !(inGuide && zone.zoneNotesCoveredByGuide);
 
 	const saveDraft = () =>
 		draft &&
@@ -64,6 +70,49 @@ export function ZoneNotesComponent({ guideShown }: { guideShown: boolean }) {
 		)
 	);
 
+	const notes = zone && (
+		<>
+			<select
+				className="PanelSelect"
+				aria-label="Act"
+				value={zone.act}
+				onChange={(event) => selectAct(event.target.value)}
+			>
+				{zone.allActs.map((act) => (
+					<option key={act} value={act}>
+						{act}
+					</option>
+				))}
+			</select>
+			{draft?.kind === "act" ? noteEditor(draft) : <p className="PanelNotes">{zone.actNotes}</p>}
+			<select
+				className="PanelSelect"
+				aria-label="Zone"
+				value={zone.zone}
+				onChange={(event) => selectZone(event.target.value)}
+			>
+				{zone.allZonesInAct.map((zoneName) => (
+					<option key={zoneName} value={zoneName}>
+						{zoneName}
+					</option>
+				))}
+			</select>
+			{draft?.kind === "zone"
+				? noteEditor(draft)
+				: showZoneNotes && <p className="PanelNotes">{zone.zoneNotes}</p>}
+		</>
+	);
+
+	if (inGuide) {
+		return (
+			<section className="GuideNotes" aria-label="Act and zone notes">
+				{/* On top: the guide's own toolbar covers its bottom edge */}
+				{interactive && <div className="GuideNotesActions">{toolbar}</div>}
+				{notes}
+			</section>
+		);
+	}
+
 	return (
 		<TrackerPanel
 			label="Act and zone notes"
@@ -71,38 +120,7 @@ export function ZoneNotesComponent({ guideShown }: { guideShown: boolean }) {
 			savePosition={window.electron.saveZoneOverlayPositionSettings}
 			toolbar={toolbar}
 		>
-			{zone && (
-				<>
-					<select
-						className="PanelSelect"
-						aria-label="Act"
-						value={zone.act}
-						onChange={(event) => selectAct(event.target.value)}
-					>
-						{zone.allActs.map((act) => (
-							<option key={act} value={act}>
-								{act}
-							</option>
-						))}
-					</select>
-					{draft?.kind === "act" ? noteEditor(draft) : <p className="PanelNotes">{zone.actNotes}</p>}
-					<select
-						className="PanelSelect"
-						aria-label="Zone"
-						value={zone.zone}
-						onChange={(event) => selectZone(event.target.value)}
-					>
-						{zone.allZonesInAct.map((zoneName) => (
-							<option key={zoneName} value={zoneName}>
-								{zoneName}
-							</option>
-						))}
-					</select>
-					{draft?.kind === "zone"
-						? noteEditor(draft)
-						: showZoneNotes && <p className="PanelNotes">{zone.zoneNotes}</p>}
-				</>
-			)}
+			{notes}
 		</TrackerPanel>
 	);
 }
