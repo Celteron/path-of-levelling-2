@@ -1232,6 +1232,12 @@ react-draggable {
 
 .ConfirmDialog {
 	max-width: 420px;
+	/* The overlay never scrolls, so a long message (e.g. a long build name) scrolls inside the
+	   dialog and the buttons stay on screen */
+	max-height: calc(100vh - 32px);
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
 	padding: 16px 18px;
 	border: 1px solid rgba(255, 255, 255, 0.12);
 	border-radius: 8px;
@@ -1242,6 +1248,8 @@ react-draggable {
 
 .ConfirmDialog p {
 	margin: 0 0 14px;
+	overflow-y: auto;
+	overflow-wrap: anywhere;
 }
 
 .ConfirmDialogButtons {
