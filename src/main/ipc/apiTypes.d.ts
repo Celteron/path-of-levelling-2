@@ -20,6 +20,7 @@ type channelReturnTypeMapping = {
 	getFontSize: number;
 	saveFontSize: number;
 	getOverlayOpacity: number;
+	getTrackerVisibility: TrackerVisibility;
 	saveOverlayOpacity: void;
 	getCampaignRunsFolder: string;
 	saveCampaignRunsFolder: string;
@@ -153,6 +154,8 @@ type channelRequestTypeMapping = {
 };
 
 // --- Settings --- //
+type TrackerVisibility = import("../trackers/trackerVisibility.js").TrackerVisibility;
+
 type HotkeysDto = {
 	hotkeys: import("../hotkeys.js").Hotkeys;
 	/** Actions whose hotkey another app already holds */

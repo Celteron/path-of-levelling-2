@@ -18,6 +18,8 @@ export function GemSettingsComponent({
 	const [editableGemSetups, setEditableGemSetups] = useState<GemSetup[]>([]);
 	const [pobInput, setPobInput] = useState("");
 	const [pobImportError, setPobImportError] = useState("");
+	// The result replaces the editor of the selected build, so the build must not change meanwhile
+	const [importingPob, setImportingPob] = useState(false);
 	// allGemSetups is the last state loaded from/saved to main
 	const confirm = useConfirm();
 	const confirmDiscard = useConfirmDiscardUnsavedChanges();
@@ -131,15 +133,19 @@ export function GemSettingsComponent({
 
 	/** Replaces the editor content with the imported setups, the user saves them explicitly */
 	const handleImportPob = () => {
-		window.electron.postImportPob(pobInput).then((result) => {
-			if (!result.ok) {
-				setPobImportError(pobImportErrors[result.error]);
-				return;
-			}
-			setEditableGemSetups(result.gemSetups);
-			setPobImportError("");
-			setPobInput("");
-		});
+		setImportingPob(true);
+		window.electron
+			.postImportPob(pobInput)
+			.finally(() => setImportingPob(false))
+			.then((result) => {
+				if (!result.ok) {
+					setPobImportError(pobImportErrors[result.error]);
+					return;
+				}
+				setEditableGemSetups(result.gemSetups);
+				setPobImportError("");
+				setPobInput("");
+			});
 	};
 
 	const handleLevelChange = (index: number, value: number) => {
@@ -165,6 +171,7 @@ export function GemSettingsComponent({
 					id="build-select"
 					value={addingBuild ? "__add__" : selectedBuild}
 					onChange={handleBuildDropdownSelection}
+					disabled={importingPob}
 					className="GemSettingsBuildSelect"
 				>
 					{allBuildNames.map((buildName) => (
@@ -179,6 +186,7 @@ export function GemSettingsComponent({
 					<button
 						className="GemSettingsDeleteBuildButton"
 						onClick={handleDeleteBuild}
+						disabled={importingPob}
 						title="Delete current build"
 					>
 						Delete Build
@@ -210,8 +218,8 @@ export function GemSettingsComponent({
 						aria-label="PoB export code or pobb.in/pastebin link"
 						className="GemSettingsPobImportInput"
 					/>
-					<button onClick={handleImportPob} disabled={!pobInput.trim()}>
-						Import from PoB
+					<button onClick={handleImportPob} disabled={importingPob || !pobInput.trim()}>
+						{importingPob ? "Importing…" : "Import from PoB"}
 					</button>
 				</div>
 			)}

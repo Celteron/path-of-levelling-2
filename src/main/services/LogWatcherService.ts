@@ -56,82 +56,88 @@ export class LogWatcherService {
 		);
 
 		fs.watchFile(this.watchedFilePath, { interval: POLL_INTERVAL_MS }, (current, previous) => {
-			const data = this.readNewLines(current, previous);
-			if (!data) return;
-
-			const shouldUpdateZoneTracker =
-				data.zoneCode !== "" && objectFactory.getZoneTracker().saveZoneFromCode(data.zoneCode);
-
-			const shouldUpdateLevelTracker = data.monsterLevel > 0 || data.playerLevel > 0;
-			if (shouldUpdateLevelTracker) {
-				objectFactory.getLevelTracker().savePlayerOrMonsterLevel(data.playerLevel, data.monsterLevel);
-			}
-
-			const shouldUpdateGemTracker = data.playerLevel > 0;
-			if (shouldUpdateGemTracker) {
-				objectFactory.getGemTracker().setGemSetupFromPlayerLevel(data.playerLevel);
-			}
-
-			// The guide checks every zone change, also towns/interludes unknown to the ZoneTracker
-			const guideChanged = data.zoneCodes
-				.map((zoneCode) => objectFactory.getGuideTracker().onZoneEntered(zoneCode))
-				.some(Boolean);
-
-			// Send the changes to the renderer
-			if (guideChanged) {
-				ipcWebContentsSend(
-					"guideUpdates",
-					mainWindow.webContents,
-					objectFactory.getGuideTracker().getGuideView(),
-				);
-			}
-
-			// All lines of one poll arrived within the poll interval, so they share one timestamp
-			const now = Date.now();
-			const timerTracker = objectFactory.getTimerTracker();
-			for (const zoneCode of data.zoneCodes) timerTracker.apply({ type: "zoneEntered", at: now, zoneCode });
-			if (data.atLoginScreen) timerTracker.apply({ type: "pause", at: now, reason: "loginScreen" });
-			if (data.zoneCodes.length > 0 || data.atLoginScreen) {
-				ipcWebContentsSend("timerUpdates", mainWindow.webContents, timerTracker.getTimerDto());
-			}
-
-			if (data.atLoginScreen !== undefined) {
-				objectFactory.getStateTracker().inGameWorld = !data.atLoginScreen;
-				ipcWebContentsSend("gameWorldUpdates", mainWindow.webContents, !data.atLoginScreen);
-			}
-
-			if (shouldUpdateZoneTracker) {
-				ipcWebContentsSend(
-					"zoneUpdatesFromLog",
-					mainWindow.webContents,
-					objectFactory.getZoneTracker().getZoneDataDto(),
-				);
-			}
-
-			// We always update the zone layout images, even if the zone wasn't found, the images
-			// should still be cleared in saveZoneFromCode, so here we're just updating the UI
-			ipcWebContentsSend(
-				"zoneLayoutImageUpdates",
-				mainWindow.webContents,
-				objectFactory.getZoneTracker().zoneImageFilePaths,
-			);
-
-			if (shouldUpdateLevelTracker) {
-				ipcWebContentsSend(
-					"subscribeToLevelUpdates",
-					mainWindow.webContents,
-					objectFactory.getLevelTracker().getLevelDataDto(),
-				);
-			}
-
-			if (shouldUpdateGemTracker) {
-				ipcWebContentsSend(
-					"subscribeToGemUpdates",
-					mainWindow.webContents,
-					objectFactory.getGemTracker().getGemDataDto(),
-				);
+			// Thrown here, an error would end up as an error dialog on every poll
+			try {
+				this.processChange(mainWindow, current, previous);
+			} catch (error) {
+				log.error("Could not process new Client.txt lines", error);
 			}
 		});
+	}
+
+	/** Hands the lines appended to Client.txt to the trackers and the renderer */
+	private processChange(mainWindow: BrowserWindow, current: fs.Stats, previous: fs.Stats) {
+		const data = this.readNewLines(current, previous);
+		if (!data) return;
+
+		const shouldUpdateZoneTracker =
+			data.zoneCode !== "" && objectFactory.getZoneTracker().saveZoneFromCode(data.zoneCode);
+
+		const shouldUpdateLevelTracker = data.monsterLevel > 0 || data.playerLevel > 0;
+		if (shouldUpdateLevelTracker) {
+			objectFactory.getLevelTracker().savePlayerOrMonsterLevel(data.playerLevel, data.monsterLevel);
+		}
+
+		const shouldUpdateGemTracker = data.playerLevel > 0;
+		if (shouldUpdateGemTracker) {
+			objectFactory.getGemTracker().setGemSetupFromPlayerLevel(data.playerLevel);
+		}
+
+		// The guide checks every zone change, also towns/interludes unknown to the ZoneTracker
+		const guideChanged = data.zoneCodes
+			.map((zoneCode) => objectFactory.getGuideTracker().onZoneEntered(zoneCode))
+			.some(Boolean);
+
+		// Send the changes to the renderer
+		if (guideChanged) {
+			ipcWebContentsSend("guideUpdates", mainWindow.webContents, objectFactory.getGuideTracker().getGuideView());
+		}
+
+		// All lines of one poll arrived within the poll interval, so they share one timestamp
+		const now = Date.now();
+		const timerTracker = objectFactory.getTimerTracker();
+		for (const zoneCode of data.zoneCodes) timerTracker.apply({ type: "zoneEntered", at: now, zoneCode });
+		if (data.atLoginScreen) timerTracker.apply({ type: "pause", at: now, reason: "loginScreen" });
+		if (data.zoneCodes.length > 0 || data.atLoginScreen) {
+			ipcWebContentsSend("timerUpdates", mainWindow.webContents, timerTracker.getTimerDto());
+		}
+
+		if (data.atLoginScreen !== undefined) {
+			objectFactory.getStateTracker().inGameWorld = !data.atLoginScreen;
+			ipcWebContentsSend("gameWorldUpdates", mainWindow.webContents, !data.atLoginScreen);
+		}
+
+		if (shouldUpdateZoneTracker) {
+			ipcWebContentsSend(
+				"zoneUpdatesFromLog",
+				mainWindow.webContents,
+				objectFactory.getZoneTracker().getZoneDataDto(),
+			);
+		}
+
+		// We always update the zone layout images, even if the zone wasn't found, the images
+		// should still be cleared in saveZoneFromCode, so here we're just updating the UI
+		ipcWebContentsSend(
+			"zoneLayoutImageUpdates",
+			mainWindow.webContents,
+			objectFactory.getZoneTracker().zoneImageFilePaths,
+		);
+
+		if (shouldUpdateLevelTracker) {
+			ipcWebContentsSend(
+				"subscribeToLevelUpdates",
+				mainWindow.webContents,
+				objectFactory.getLevelTracker().getLevelDataDto(),
+			);
+		}
+
+		if (shouldUpdateGemTracker) {
+			ipcWebContentsSend(
+				"subscribeToGemUpdates",
+				mainWindow.webContents,
+				objectFactory.getGemTracker().getGemDataDto(),
+			);
+		}
 	}
 
 	stopWatching() {

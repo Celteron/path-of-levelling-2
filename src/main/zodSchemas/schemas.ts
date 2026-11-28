@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isValidFontSize } from "../fontSize.js";
 
 // We define Zod schemas here becuase it makes validation & defaults easy,
 // and we also export types based on these schemas so that we can add type safety
@@ -61,7 +62,8 @@ export function readOverlayOpacity(stored: unknown): number {
 export const GlobalSettingsZodSchema = z.object({
 	version: z.number().default(1),
 	selectedProfile: z.enum(["poe1", "poe2"]).default("poe2"),
-	fontSize: z.number().default(11),
+	// No .catch: the start-up repair then replaces a broken size with the screen's default
+	fontSize: z.number().refine(isValidFontSize).default(11),
 	// .catch: a broken opacity must not fail validation, which would reset all global settings
 	overlayOpacity: StoredOverlayOpacityZodSchema.default(DEFAULT_OVERLAY_OPACITY),
 	/** Folder for the CSV file of finished campaign runs; empty means Documents/PoL2 */
@@ -96,7 +98,7 @@ export const UiSettingsZodSchema = z.object({
 });
 
 // Guide progress and panel position. A top-level game setting on purpose: migrations merge
-// settings shallowly, a new key nested in uiSettings would reset existing users' settings.
+// settings shallowly, a new key nested in uiSettings would reset existing users' panel positions.
 export const LevelingGuideSettingsZodSchema = z.object({
 	pageIndex: z.number().int().nonnegative(),
 	/** Target zone of the saved page, finds the page again after guide updates */
@@ -136,6 +138,22 @@ export const CampaignRunsZodSchema = z.array(
 	z.object({ finishedAt: z.number(), acts: StoredCampaignTimerZodSchema.shape.acts }),
 );
 
+// Which tracker windows are shown, kept across app starts
+export const TrackerVisibilityZodSchema = z.object({
+	zoneNotesOpen: z.boolean(),
+	layoutImagesOpen: z.boolean(),
+	levelTrackerOpen: z.boolean(),
+	gemTrackerOpen: z.boolean(),
+	guideOpen: z.boolean(),
+});
+const allTrackersShown = {
+	zoneNotesOpen: true,
+	layoutImagesOpen: true,
+	levelTrackerOpen: true,
+	gemTrackerOpen: true,
+	guideOpen: true,
+};
+
 export const GameSettingsZodSchema = z.object({
 	version: z.number(),
 	clientTxtPath: z.string(),
@@ -145,6 +163,7 @@ export const GameSettingsZodSchema = z.object({
 	levelingGuide: LevelingGuideSettingsZodSchema,
 	campaignTimer: StoredCampaignTimerZodSchema,
 	campaignRuns: CampaignRunsZodSchema,
+	trackerVisibility: TrackerVisibilityZodSchema,
 });
 
 // Default settings for each profile
@@ -168,6 +187,7 @@ export const DefaultPoE1GameSettings = GameSettingsZodSchema.extend({
 	levelingGuide: LevelingGuideSettingsZodSchema.default(defaultLevelingGuideSettings),
 	campaignTimer: StoredCampaignTimerZodSchema.default(defaultCampaignTimer),
 	campaignRuns: CampaignRunsZodSchema.default([]),
+	trackerVisibility: TrackerVisibilityZodSchema.default(allTrackersShown),
 });
 
 export const DefaultPoE2GameSettings = GameSettingsZodSchema.extend({
@@ -189,6 +209,7 @@ export const DefaultPoE2GameSettings = GameSettingsZodSchema.extend({
 	levelingGuide: LevelingGuideSettingsZodSchema.default(defaultLevelingGuideSettings),
 	campaignTimer: StoredCampaignTimerZodSchema.default(defaultCampaignTimer),
 	campaignRuns: CampaignRunsZodSchema.default([]),
+	trackerVisibility: TrackerVisibilityZodSchema.default(allTrackersShown),
 });
 
 export type GameSettings = z.infer<typeof GameSettingsZodSchema>;

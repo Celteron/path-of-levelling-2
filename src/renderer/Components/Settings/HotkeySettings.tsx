@@ -22,9 +22,11 @@ export function HotkeySettings() {
 	}, []);
 
 	// The global hotkeys are paused while recording; resume them however the recording ends,
-	// also when the settings close in between
+	// also when the settings close in between. Pausing here, not on click, keeps the order right
+	// when switching from one recording to the next: the old one resumes, then the new one pauses.
 	useEffect(() => {
 		if (recording === null) return;
+		window.electron.postHotkeysPaused(true);
 		return () => {
 			window.electron.postHotkeysPaused(false);
 		};
@@ -33,7 +35,6 @@ export function HotkeySettings() {
 	const startRecording = (action: HotkeyAction) => {
 		setHint("");
 		setRecording(action);
-		window.electron.postHotkeysPaused(true);
 	};
 
 	const save = (action: HotkeyAction, accelerator: string) => {

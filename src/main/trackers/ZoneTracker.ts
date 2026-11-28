@@ -278,40 +278,17 @@ export class ZoneTracker {
 		this.saveZoneNotes(buildName, buildToCopy.zoneNotes);
 	}
 
-	// Remove the user's act note from the saved custom Act Notes
+	/**
+	 * The shipped default of a note. The settings page shows it as an unsaved change; saving it
+	 * removes the own note, so discarding the reset keeps the own note.
+	 */
 	resetActNoteForAct(actName: string): ActNote {
-		const currentBuildName = objectFactory.getSettingsService().getBuildName();
-		const currentBuild = objectFactory.getStoreService().getBuild(currentBuildName);
-
-		// Without a saved build there is no custom note to remove
-		if (!currentBuild)
-			return this.defaultActAndZoneNotes.actNotes.find((defaultActNote) => defaultActNote.actName == actName)!;
-
-		objectFactory.getStoreService().setBuild(currentBuildName, {
-			...currentBuild,
-			actNotes: currentBuild.actNotes.filter((existingActNote) => existingActNote.actName !== actName),
-		});
-
 		return this.defaultActAndZoneNotes.actNotes.find((defaultActNote) => defaultActNote.actName == actName)!;
 	}
 
-	// Remove the user's zone note from the saved array of custom Zone Notes
+	/** The shipped default of a zone note; like resetActNoteForAct, nothing changes until saved */
 	resetZoneNoteForZone(zoneCode: string): ZoneNote {
-		const currentBuildName = objectFactory.getSettingsService().getBuildName();
-		const currentBuild = objectFactory.getStoreService().getBuild(currentBuildName);
-		const defaultZoneNote = this.defaultActAndZoneNotes.zoneNotes.find(
-			(defaultZoneNote) => defaultZoneNote.zoneCode == zoneCode,
-		)!;
-
-		// Without a saved build there is no custom note to remove
-		if (!currentBuild) return defaultZoneNote;
-
-		objectFactory.getStoreService().setBuild(currentBuildName, {
-			...currentBuild,
-			zoneNotes: currentBuild.zoneNotes.filter((existingZoneNote) => existingZoneNote.zoneCode !== zoneCode),
-		});
-
-		return defaultZoneNote;
+		return this.defaultActAndZoneNotes.zoneNotes.find((defaultZoneNote) => defaultZoneNote.zoneCode == zoneCode)!;
 	}
 
 	/** Act picked in the UI: shows the first zone of that act */

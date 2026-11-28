@@ -136,8 +136,11 @@ export function NotesSettingsPage<Note extends EditableNote>({
 		}
 	};
 
-	const handleCopyFromBuild = () => {
+	const handleCopyFromBuild = async () => {
 		if (!canCopy) return;
+		// Copying saves right away, over the saved notes and any unsaved edits on this page
+		const question = `Replace the ${notesName} of "${selectedBuild}" with those of "${buildToCopyName}"? Unsaved changes are lost.`;
+		if (!(await confirm(question, "Replace"))) return;
 		api.copyFromBuild(selectedBuild, buildToCopyName).then((state) => loadNotes(state.notes));
 	};
 

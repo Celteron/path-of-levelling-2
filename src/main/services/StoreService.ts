@@ -10,6 +10,14 @@ import {
 } from "../zodSchemas/schemas.js";
 import log from "electron-log";
 
+/**
+ * Builds are a plain object keyed by name, so a name like "constructor" or "toString" would
+ * otherwise return a built-in function instead of no build
+ */
+function ownBuild(allBuilds: BuildStore["builds"] | undefined, buildName: string): Build | undefined {
+	return allBuilds !== undefined && Object.hasOwn(allBuilds, buildName) ? allBuilds[buildName] : undefined;
+}
+
 // StoreService is used to interface with the various electron stores the app uses.
 // Includes wrappers to add type safety to get and set calls, as well as abstractions to
 // hide which game is currently being accessed.
@@ -108,7 +116,7 @@ export class StoreService {
 		if (!this.buildsStore) throw new Error("Profile not initialized");
 
 		const allBuilds = this.buildsStore.get("builds") as BuildStore["builds"];
-		return allBuilds[buildName];
+		return ownBuild(allBuilds, buildName);
 	}
 
 	setBuild(buildName: string, build: Build): void {
@@ -156,7 +164,7 @@ export class StoreService {
 	getBuildForProfileId(profileId: ProfileId, buildName: string): Build | undefined {
 		const buildsStore = this.getBuildsStoreForProfileId(profileId);
 		const allBuilds = buildsStore.get("builds") as BuildStore["builds"];
-		return allBuilds === undefined ? undefined : allBuilds[buildName];
+		return ownBuild(allBuilds, buildName);
 	}
 
 	/** WARNING - you probably don't want this method! It has very limited use cases! */

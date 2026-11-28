@@ -5,6 +5,7 @@ import electronUpdater, { type AppUpdater } from "electron-updater";
 import path from "path";
 import { LogWatcherService } from "./services/LogWatcherService.js";
 import { getDesktopIconPath, getPreloadPath, getUIPath, isDev } from "./pathResolver.js";
+import { externalLink } from "./navigation.js";
 import { objectFactory } from "./objectFactory.js";
 import { activateBuild, createBuild, removeBuild, sendBuildState, useBuild } from "./builds.js";
 import { TimerEvent } from "./campaignTimer.js";
@@ -12,7 +13,7 @@ import { getProfile } from "./profiles/profiles.js";
 import { ipcMainHandle, ipcWebContentsSend } from "./ipc/ipcWrappers.js";
 import { toggleAllTrackers } from "./trackers/trackerVisibility.js";
 import { HotkeyAction, registerHotkeys } from "./hotkeys.js";
-import { importPob } from "./pob/pobImport.js";
+import { importPob, readPobDownload } from "./pob/pobImport.js";
 import { GuidePrefsZodSchema, SaveNoteZodSchema, OverlayOpacityZodSchema } from "./zodSchemas/schemas.js";
 
 // Only allow one instance of the app
@@ -95,17 +96,19 @@ async function createWindow() {
 		},
 	});
 
-	// Prevent opening new windows within the app - open in browser instead
-	// eg. links to documentation
+	// Links (e.g. to the documentation) open in the browser, never inside the overlay or in a new
+	// app window, which would get the preload API
+	const openInBrowser = (url: string) => {
+		const link = externalLink(url);
+		if (link) shell.openExternal(link);
+	};
 	mainWindow.webContents.on("will-navigate", (event, url) => {
-		// Check if the URL is outside our app
-		const currentHost = new URL(mainWindow.webContents.getURL()).host;
-		const requestedHost = new URL(url).host;
-
-		if (requestedHost && requestedHost !== currentHost) {
-			event.preventDefault(); // Prevent default navigation within the app
-			shell.openExternal(url); // Open in external browser
-		}
+		event.preventDefault();
+		openInBrowser(url);
+	});
+	mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+		openInBrowser(url);
+		return { action: "deny" };
 	});
 
 	if (isDev()) {
@@ -179,6 +182,8 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 		objectFactory.getSettingsService().saveFontSize(fontSize);
 		return objectFactory.getSettingsService().getFontSize();
 	});
+
+	ipcMainHandle("getTrackerVisibility", async () => objectFactory.getStateTracker().getTrackerVisibility());
 
 	ipcMainHandle("getOverlayOpacity", async () => {
 		return objectFactory.getSettingsService().getOverlayOpacity();
@@ -519,45 +524,45 @@ function hotkeyHandlers(mainWindow: BrowserWindow): Record<HotkeyAction, () => v
 			}
 		},
 		toggleZoneNotes: () => {
-			objectFactory.getStateTracker().zoneNotesOpen = !objectFactory.getStateTracker().zoneNotesOpen;
-
+			const stateTracker = objectFactory.getStateTracker();
+			stateTracker.setTrackerVisibility({ zoneNotesOpen: !stateTracker.zoneNotesOpen });
 			ipcWebContentsSend("Hotkeys", mainWindow.webContents, {
 				hotkey: "ToggleZoneNotes",
-				value: objectFactory.getStateTracker().zoneNotesOpen,
+				value: stateTracker.zoneNotesOpen,
 			});
 		},
 		toggleLayoutImages: () => {
-			objectFactory.getStateTracker().layoutImagesOpen = !objectFactory.getStateTracker().layoutImagesOpen;
-
+			const stateTracker = objectFactory.getStateTracker();
+			stateTracker.setTrackerVisibility({ layoutImagesOpen: !stateTracker.layoutImagesOpen });
 			ipcWebContentsSend("Hotkeys", mainWindow.webContents, {
 				hotkey: "ToggleLayoutImages",
-				value: objectFactory.getStateTracker().layoutImagesOpen,
+				value: stateTracker.layoutImagesOpen,
 			});
 		},
 		toggleLevelTracker: () => {
-			objectFactory.getStateTracker().levelTrackerOpen = !objectFactory.getStateTracker().levelTrackerOpen;
-
+			const stateTracker = objectFactory.getStateTracker();
+			stateTracker.setTrackerVisibility({ levelTrackerOpen: !stateTracker.levelTrackerOpen });
 			ipcWebContentsSend("Hotkeys", mainWindow.webContents, {
 				hotkey: "ToggleLevelTracker",
-				value: objectFactory.getStateTracker().levelTrackerOpen,
+				value: stateTracker.levelTrackerOpen,
 			});
 		},
 		toggleGemTracker: () => {
-			objectFactory.getStateTracker().gemTrackerOpen = !objectFactory.getStateTracker().gemTrackerOpen;
-
+			const stateTracker = objectFactory.getStateTracker();
+			stateTracker.setTrackerVisibility({ gemTrackerOpen: !stateTracker.gemTrackerOpen });
 			ipcWebContentsSend("Hotkeys", mainWindow.webContents, {
 				hotkey: "ToggleGemTracker",
-				value: objectFactory.getStateTracker().gemTrackerOpen,
+				value: stateTracker.gemTrackerOpen,
 			});
 		},
 		toggleGuide: () => {
 			// Without a guide (PoE1) the hidden flag would break the all-trackers hotkey's "all shown" check
 			if (!objectFactory.getGuideTracker().getGuideView().enabled) return;
-			objectFactory.getStateTracker().guideOpen = !objectFactory.getStateTracker().guideOpen;
-
+			const stateTracker = objectFactory.getStateTracker();
+			stateTracker.setTrackerVisibility({ guideOpen: !stateTracker.guideOpen });
 			ipcWebContentsSend("Hotkeys", mainWindow.webContents, {
 				hotkey: "ToggleGuide",
-				value: objectFactory.getStateTracker().guideOpen,
+				value: stateTracker.guideOpen,
 			});
 		},
 		guideNext: () => stepGuide(1),
@@ -565,7 +570,7 @@ function hotkeyHandlers(mainWindow: BrowserWindow): Record<HotkeyAction, () => v
 		toggleAllTrackers: () => {
 			const stateTracker = objectFactory.getStateTracker();
 			const visibility = toggleAllTrackers(stateTracker);
-			Object.assign(stateTracker, visibility);
+			stateTracker.setTrackerVisibility(visibility);
 
 			const webContents = mainWindow.webContents;
 			ipcWebContentsSend("Hotkeys", webContents, { hotkey: "ToggleZoneNotes", value: visibility.zoneNotesOpen });
@@ -594,7 +599,7 @@ function hotkeyHandlers(mainWindow: BrowserWindow): Record<HotkeyAction, () => v
 async function downloadPobExport(url: string): Promise<string> {
 	const response = await net.fetch(url, { signal: AbortSignal.timeout(10_000) });
 	if (!response.ok) throw new Error(`PoB download failed with HTTP ${response.status}: ${url}`);
-	return response.text();
+	return readPobDownload(response);
 }
 
 //-----------------------testing
