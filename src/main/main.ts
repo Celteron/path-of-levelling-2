@@ -11,6 +11,7 @@ import { TimerEvent } from "./campaignTimer.js";
 import { getProfile } from "./profiles/profiles.js";
 import { ipcMainHandle, ipcWebContentsSend } from "./ipc/ipcWrappers.js";
 import { toggleAllTrackers } from "./trackers/trackerVisibility.js";
+import { HotkeyAction, registerHotkeys } from "./hotkeys.js";
 import { importPob } from "./pob/pobImport.js";
 import { GuidePrefsZodSchema, OverlayOpacityZodSchema } from "./zodSchemas/schemas.js";
 
@@ -122,7 +123,7 @@ async function createWindow() {
 
 	createIPCEventListeners(mainWindow, objectFactory.getLogWatcherService());
 
-	registerGlobalHotkeys(mainWindow);
+	applyHotkeys(mainWindow);
 
 	OverlayController.events.addListener("focus", async () => {
 		// When the overlay gains focus, if the user had settings open (i.e. window
@@ -186,6 +187,20 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 	ipcMainHandle("saveOverlayOpacity", async (_, overlayOpacity) => {
 		const validOpacity = OverlayOpacityZodSchema.safeParse(overlayOpacity);
 		if (validOpacity.success) objectFactory.getSettingsService().saveOverlayOpacity(validOpacity.data);
+	});
+
+	ipcMainHandle("getHotkeys", async () => hotkeysDto());
+
+	ipcMainHandle("saveHotkey", async (_, request) => {
+		const error = objectFactory.getSettingsService().saveHotkey(request?.action, request?.accelerator);
+		applyHotkeys(mainWindow);
+		return hotkeysDto(error);
+	});
+
+	// While a hotkey is recorded in the settings, the global ones must not catch the key presses
+	ipcMainHandle("postHotkeysPaused", async (_, paused) => {
+		if (paused === true) globalShortcut.unregisterAll();
+		else applyHotkeys(mainWindow);
 	});
 
 	ipcMainHandle("getCampaignRunsFolder", async () => objectFactory.getSettingsService().getCampaignRunsFolder());
@@ -459,106 +474,114 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 	});
 }
 
-function registerGlobalHotkeys(mainWindow: BrowserWindow) {
-	// Pause/resume the campaign timer; starts it in the current act if it has not run yet
-	globalShortcut.register("Ctrl+Alt+P", () => {
-		objectFactory.getTimerTracker().togglePause(Date.now(), objectFactory.getZoneTracker().zoneCode);
-		ipcWebContentsSend("timerUpdates", mainWindow.webContents, objectFactory.getTimerTracker().getTimerDto());
-	});
+let failedHotkeys: HotkeyAction[] = [];
 
-	//Show/hide settings - default hidden
-	globalShortcut.register("Ctrl+Alt+S", () => {
-		objectFactory.getStateTracker().settingsOpen = !objectFactory.getStateTracker().settingsOpen;
+/** (Re-)registers the global hotkeys from the settings */
+function applyHotkeys(mainWindow: BrowserWindow) {
+	const hotkeys = objectFactory.getSettingsService().getHotkeys();
+	failedHotkeys = registerHotkeys(globalShortcut, hotkeys, hotkeyHandlers(mainWindow));
+	if (failedHotkeys.length > 0) log.warn("Hotkeys held by another app:", failedHotkeys);
+}
 
-		ipcWebContentsSend("Hotkeys", mainWindow.webContents, {
-			hotkey: "ToggleSettings",
-			value: objectFactory.getStateTracker().settingsOpen,
-		});
+function hotkeysDto(error?: string): HotkeysDto {
+	return { hotkeys: objectFactory.getSettingsService().getHotkeys(), failed: failedHotkeys, error };
+}
 
-		// The overlay library hides the overlay when another app gets focus, but only if it knows
-		// whether the overlay or the game should be focused next. Toggling mouse events alone
-		// left the overlay focused: it stayed on top of other apps and showed up in Alt+Tab.
-		if (mainWindow.isVisible()) {
-			if (objectFactory.getStateTracker().settingsOpen) OverlayController.activateOverlay();
-			else OverlayController.focusTarget();
-		} else {
-			// Game not attached: focusing would show a detached overlay window
-			mainWindow.setIgnoreMouseEvents(!objectFactory.getStateTracker().settingsOpen);
-		}
-	});
-	//Show/hide zone notes - default shown
-	globalShortcut.register("Ctrl+Alt+z", () => {
-		objectFactory.getStateTracker().zoneNotesOpen = !objectFactory.getStateTracker().zoneNotesOpen;
-
-		ipcWebContentsSend("Hotkeys", mainWindow.webContents, {
-			hotkey: "ToggleZoneNotes",
-			value: objectFactory.getStateTracker().zoneNotesOpen,
-		});
-	});
-	//Show/hide layout images - default shown
-	globalShortcut.register("Ctrl+Alt+i", () => {
-		objectFactory.getStateTracker().layoutImagesOpen = !objectFactory.getStateTracker().layoutImagesOpen;
-
-		ipcWebContentsSend("Hotkeys", mainWindow.webContents, {
-			hotkey: "ToggleLayoutImages",
-			value: objectFactory.getStateTracker().layoutImagesOpen,
-		});
-	});
-	//Show/hide level tracker - default shown
-	globalShortcut.register("Ctrl+Alt+l", () => {
-		objectFactory.getStateTracker().levelTrackerOpen = !objectFactory.getStateTracker().levelTrackerOpen;
-
-		ipcWebContentsSend("Hotkeys", mainWindow.webContents, {
-			hotkey: "ToggleLevelTracker",
-			value: objectFactory.getStateTracker().levelTrackerOpen,
-		});
-	});
-	//Show/hide level tracker - default shown
-	globalShortcut.register("Ctrl+Alt+g", () => {
-		objectFactory.getStateTracker().gemTrackerOpen = !objectFactory.getStateTracker().gemTrackerOpen;
-
-		ipcWebContentsSend("Hotkeys", mainWindow.webContents, {
-			hotkey: "ToggleGemTracker",
-			value: objectFactory.getStateTracker().gemTrackerOpen,
-		});
-	});
-	//Show/hide leveling guide - default shown
-	globalShortcut.register("Ctrl+Alt+j", () => {
-		// Without a guide (PoE1) the hidden flag would break Ctrl+Alt+A's "all shown" check
-		if (!objectFactory.getGuideTracker().getGuideView().enabled) return;
-		objectFactory.getStateTracker().guideOpen = !objectFactory.getStateTracker().guideOpen;
-
-		ipcWebContentsSend("Hotkeys", mainWindow.webContents, {
-			hotkey: "ToggleGuide",
-			value: objectFactory.getStateTracker().guideOpen,
-		});
-	});
-	//Leveling guide: next/previous page
+function hotkeyHandlers(mainWindow: BrowserWindow): Record<HotkeyAction, () => void> {
 	const stepGuide = (delta: 1 | -1) => {
 		objectFactory.getGuideTracker().step(delta);
 		ipcWebContentsSend("guideUpdates", mainWindow.webContents, objectFactory.getGuideTracker().getGuideView());
 	};
-	globalShortcut.register("Ctrl+Alt+n", () => stepGuide(1));
-	globalShortcut.register("Ctrl+Alt+b", () => stepGuide(-1));
-	//Show/hide all trackers at once (#3)
-	globalShortcut.register("Ctrl+Alt+a", () => {
-		const stateTracker = objectFactory.getStateTracker();
-		const visibility = toggleAllTrackers(stateTracker);
-		Object.assign(stateTracker, visibility);
+	return {
+		toggleSettings: () => {
+			objectFactory.getStateTracker().settingsOpen = !objectFactory.getStateTracker().settingsOpen;
 
-		const webContents = mainWindow.webContents;
-		ipcWebContentsSend("Hotkeys", webContents, { hotkey: "ToggleZoneNotes", value: visibility.zoneNotesOpen });
-		ipcWebContentsSend("Hotkeys", webContents, {
-			hotkey: "ToggleLayoutImages",
-			value: visibility.layoutImagesOpen,
-		});
-		ipcWebContentsSend("Hotkeys", webContents, {
-			hotkey: "ToggleLevelTracker",
-			value: visibility.levelTrackerOpen,
-		});
-		ipcWebContentsSend("Hotkeys", webContents, { hotkey: "ToggleGemTracker", value: visibility.gemTrackerOpen });
-		ipcWebContentsSend("Hotkeys", webContents, { hotkey: "ToggleGuide", value: visibility.guideOpen });
-	});
+			ipcWebContentsSend("Hotkeys", mainWindow.webContents, {
+				hotkey: "ToggleSettings",
+				value: objectFactory.getStateTracker().settingsOpen,
+			});
+
+			// The overlay library hides the overlay when another app gets focus, but only if it knows
+			// whether the overlay or the game should be focused next. Toggling mouse events alone
+			// left the overlay focused: it stayed on top of other apps and showed up in Alt+Tab.
+			if (mainWindow.isVisible()) {
+				if (objectFactory.getStateTracker().settingsOpen) OverlayController.activateOverlay();
+				else OverlayController.focusTarget();
+			} else {
+				// Game not attached: focusing would show a detached overlay window
+				mainWindow.setIgnoreMouseEvents(!objectFactory.getStateTracker().settingsOpen);
+			}
+		},
+		toggleZoneNotes: () => {
+			objectFactory.getStateTracker().zoneNotesOpen = !objectFactory.getStateTracker().zoneNotesOpen;
+
+			ipcWebContentsSend("Hotkeys", mainWindow.webContents, {
+				hotkey: "ToggleZoneNotes",
+				value: objectFactory.getStateTracker().zoneNotesOpen,
+			});
+		},
+		toggleLayoutImages: () => {
+			objectFactory.getStateTracker().layoutImagesOpen = !objectFactory.getStateTracker().layoutImagesOpen;
+
+			ipcWebContentsSend("Hotkeys", mainWindow.webContents, {
+				hotkey: "ToggleLayoutImages",
+				value: objectFactory.getStateTracker().layoutImagesOpen,
+			});
+		},
+		toggleLevelTracker: () => {
+			objectFactory.getStateTracker().levelTrackerOpen = !objectFactory.getStateTracker().levelTrackerOpen;
+
+			ipcWebContentsSend("Hotkeys", mainWindow.webContents, {
+				hotkey: "ToggleLevelTracker",
+				value: objectFactory.getStateTracker().levelTrackerOpen,
+			});
+		},
+		toggleGemTracker: () => {
+			objectFactory.getStateTracker().gemTrackerOpen = !objectFactory.getStateTracker().gemTrackerOpen;
+
+			ipcWebContentsSend("Hotkeys", mainWindow.webContents, {
+				hotkey: "ToggleGemTracker",
+				value: objectFactory.getStateTracker().gemTrackerOpen,
+			});
+		},
+		toggleGuide: () => {
+			// Without a guide (PoE1) the hidden flag would break the all-trackers hotkey's "all shown" check
+			if (!objectFactory.getGuideTracker().getGuideView().enabled) return;
+			objectFactory.getStateTracker().guideOpen = !objectFactory.getStateTracker().guideOpen;
+
+			ipcWebContentsSend("Hotkeys", mainWindow.webContents, {
+				hotkey: "ToggleGuide",
+				value: objectFactory.getStateTracker().guideOpen,
+			});
+		},
+		guideNext: () => stepGuide(1),
+		guidePrevious: () => stepGuide(-1),
+		toggleAllTrackers: () => {
+			const stateTracker = objectFactory.getStateTracker();
+			const visibility = toggleAllTrackers(stateTracker);
+			Object.assign(stateTracker, visibility);
+
+			const webContents = mainWindow.webContents;
+			ipcWebContentsSend("Hotkeys", webContents, { hotkey: "ToggleZoneNotes", value: visibility.zoneNotesOpen });
+			ipcWebContentsSend("Hotkeys", webContents, {
+				hotkey: "ToggleLayoutImages",
+				value: visibility.layoutImagesOpen,
+			});
+			ipcWebContentsSend("Hotkeys", webContents, {
+				hotkey: "ToggleLevelTracker",
+				value: visibility.levelTrackerOpen,
+			});
+			ipcWebContentsSend("Hotkeys", webContents, {
+				hotkey: "ToggleGemTracker",
+				value: visibility.gemTrackerOpen,
+			});
+			ipcWebContentsSend("Hotkeys", webContents, { hotkey: "ToggleGuide", value: visibility.guideOpen });
+		},
+		toggleTimer: () => {
+			objectFactory.getTimerTracker().togglePause(Date.now(), objectFactory.getZoneTracker().zoneCode);
+			ipcWebContentsSend("timerUpdates", mainWindow.webContents, objectFactory.getTimerTracker().getTimerDto());
+		},
+	};
 }
 
 /** Downloads a PoB export on user request, pobb.in and pastebin answer with the plain code */

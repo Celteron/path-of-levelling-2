@@ -66,6 +66,8 @@ export const GlobalSettingsZodSchema = z.object({
 	overlayOpacity: StoredOverlayOpacityZodSchema.default(DEFAULT_OVERLAY_OPACITY),
 	/** Folder for the CSV file of finished campaign runs; empty means Documents/PoL2 */
 	campaignRunsFolder: z.string().catch("").default(""),
+	/** Hotkeys changed from the defaults, by action; each value is checked when it is read */
+	hotkeys: z.record(z.string(), z.unknown()).catch({}).default({}),
 });
 
 export type GlobalSettings = z.infer<typeof GlobalSettingsZodSchema>;

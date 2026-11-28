@@ -3,6 +3,16 @@ import path from "path";
 import { LogWatcherService } from "./LogWatcherService.js";
 import { OverlayPosition, readOverlayOpacity } from "../zodSchemas/schemas.js";
 import { objectFactory } from "../objectFactory.js";
+import {
+	DEFAULT_HOTKEYS,
+	effectiveHotkeys,
+	HOTKEY_ACTIONS,
+	HOTKEY_LABELS,
+	HOTKEY_RULE,
+	HotkeyAction,
+	Hotkeys,
+	isValidAccelerator,
+} from "../hotkeys.js";
 
 export class SettingsService {
 	constructor() {}
@@ -37,6 +47,29 @@ export class SettingsService {
 			objectFactory.getStoreService().setGlobalSetting("campaignRunsFolder", trimmed);
 		}
 		return this.getCampaignRunsFolder();
+	}
+
+	getHotkeys(): Hotkeys {
+		return effectiveHotkeys(objectFactory.getStoreService().getGlobalSetting("hotkeys"));
+	}
+
+	/** Saves a hotkey; returns why it was refused, or undefined. Only changed hotkeys are stored. */
+	saveHotkey(action: HotkeyAction, accelerator: unknown): string | undefined {
+		if (!HOTKEY_ACTIONS.includes(action)) return "Unknown action";
+		if (!isValidAccelerator(accelerator)) return HOTKEY_RULE;
+		const hotkeys = this.getHotkeys();
+		const usedBy = HOTKEY_ACTIONS.find(
+			(other) => other !== action && hotkeys[other].toLowerCase() === accelerator.toLowerCase(),
+		);
+		if (usedBy) return `Already used for: ${HOTKEY_LABELS[usedBy]}`;
+
+		const changed = Object.fromEntries(
+			HOTKEY_ACTIONS.map((a) => [a, a === action ? accelerator : hotkeys[a]] as const).filter(
+				([a, value]) => value !== DEFAULT_HOTKEYS[a],
+			),
+		);
+		objectFactory.getStoreService().setGlobalSetting("hotkeys", changed);
+		return undefined;
 	}
 
 	getClientTxtPath(): string {

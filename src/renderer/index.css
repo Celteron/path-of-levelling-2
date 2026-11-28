@@ -230,6 +230,25 @@ react-draggable {
 	color: red;
 }
 
+.HotkeyTable td {
+	padding: 2px 8px 2px 0;
+}
+
+.HotkeyButton {
+	min-width: 120px;
+	min-height: 28px;
+	font-family: monospace;
+}
+
+.HotkeyButton[data-recording="true"] {
+	outline: 2px solid var(--panel-accent);
+}
+
+.HotkeyWarning {
+	margin-right: 8px;
+	color: var(--panel-danger);
+}
+
 /* Gem Settings Page Content */
 .GemSettingsComponent {
 	position: absolute;
