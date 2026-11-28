@@ -4,13 +4,14 @@ import {
 	DEFAULT_HOTKEYS,
 	HOTKEY_ACTIONS,
 	HOTKEY_LABELS,
+	HOTKEY_PREFIX,
 	HOTKEY_RULE,
 	HotkeyAction,
 } from "../../../main/hotkeys";
 
 const MODIFIER_KEYS = ["Control", "Alt", "AltGraph", "Shift", "Meta"];
 
-/** Global hotkeys: click one, press the new combination; Escape cancels */
+/** Global hotkeys: Ctrl+Alt plus a key; click the key and press the new one, Escape cancels */
 export function HotkeySettings() {
 	const [state, setState] = useState<HotkeysDto | null>(null);
 	const [recording, setRecording] = useState<HotkeyAction | null>(null);
@@ -61,7 +62,7 @@ export function HotkeySettings() {
 	return (
 		<div className="HotkeysWrapper">
 			<h3>Hotkeys</h3>
-			<p>Click a hotkey and press the new key combination. Escape cancels.</p>
+			<p>Every hotkey is Ctrl+Alt plus one key. Click the key and press the new one. Escape cancels.</p>
 			<table className="HotkeyTable">
 				<tbody>
 					{HOTKEY_ACTIONS.map((action) => {
@@ -70,7 +71,8 @@ export function HotkeySettings() {
 						return (
 							<tr key={action}>
 								<td>{label}</td>
-								<td>
+								<td className="HotkeyKey">
+									{HOTKEY_PREFIX}
 									<button
 										className="HotkeyButton"
 										aria-label={`Change hotkey: ${label}`}
@@ -79,7 +81,9 @@ export function HotkeySettings() {
 										onKeyDown={(event) => handleKeyDown(action, event)}
 										onBlur={() => recording === action && setRecording(null)}
 									>
-										{recording === action ? "Press keys…" : accelerator}
+										{recording === action
+											? "Press a key…"
+											: accelerator.slice(HOTKEY_PREFIX.length).toUpperCase()}
 									</button>
 								</td>
 								<td>

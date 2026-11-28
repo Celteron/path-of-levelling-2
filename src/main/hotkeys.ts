@@ -32,33 +32,27 @@ export const DEFAULT_HOTKEYS: Hotkeys = {
 
 export const HOTKEY_ACTIONS = Object.keys(HOTKEY_LABELS) as HotkeyAction[];
 
-export const HOTKEY_RULE = "Use Ctrl or Alt (and maybe Shift) with a letter, a digit or F1–F24";
+/** Every hotkey is Ctrl+Alt plus one key, so it never fires while typing in the game chat */
+export const HOTKEY_PREFIX = "Ctrl+Alt+";
 
-/**
- * Ctrl or Alt is required: without them the hotkey would fire while typing in the game chat.
- * Only letters, digits and F-keys, the keys every keyboard layout and Electron agree on.
- */
+export const HOTKEY_RULE = "Press a letter, a digit or F1–F24";
+
+/** Only letters, digits and F-keys, the keys every keyboard layout and Electron agree on */
 export function isValidAccelerator(accelerator: unknown): accelerator is string {
-	return (
-		typeof accelerator === "string" &&
-		/^(?=.*(Ctrl|Alt)\+)(Ctrl\+)?(Alt\+)?(Shift\+)?([A-Z0-9]|F([1-9]|1\d|2[0-4]))$/i.test(accelerator)
-	);
+	return typeof accelerator === "string" && /^Ctrl\+Alt\+([A-Z0-9]|F([1-9]|1\d|2[0-4]))$/i.test(accelerator);
 }
 
 /**
- * The accelerator for a key press, or undefined while it is no valid hotkey (e.g. modifiers only).
- * The letter comes from the key, so a QWERTZ Z is Z; when AltGr (= Ctrl+Alt on Windows) turns it
- * into another character, the physical key is used instead.
+ * The accelerator for a pressed key, or undefined for keys that cannot be a hotkey. Modifiers held
+ * anyway are ignored. The letter comes from the key, so a QWERTZ Z is Z; when Shift or AltGr turns
+ * it into another character, the physical key is used instead.
  */
 export function acceleratorFromKeyEvent(event: KeyboardEvent): string | undefined {
 	const typed = /^[a-z0-9]$/i.test(event.key) ? event.key.toUpperCase() : undefined;
 	const physical = /^(Key([A-Z])|Digit([0-9])|(F\d{1,2}))$/.exec(event.code);
 	const key = typed ?? (physical && (physical[2] ?? physical[3] ?? physical[4]));
-	if (!key) return undefined;
-
-	const modifiers = [event.ctrlKey && "Ctrl", event.altKey && "Alt", event.shiftKey && "Shift"].filter(Boolean);
-	const accelerator = [...modifiers, key].join("+");
-	return isValidAccelerator(accelerator) ? accelerator : undefined;
+	const accelerator = HOTKEY_PREFIX + key;
+	return key && isValidAccelerator(accelerator) ? accelerator : undefined;
 }
 
 /** The defaults with the valid stored changes on top */

@@ -234,9 +234,17 @@ react-draggable {
 	padding: 2px 8px 2px 0;
 }
 
+.HotkeyKey {
+	font-family: monospace;
+	white-space: nowrap;
+}
+
+/* The key after the fixed Ctrl+Alt, shown as a key cap */
 .HotkeyButton {
-	min-width: 120px;
+	min-width: 48px;
 	min-height: 28px;
+	margin-left: 4px;
+	border-radius: 999px;
 	font-family: monospace;
 }
 
