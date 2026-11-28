@@ -248,7 +248,7 @@ type LevelDataDto = {
 	levelStatus?: import("../levelingGuide.js").LevelStatus;
 };
 
-type GuideDataDto = import("../levelingGuide.js").GuideView;
+type GuideDataDto = import("../trackers/GuideTracker.js").GuideDto;
 type GuidePrefsRequest = import("../levelingGuide.js").GuidePrefs;
 
 type GemDataDto = {
