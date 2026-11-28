@@ -107,6 +107,12 @@ export const LevelingGuideSettingsZodSchema = z.object({
 });
 
 /** Validates guide preferences coming from the renderer */
+/** A note edited in the overlay, for the act or zone it was written for */
+export const SaveNoteZodSchema = z.discriminatedUnion("kind", [
+	z.object({ kind: z.literal("act"), actName: z.string(), notes: z.string() }),
+	z.object({ kind: z.literal("zone"), zoneCode: z.string(), notes: z.string() }),
+]);
+
 export const GuidePrefsZodSchema = LevelingGuideSettingsZodSchema.pick({ leagueStart: true, showOptional: true });
 
 const defaultLevelingGuideSettings = {

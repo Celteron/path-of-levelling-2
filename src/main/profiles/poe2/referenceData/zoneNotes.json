@@ -413,6 +413,12 @@
 		},
 		{
 			"lockNoteOption": "unlocked",
+			"zoneCode": "G4_11_1b",
+			"zoneName": "Ngakanu",
+			"notes": ""
+		},
+		{
+			"lockNoteOption": "unlocked",
 			"zoneCode": "G4_11_2",
 			"zoneName": "Heart of the Tribe",
 			"notes": "Keep trying to head north, every time you see a \nCheckpoint go back and find the fork, you went the\nwrong way\nKill Tavakai and you're done with Act 4!"
