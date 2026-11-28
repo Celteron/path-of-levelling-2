@@ -4,6 +4,9 @@ import { SettingsService } from "../services/Settings.js";
 import { LevelTracker } from "./LevelTracker.js";
 import { Build, DefaultGemBuild, GemBuild, GemSetup } from "../zodSchemas/schemas.js";
 
+/** The tracker picks the last setup at or below the player level, so setups must be in level order */
+const byLevel = (gemSetups: GemSetup[]) => [...gemSetups].sort((a, b) => a.level - b.level);
+
 /**
  * Tracks the gem setup for the current character level. It also owns the build list (selected
  * build, create, delete) because no other module manages builds yet; a dedicated build module
@@ -95,7 +98,7 @@ export class GemTracker {
 		}
 
 		this.gemBuild = build.gemBuild;
-		this.allGemSetups = build.gemBuild.gemSetups;
+		this.allGemSetups = byLevel(build.gemBuild.gemSetups);
 
 		// This is used to populate the dropdown in the UI
 		this.allGemSetupLevels = this.allGemSetups.map((setup: GemSetup) => {
@@ -107,7 +110,9 @@ export class GemTracker {
 
 	/** Returns true if the gem setup changed, i.e. the renderer needs an update */
 	setGemSetupFromPlayerLevel(playerLevel: number): boolean {
-		const foundGemSetup = this.allGemSetups.findLast((gemSetup) => playerLevel >= gemSetup.level);
+		// Below the first setup's level the first setup still beats the gems of the previous build
+		const foundGemSetup =
+			this.allGemSetups.findLast((gemSetup) => playerLevel >= gemSetup.level) ?? this.allGemSetups[0];
 
 		if (foundGemSetup === undefined) {
 			log.info("Could not find gem setup matching level", playerLevel);
@@ -128,7 +133,7 @@ export class GemTracker {
 
 		const newGemBuild = {
 			changedByUser: true,
-			gemSetups: gemSetups,
+			gemSetups: byLevel(gemSetups),
 		};
 
 		objectFactory.getStoreService().setBuild(buildName, {
