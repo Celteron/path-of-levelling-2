@@ -943,6 +943,8 @@ react-draggable {
 }
 
 .LayoutImage {
+	/* Shrink with a narrow window too: the images share the width and stay whole */
+	min-width: 0;
 	height: 100%;
 	width: auto;
 	object-fit: contain;
