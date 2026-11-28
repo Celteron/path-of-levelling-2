@@ -70,9 +70,9 @@ run `pkill -f pol2-test/` in another console or via SSH.
 Go through it in order, ideally with a new character so the guide fits from the start. For every
 failure note: number, what happened, for the guide also the page (e.g. `12 / 136`) and the zone.
 
-**Round 5 (2026-11-28, configurable hotkeys and long build names):** run the setup script again
-(`Version:` must show `32cf904` or newer) and test 34 and 35. Round 4 passed; 16, 24 and 26 stay
-untested for now.
+**Round 6 (2026-11-28, hotkeys as Ctrl+Alt plus a key, layout images in a small window):** run the
+setup script again (`Version:` must show `6f26113` or newer) and test 35 and 36. 34 passed in
+round 5; 16, 24 and 26 stay untested for now.
 
 ### A. Start and login
 
@@ -218,13 +218,17 @@ untested for now.
     `Delete Build`.
     *Expected:* The name field stops at 50 characters. The delete question fits on the screen (a long
     name scrolls inside the dialog), and `Delete` removes the build.
-35. **Configurable hotkeys.** Settings → General → Hotkeys: click the timer hotkey and press
-    `Ctrl+Alt+K`. Try to give another action `Ctrl+Alt+S`, and press a plain `P`. Close the settings,
-    press `Ctrl+Alt+K` and `Ctrl+Alt+P`. Restart the test build, then use `Default` on the timer row.
-    *Expected:* While recording the button says `Press keys…` and the hotkeys do nothing; `Escape`
-    cancels. `Ctrl+Alt+S` is refused with "Already used for: Show/hide settings", a plain `P` shows a
-    hint. `Ctrl+Alt+K` pauses the timer, `Ctrl+Alt+P` no longer does. After the restart `Ctrl+Alt+K`
-    is kept; `Default` brings back `Ctrl+Alt+P`.
+35. **Configurable hotkeys.** Settings → General → Hotkeys: each row shows `Ctrl+Alt+` and the key
+    as a round button. Click the timer key and press `K` (just the key). Then click it again, press
+    `Space`, then `S`. Close the settings, press `Ctrl+Alt+K` and `Ctrl+Alt+P`. Restart the test
+    build, then use `Default` on the timer row.
+    *Expected:* While recording the button says `Press a key…` and the hotkeys do nothing; `Escape`
+    cancels. `Space` shows a hint, `S` is refused with "Already used for: Show/hide settings".
+    `Ctrl+Alt+K` pauses the timer, `Ctrl+Alt+P` no longer does. After the restart `K` is kept;
+    `Default` brings back `P`.
+36. **Layout images in a small window.** Enter Ogham Manor (three layout images) or any zone with
+    layouts. Ctrl+Alt+S, hover the layout window, `Move/Resize`, and make it narrow, then low.
+    *Expected:* The images shrink with the window and stay whole, none is cut off.
 
 ## 4. Reporting
 
