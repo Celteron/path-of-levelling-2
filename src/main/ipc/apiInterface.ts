@@ -12,6 +12,7 @@ declare global {
 			getFontSize: () => Promise<number>;
 			saveFontSize: (fontSize: number) => Promise<number>;
 			getOverlayOpacity: () => Promise<number>;
+			getTrackerVisibility: () => Promise<TrackerVisibility>;
 			saveOverlayOpacity: (overlayOpacity: number) => void;
 			getCampaignRunsFolder: () => Promise<string>;
 			getHotkeys: () => Promise<HotkeysDto>;

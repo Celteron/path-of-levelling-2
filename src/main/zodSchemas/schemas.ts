@@ -138,6 +138,22 @@ export const CampaignRunsZodSchema = z.array(
 	z.object({ finishedAt: z.number(), acts: StoredCampaignTimerZodSchema.shape.acts }),
 );
 
+// Which tracker windows are shown, kept across app starts
+export const TrackerVisibilityZodSchema = z.object({
+	zoneNotesOpen: z.boolean(),
+	layoutImagesOpen: z.boolean(),
+	levelTrackerOpen: z.boolean(),
+	gemTrackerOpen: z.boolean(),
+	guideOpen: z.boolean(),
+});
+const allTrackersShown = {
+	zoneNotesOpen: true,
+	layoutImagesOpen: true,
+	levelTrackerOpen: true,
+	gemTrackerOpen: true,
+	guideOpen: true,
+};
+
 export const GameSettingsZodSchema = z.object({
 	version: z.number(),
 	clientTxtPath: z.string(),
@@ -147,6 +163,7 @@ export const GameSettingsZodSchema = z.object({
 	levelingGuide: LevelingGuideSettingsZodSchema,
 	campaignTimer: StoredCampaignTimerZodSchema,
 	campaignRuns: CampaignRunsZodSchema,
+	trackerVisibility: TrackerVisibilityZodSchema,
 });
 
 // Default settings for each profile
@@ -170,6 +187,7 @@ export const DefaultPoE1GameSettings = GameSettingsZodSchema.extend({
 	levelingGuide: LevelingGuideSettingsZodSchema.default(defaultLevelingGuideSettings),
 	campaignTimer: StoredCampaignTimerZodSchema.default(defaultCampaignTimer),
 	campaignRuns: CampaignRunsZodSchema.default([]),
+	trackerVisibility: TrackerVisibilityZodSchema.default(allTrackersShown),
 });
 
 export const DefaultPoE2GameSettings = GameSettingsZodSchema.extend({
@@ -191,6 +209,7 @@ export const DefaultPoE2GameSettings = GameSettingsZodSchema.extend({
 	levelingGuide: LevelingGuideSettingsZodSchema.default(defaultLevelingGuideSettings),
 	campaignTimer: StoredCampaignTimerZodSchema.default(defaultCampaignTimer),
 	campaignRuns: CampaignRunsZodSchema.default([]),
+	trackerVisibility: TrackerVisibilityZodSchema.default(allTrackersShown),
 });
 
 export type GameSettings = z.infer<typeof GameSettingsZodSchema>;

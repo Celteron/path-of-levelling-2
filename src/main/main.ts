@@ -183,6 +183,8 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 		return objectFactory.getSettingsService().getFontSize();
 	});
 
+	ipcMainHandle("getTrackerVisibility", async () => objectFactory.getStateTracker().getTrackerVisibility());
+
 	ipcMainHandle("getOverlayOpacity", async () => {
 		return objectFactory.getSettingsService().getOverlayOpacity();
 	});
@@ -522,45 +524,45 @@ function hotkeyHandlers(mainWindow: BrowserWindow): Record<HotkeyAction, () => v
 			}
 		},
 		toggleZoneNotes: () => {
-			objectFactory.getStateTracker().zoneNotesOpen = !objectFactory.getStateTracker().zoneNotesOpen;
-
+			const stateTracker = objectFactory.getStateTracker();
+			stateTracker.setTrackerVisibility({ zoneNotesOpen: !stateTracker.zoneNotesOpen });
 			ipcWebContentsSend("Hotkeys", mainWindow.webContents, {
 				hotkey: "ToggleZoneNotes",
-				value: objectFactory.getStateTracker().zoneNotesOpen,
+				value: stateTracker.zoneNotesOpen,
 			});
 		},
 		toggleLayoutImages: () => {
-			objectFactory.getStateTracker().layoutImagesOpen = !objectFactory.getStateTracker().layoutImagesOpen;
-
+			const stateTracker = objectFactory.getStateTracker();
+			stateTracker.setTrackerVisibility({ layoutImagesOpen: !stateTracker.layoutImagesOpen });
 			ipcWebContentsSend("Hotkeys", mainWindow.webContents, {
 				hotkey: "ToggleLayoutImages",
-				value: objectFactory.getStateTracker().layoutImagesOpen,
+				value: stateTracker.layoutImagesOpen,
 			});
 		},
 		toggleLevelTracker: () => {
-			objectFactory.getStateTracker().levelTrackerOpen = !objectFactory.getStateTracker().levelTrackerOpen;
-
+			const stateTracker = objectFactory.getStateTracker();
+			stateTracker.setTrackerVisibility({ levelTrackerOpen: !stateTracker.levelTrackerOpen });
 			ipcWebContentsSend("Hotkeys", mainWindow.webContents, {
 				hotkey: "ToggleLevelTracker",
-				value: objectFactory.getStateTracker().levelTrackerOpen,
+				value: stateTracker.levelTrackerOpen,
 			});
 		},
 		toggleGemTracker: () => {
-			objectFactory.getStateTracker().gemTrackerOpen = !objectFactory.getStateTracker().gemTrackerOpen;
-
+			const stateTracker = objectFactory.getStateTracker();
+			stateTracker.setTrackerVisibility({ gemTrackerOpen: !stateTracker.gemTrackerOpen });
 			ipcWebContentsSend("Hotkeys", mainWindow.webContents, {
 				hotkey: "ToggleGemTracker",
-				value: objectFactory.getStateTracker().gemTrackerOpen,
+				value: stateTracker.gemTrackerOpen,
 			});
 		},
 		toggleGuide: () => {
 			// Without a guide (PoE1) the hidden flag would break the all-trackers hotkey's "all shown" check
 			if (!objectFactory.getGuideTracker().getGuideView().enabled) return;
-			objectFactory.getStateTracker().guideOpen = !objectFactory.getStateTracker().guideOpen;
-
+			const stateTracker = objectFactory.getStateTracker();
+			stateTracker.setTrackerVisibility({ guideOpen: !stateTracker.guideOpen });
 			ipcWebContentsSend("Hotkeys", mainWindow.webContents, {
 				hotkey: "ToggleGuide",
-				value: objectFactory.getStateTracker().guideOpen,
+				value: stateTracker.guideOpen,
 			});
 		},
 		guideNext: () => stepGuide(1),
@@ -568,7 +570,7 @@ function hotkeyHandlers(mainWindow: BrowserWindow): Record<HotkeyAction, () => v
 		toggleAllTrackers: () => {
 			const stateTracker = objectFactory.getStateTracker();
 			const visibility = toggleAllTrackers(stateTracker);
-			Object.assign(stateTracker, visibility);
+			stateTracker.setTrackerVisibility(visibility);
 
 			const webContents = mainWindow.webContents;
 			ipcWebContentsSend("Hotkeys", webContents, { hotkey: "ToggleZoneNotes", value: visibility.zoneNotesOpen });

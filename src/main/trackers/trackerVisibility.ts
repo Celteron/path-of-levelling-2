@@ -1,10 +1,7 @@
-export interface TrackerVisibility {
-	zoneNotesOpen: boolean;
-	layoutImagesOpen: boolean;
-	levelTrackerOpen: boolean;
-	gemTrackerOpen: boolean;
-	guideOpen: boolean;
-}
+import type { z } from "zod";
+import type { TrackerVisibilityZodSchema } from "../zodSchemas/schemas.js";
+
+export type TrackerVisibility = z.infer<typeof TrackerVisibilityZodSchema>;
 
 /**
  * Hides all trackers if all are shown, otherwise shows all of them (#3): one hotkey gives a quick

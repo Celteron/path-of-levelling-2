@@ -44,6 +44,7 @@ electron.contextBridge.exposeInMainWorld("electron", {
 	getFontSize: async () => ipcRendererInvokeGet("getFontSize"),
 	saveFontSize: async (fontSize: number) => ipcRendererInvokePost("saveFontSize", fontSize),
 	getOverlayOpacity: async () => ipcRendererInvokeGet("getOverlayOpacity"),
+	getTrackerVisibility: async () => ipcRendererInvokeGet("getTrackerVisibility"),
 	saveOverlayOpacity: async (overlayOpacity: number) => ipcRendererInvokePost("saveOverlayOpacity", overlayOpacity),
 	getCampaignRunsFolder: async () => ipcRendererInvokeGet("getCampaignRunsFolder"),
 	getHotkeys: async () => ipcRendererInvokeGet("getHotkeys"),
