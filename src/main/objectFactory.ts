@@ -78,7 +78,8 @@ class ObjectFactory {
 
 		log.info(`Switching profile to ${profileId}, restarting app...`);
 		app.relaunch();
-		app.exit(0);
+		// quit, not exit: exit skips before-quit, which pauses and saves the running timer
+		app.quit();
 	}
 
 	// --- Services --- //
