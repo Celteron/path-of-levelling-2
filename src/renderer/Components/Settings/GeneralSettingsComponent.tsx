@@ -1,4 +1,5 @@
 import { ChangeEvent, useEffect, useState } from "react";
+import { HotkeySettings } from "./HotkeySettings";
 
 export function GeneralSettingsComponent({
 	fontSize,
@@ -123,20 +124,7 @@ export function GeneralSettingsComponent({
 				/>
 				<span>{Math.round(overlayOpacity * 100)}%</span>
 			</div>
-			<div className="HotkeysWrapper">
-				<h3>Hotkeys</h3>
-				<div className="HotkeysRow">
-					<p>Show/hide settings: Ctrl+Alt+s</p>
-					<p>Show/hide zone notes: Ctrl+Alt+z</p>
-					<p>Show/hide layout images: Ctrl+Alt+i</p>
-					<p>Show/hide level tracker: Ctrl+Alt+l</p>
-					<p>Show/hide gem tracker: Ctrl+Alt+g</p>
-					<p>Show/hide leveling guide: Ctrl+Alt+j</p>
-					<p>Leveling guide next/previous page: Ctrl+Alt+n / Ctrl+Alt+b</p>
-					<p>Show/hide all trackers: Ctrl+Alt+a</p>
-					<p>Pause/resume campaign timer: Ctrl+Alt+p</p>
-				</div>
-			</div>
+			<HotkeySettings />
 			<div className="CampaignRunsFolderWrapper">
 				<label className="SettingsLabel" htmlFor="campaign-runs-folder">
 					Campaign runs folder

@@ -14,6 +14,10 @@ declare global {
 			getOverlayOpacity: () => Promise<number>;
 			saveOverlayOpacity: (overlayOpacity: number) => void;
 			getCampaignRunsFolder: () => Promise<string>;
+			getHotkeys: () => Promise<HotkeysDto>;
+			saveHotkey: (request: SaveHotkeyRequest) => Promise<HotkeysDto>;
+			/** Pauses the global hotkeys while one is recorded, so the key press reaches the settings */
+			postHotkeysPaused: (paused: boolean) => Promise<void>;
 			/** Returns the folder in use afterwards: the default for an empty one, the old one for an invalid one */
 			saveCampaignRunsFolder: (folder: string) => Promise<string>;
 

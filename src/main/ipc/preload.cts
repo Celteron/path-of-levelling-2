@@ -46,6 +46,9 @@ electron.contextBridge.exposeInMainWorld("electron", {
 	getOverlayOpacity: async () => ipcRendererInvokeGet("getOverlayOpacity"),
 	saveOverlayOpacity: async (overlayOpacity: number) => ipcRendererInvokePost("saveOverlayOpacity", overlayOpacity),
 	getCampaignRunsFolder: async () => ipcRendererInvokeGet("getCampaignRunsFolder"),
+	getHotkeys: async () => ipcRendererInvokeGet("getHotkeys"),
+	saveHotkey: async (request: SaveHotkeyRequest) => ipcRendererInvokePost("saveHotkey", request),
+	postHotkeysPaused: async (paused: boolean) => ipcRendererInvokePost("postHotkeysPaused", paused),
 	saveCampaignRunsFolder: async (folder: string) => ipcRendererInvokePost("saveCampaignRunsFolder", folder),
 
 	getIsClientWatcherActive: async () => ipcRendererInvokeGet("getIsClientWatcherActive"),

@@ -47,7 +47,7 @@ export function LevelTrackerComponent() {
 							<button
 								className="PanelButton"
 								onClick={() => window.electron.postTimerToggle().then(setTimer)}
-								title="Also Ctrl+Alt+P"
+								title="Also by hotkey, see General settings"
 							>
 								{!started
 									? "Start timer"

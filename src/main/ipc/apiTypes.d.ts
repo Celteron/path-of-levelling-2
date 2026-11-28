@@ -23,6 +23,9 @@ type channelReturnTypeMapping = {
 	saveOverlayOpacity: void;
 	getCampaignRunsFolder: string;
 	saveCampaignRunsFolder: string;
+	getHotkeys: HotkeysDto;
+	saveHotkey: HotkeysDto;
+	postHotkeysPaused: void;
 
 	getClientPath: string;
 	saveClientPath: boolean;
@@ -108,6 +111,8 @@ type channelRequestTypeMapping = {
 	saveFontSize: number;
 	saveOverlayOpacity: number;
 	saveCampaignRunsFolder: string;
+	saveHotkey: SaveHotkeyRequest;
+	postHotkeysPaused: boolean;
 
 	saveClientPath: string;
 
@@ -146,6 +151,16 @@ type channelRequestTypeMapping = {
 };
 
 // --- Settings --- //
+type HotkeysDto = {
+	hotkeys: import("../hotkeys.js").Hotkeys;
+	/** Actions whose hotkey another app already holds */
+	failed: import("../hotkeys.js").HotkeyAction[];
+	/** Why the last change was refused */
+	error?: string;
+};
+
+type SaveHotkeyRequest = { action: import("../hotkeys.js").HotkeyAction; accelerator: string };
+
 type HotkeyEvent = {
 	hotkey:
 		| "ToggleSettings"

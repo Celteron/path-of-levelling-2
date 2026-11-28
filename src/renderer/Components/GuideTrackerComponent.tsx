@@ -133,7 +133,7 @@ export function GuideTrackerComponent() {
 				<button
 					className="PanelButton"
 					aria-label="Previous page"
-					title="Previous page (Ctrl+Alt+B)"
+					title="Previous page (also by hotkey, see General settings)"
 					onClick={() => step(-1)}
 				>
 					‹
@@ -141,7 +141,7 @@ export function GuideTrackerComponent() {
 				<button
 					className="PanelButton"
 					aria-label="Next page"
-					title="Next page (Ctrl+Alt+N)"
+					title="Next page (also by hotkey, see General settings)"
 					onClick={() => step(1)}
 				>
 					›
