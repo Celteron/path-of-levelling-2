@@ -21,6 +21,8 @@ function App() {
 	// settings are open so they can still be moved and resized there.
 	const inGameWorld = useInGameWorld();
 	const showTrackers = inGameWorld || settingsActive;
+	// One window less: the notes sit inside the guide while it is shown
+	const renderNotes = (inGuide: boolean) => zoneNotesActive && <ZoneNotesComponent inGuide={inGuide} />;
 
 	const [fontSize, setFontSize] = useState(11);
 	const [overlayOpacity, setOverlayOpacity] = useState(0.85);
@@ -77,11 +79,11 @@ function App() {
 					)}
 					{showTrackers && (
 						<>
-							{zoneNotesActive && <ZoneNotesComponent guideShown={guideActive} />}
+							{!guideActive && renderNotes(false)}
 							{layoutImagesActive && <LayoutImagesComponent />}
 							{levelTrackerActive && <LevelTrackerComponent />}
 							{gemTrackerActive && <GemTrackerComponent />}
-							{guideActive && <GuideTrackerComponent />}
+							{guideActive && <GuideTrackerComponent renderNotes={renderNotes} />}
 						</>
 					)}
 				</ConfirmProvider>

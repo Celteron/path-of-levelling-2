@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { useConfirm } from "./useConfirm";
 import { TrackerPanel } from "./TrackerPanel";
 
@@ -76,7 +76,8 @@ function Segments({ segments }: { segments: GuideSegment[] }) {
 	return segments.map((segment, index) => <Segment key={index} segment={segment} />);
 }
 
-export function GuideTrackerComponent() {
+/** renderNotes(true) gives the notes shown below the steps; without a guide they stand alone */
+export function GuideTrackerComponent({ renderNotes }: { renderNotes?: (inGuide: boolean) => ReactNode }) {
 	const confirm = useConfirm();
 	const [guide, setGuide] = useState<GuideDataDto | null>(null);
 
@@ -87,7 +88,8 @@ export function GuideTrackerComponent() {
 		return unsubscribe;
 	}, []);
 
-	if (!guide?.enabled) return null;
+	if (!guide) return null;
+	if (!guide.enabled) return renderNotes?.(false) ?? null;
 
 	const step = (delta: 1 | -1) => window.electron.postGuideStep(delta).then(setGuide);
 	const savePrefs = (prefs: GuidePrefsRequest) => window.electron.saveGuidePrefs(prefs).then(setGuide);
@@ -168,6 +170,7 @@ export function GuideTrackerComponent() {
 					</li>
 				))}
 			</ol>
+			{renderNotes?.(true)}
 		</TrackerPanel>
 	);
 }

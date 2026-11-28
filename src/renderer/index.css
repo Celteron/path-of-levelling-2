@@ -928,6 +928,28 @@ react-draggable {
 	white-space: pre-wrap;
 }
 
+/* Notes inside the leveling guide, below the steps */
+.GuideNotes {
+	display: flex;
+	flex-direction: column;
+	flex-shrink: 0;
+	max-height: 50%;
+	overflow-y: auto;
+	border-top: 1px solid var(--panel-border);
+}
+
+/* The section scrolls as a whole instead of squeezing each note */
+.GuideNotes > * {
+	flex: none;
+}
+
+.GuideNotesActions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 6px;
+	padding: 4px 6px 0;
+}
+
 /* Note edited in the overlay, in place of the note text */
 .PanelNoteEditor {
 	flex: 1;
