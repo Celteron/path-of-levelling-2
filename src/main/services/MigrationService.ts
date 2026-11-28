@@ -3,7 +3,6 @@ import log from "electron-log";
 import screen from "electron";
 import fs from "fs";
 import path from "path";
-import { z } from "zod";
 import poe1DefaultSettings from "../profiles/poe1/defaultUnversionedSettings.json" with { type: "json" };
 import poe2DefaultSettings from "../profiles/poe2/defaultUnversionedSettings.json" with { type: "json" };
 import {
@@ -14,6 +13,7 @@ import {
 	GlobalSettingsZodSchema,
 	ProfileId,
 } from "../zodSchemas/schemas.js";
+import { fillWithDefaults } from "../zodSchemas/fillWithDefaults.js";
 import {
 	findClientTxtPathForProfileId,
 	getBuildsRootPath,
@@ -69,22 +69,15 @@ export class MigrationService {
 		const primaryDisplayHeight = screen.screen.getPrimaryDisplay().workAreaSize.height;
 		const defaultFontSize = Math.ceil((11 * primaryDisplayHeight) / 1080);
 
-		const dataValidationResult = this.FillWithDefaultsAndStrip(
+		const repaired = fillWithDefaults(
 			GlobalSettingsZodSchema,
 			{ ...GlobalSettingsZodSchema.parse({}), fontSize: defaultFontSize },
 			globalSettings,
 		);
+		if (!repaired) return; // No changes required
 
-		if (!dataValidationResult) return; // No changes required
-
-		if (dataValidationResult.success) {
-			log.warn("Stripping unknown keys and filling missing Global Settings with defaults");
-			objectFactory.getStoreService().setAllGlobalSettings(dataValidationResult.data);
-			return;
-		} else {
-			log.warn("Resetting Global Settings to defaults");
-			objectFactory.getStoreService().setAllGlobalSettings(GlobalSettingsZodSchema.parse({}));
-		}
+		log.warn("Filling missing Global Settings with defaults, resetting broken ones");
+		objectFactory.getStoreService().setAllGlobalSettings(repaired);
 	}
 
 	private MigratePoE1GameSettings() {
@@ -93,23 +86,15 @@ export class MigrationService {
 		// --- Fill missing settings with defaults from zod schema --- //
 		const poe1GameSettings = objectFactory.getStoreService().getAllGameSettingsForProfileId("poe1");
 
-		const dataValidationResult = this.FillWithDefaultsAndStrip(
+		const repaired = fillWithDefaults(
 			GameSettingsZodSchema,
 			{ ...DefaultPoE1GameSettings.parse({}), clientTxtPath: guessClientTxtPathForProfileId("poe1") },
 			poe1GameSettings,
 		);
+		if (!repaired) return; // No changes required
 
-		if (!dataValidationResult) return; // No changes required
-
-		// If the dataValidationResult.success is true, the data just needed to be filled with
-		// defaults and/or stripped of extra keys. If false, the data was too broken to fix.
-		if (dataValidationResult.success) {
-			log.warn("Filling missing PoE1 Game Settings with defaults");
-			objectFactory.getStoreService().setAllGameSettingsForProfileId("poe1", dataValidationResult.data);
-		} else {
-			log.warn("Resetting PoE1 Game Settings to defaults");
-			objectFactory.getStoreService().setAllGameSettingsForProfileId("poe1", DefaultPoE1GameSettings.parse({}));
-		}
+		log.warn("Filling missing PoE1 Game Settings with defaults, resetting broken ones");
+		objectFactory.getStoreService().setAllGameSettingsForProfileId("poe1", repaired);
 	}
 
 	private MigratePoE2GameSettings() {
@@ -118,21 +103,15 @@ export class MigrationService {
 		// --- Fill missing settings with defaults from zod schema --- //
 		const poe2GameSettings = objectFactory.getStoreService().getAllGameSettingsForProfileId("poe2");
 
-		const dataValidationResult = this.FillWithDefaultsAndStrip(
+		const repaired = fillWithDefaults(
 			GameSettingsZodSchema,
 			{ ...DefaultPoE2GameSettings.parse({}), clientTxtPath: guessClientTxtPathForProfileId("poe2") },
 			poe2GameSettings,
 		);
+		if (!repaired) return; // No changes required
 
-		if (!dataValidationResult) return; // No changes required
-
-		if (dataValidationResult.success) {
-			log.warn("Filling missing PoE2 Game Settings with defaults");
-			objectFactory.getStoreService().setAllGameSettingsForProfileId("poe2", dataValidationResult.data);
-		} else {
-			log.warn("Resetting PoE2 Game Settings to defaults");
-			objectFactory.getStoreService().setAllGameSettingsForProfileId("poe2", DefaultPoE2GameSettings.parse({}));
-		}
+		log.warn("Filling missing PoE2 Game Settings with defaults, resetting broken ones");
+		objectFactory.getStoreService().setAllGameSettingsForProfileId("poe2", repaired);
 	}
 
 	private MigrateBuilds() {
@@ -313,31 +292,5 @@ export class MigrationService {
 				migrateBuildsV1ToV2(buildStore.get("builds") as Parameters<typeof migrateBuildsV1ToV2>[0]),
 			);
 		}
-	}
-
-	/** Checks existing settings, trims extra keys and fills defaults.
-	 * Returns undefined if no changes are required.
-	 */
-	private FillWithDefaultsAndStrip<T extends z.ZodObject<z.ZodRawShape>>(
-		schema: T,
-		defaults: z.infer<T>,
-		current: object,
-	): z.ZodSafeParseResult<z.infer<T>> | undefined {
-		// First check that there are missing settings at all, or any extra keys
-		const alreadyValidCheck = schema.safeParse(current);
-		if (alreadyValidCheck.success && Object.keys(alreadyValidCheck.data).length === Object.keys(current).length)
-			return; // No missing settings and no extra keys
-
-		log.warn(
-			"Failed schema validation on Global Settings:",
-			alreadyValidCheck.error === undefined ? "Unrecognised keys!" : z.treeifyError(alreadyValidCheck.error),
-		);
-
-		// Fill in missing settings with defaults and strip extra keys at the same time.
-		// Return result of the safeParse - too hard to automate which store to write to
-		return schema.safeParse({
-			...defaults,
-			...current,
-		});
 	}
 }

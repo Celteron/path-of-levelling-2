@@ -62,7 +62,8 @@ export function readOverlayOpacity(stored: unknown): number {
 export const GlobalSettingsZodSchema = z.object({
 	version: z.number().default(1),
 	selectedProfile: z.enum(["poe1", "poe2"]).default("poe2"),
-	fontSize: z.number().refine(isValidFontSize).catch(11).default(11),
+	// No .catch: the start-up repair then replaces a broken size with the screen's default
+	fontSize: z.number().refine(isValidFontSize).default(11),
 	// .catch: a broken opacity must not fail validation, which would reset all global settings
 	overlayOpacity: StoredOverlayOpacityZodSchema.default(DEFAULT_OVERLAY_OPACITY),
 	/** Folder for the CSV file of finished campaign runs; empty means Documents/PoL2 */
@@ -97,7 +98,7 @@ export const UiSettingsZodSchema = z.object({
 });
 
 // Guide progress and panel position. A top-level game setting on purpose: migrations merge
-// settings shallowly, a new key nested in uiSettings would reset existing users' settings.
+// settings shallowly, a new key nested in uiSettings would reset existing users' panel positions.
 export const LevelingGuideSettingsZodSchema = z.object({
 	pageIndex: z.number().int().nonnegative(),
 	/** Target zone of the saved page, finds the page again after guide updates */
