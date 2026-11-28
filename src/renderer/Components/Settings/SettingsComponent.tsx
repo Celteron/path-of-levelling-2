@@ -10,12 +10,20 @@ import { useOverlayPosition } from "../useOverlayPosition";
 
 type SettingsPage = "General" | "Gems" | "Act Notes" | "Zone Notes" | "About";
 
+/**
+ * Stays mounted while closed, so unsaved edits survive closing the settings by hotkey. A page
+ * without unsaved edits is mounted afresh on closing, so nothing on it (e.g. a hotkey recording)
+ * keeps running while closed, and on opening, so it shows current data and sizes its text fields
+ * while visible (hidden elements measure 0 px).
+ */
 export function SettingsComponent({
+	shown,
 	setFontSizeFunction,
 	fontSize,
 	overlayOpacity,
 	onOverlayOpacityChange,
 }: {
+	shown: boolean;
 	setFontSizeFunction: (n: number) => void;
 	fontSize: number;
 	overlayOpacity: number;
@@ -24,6 +32,13 @@ export function SettingsComponent({
 	const [activePage, setActivePage] = useState<SettingsPage>("General");
 	// Pages unmount when switching, so their unsaved edits would be lost without a warning
 	const [pageHasUnsavedChanges, setPageHasUnsavedChanges] = useState(false);
+
+	const [wasShown, setWasShown] = useState(shown);
+	const [pageKey, setPageKey] = useState(0);
+	if (shown !== wasShown) {
+		setWasShown(shown);
+		if (!pageHasUnsavedChanges) setPageKey((key) => key + 1);
+	}
 
 	const confirmDiscard = useConfirmDiscardUnsavedChanges();
 	const changePage = async (page: SettingsPage) => {
@@ -46,6 +61,7 @@ export function SettingsComponent({
 			onDragStop={onDragStop}
 			onResizeStop={onResizeStop}
 			style={{ backgroundColor: "rgba(50, 50, 50, 0.7)" }}
+			className={shown ? undefined : "SettingsClosed"}
 			bounds="parent"
 			disableDragging={!moveMode}
 			enableResizing={moveMode}
@@ -108,7 +124,7 @@ export function SettingsComponent({
 					</button>
 				</div>
 				{/* Main Content */}
-				<div className="SettingsPageContent">
+				<div className="SettingsPageContent" key={pageKey}>
 					{activePage === "General" && (
 						<GeneralSettingsComponent
 							fontSize={fontSize}

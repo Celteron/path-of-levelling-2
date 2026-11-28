@@ -66,6 +66,11 @@ react-draggable {
 }
 
 /* Settings Overlay */
+/* Closed settings stay mounted to keep unsaved edits */
+.SettingsClosed {
+	display: none !important;
+}
+
 .SettingsOverlay {
 	position: absolute;
 	width: 100%;

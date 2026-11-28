@@ -69,14 +69,13 @@ function App() {
 		<div style={overlayStyle} className={settingsActive ? "overlay-container-shown" : "overlay-container-hidden"}>
 			<OverlayInteractiveContext.Provider value={settingsActive}>
 				<ConfirmProvider>
-					{settingsActive && (
-						<SettingsComponent
-							fontSize={fontSize}
-							setFontSizeFunction={setFontSize}
-							overlayOpacity={overlayOpacity}
-							onOverlayOpacityChange={setOverlayOpacity}
-						/>
-					)}
+					<SettingsComponent
+						shown={settingsActive}
+						fontSize={fontSize}
+						setFontSizeFunction={setFontSize}
+						overlayOpacity={overlayOpacity}
+						onOverlayOpacityChange={setOverlayOpacity}
+					/>
 					{showTrackers && (
 						<>
 							{!guideActive && renderNotes(false)}
