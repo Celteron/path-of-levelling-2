@@ -70,9 +70,9 @@ run `pkill -f pol2-test/` in another console or via SSH.
 Go through it in order, ideally with a new character so the guide fits from the start. For every
 failure note: number, what happened, for the guide also the page (e.g. `12 / 136`) and the zone.
 
-**Round 4 (2026-11-27, after the window redesign, the code cleanup and the campaign timer):** run the
-setup script again (`Version:` must show `20f635c` or newer), then test the redesigned windows (9 and
-21–25), the still open 16, 17, 19 and 20, the cleanup fixes (26–29) and the timer (30–33).
+**Round 5 (2026-11-28, configurable hotkeys and long build names):** run the setup script again
+(`Version:` must show `32cf904` or newer) and test 34 and 35. Round 4 passed; 16, 24 and 26 stay
+untested for now.
 
 ### A. Start and login
 
@@ -210,6 +210,21 @@ setup script again (`Version:` must show `20f635c` or newer), then test the rede
     `pol2-campaign-runs-poe2.csv` with a header, one row per act and a `Total` row, each with today's
     date and time. Hovering the level window with the settings open shows `· PB …` behind each act.
     Afterwards use `Reset timer` and `Ctrl+Alt+P` to time your character again.
+
+### G. Round 5
+
+34. **Long build names.** Settings → Gems: `Add build...` and paste a long text (e.g. a PoB code)
+    into the name field. Then select the build with the PoB code as name from round 4 and use
+    `Delete Build`.
+    *Expected:* The name field stops at 50 characters. The delete question fits on the screen (a long
+    name scrolls inside the dialog), and `Delete` removes the build.
+35. **Configurable hotkeys.** Settings → General → Hotkeys: click the timer hotkey and press
+    `Ctrl+Alt+K`. Try to give another action `Ctrl+Alt+S`, and press a plain `P`. Close the settings,
+    press `Ctrl+Alt+K` and `Ctrl+Alt+P`. Restart the test build, then use `Default` on the timer row.
+    *Expected:* While recording the button says `Press keys…` and the hotkeys do nothing; `Escape`
+    cancels. `Ctrl+Alt+S` is refused with "Already used for: Show/hide settings", a plain `P` shows a
+    hint. `Ctrl+Alt+K` pauses the timer, `Ctrl+Alt+P` no longer does. After the restart `Ctrl+Alt+K`
+    is kept; `Default` brings back `Ctrl+Alt+P`.
 
 ## 4. Reporting
 
