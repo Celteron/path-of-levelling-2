@@ -5,6 +5,7 @@ import electronUpdater, { type AppUpdater } from "electron-updater";
 import path from "path";
 import { LogWatcherService } from "./services/LogWatcherService.js";
 import { getDesktopIconPath, getPreloadPath, getUIPath, isDev } from "./pathResolver.js";
+import { externalLink } from "./navigation.js";
 import { objectFactory } from "./objectFactory.js";
 import { activateBuild, createBuild, removeBuild, sendBuildState, useBuild } from "./builds.js";
 import { TimerEvent } from "./campaignTimer.js";
@@ -95,17 +96,19 @@ async function createWindow() {
 		},
 	});
 
-	// Prevent opening new windows within the app - open in browser instead
-	// eg. links to documentation
+	// Links (e.g. to the documentation) open in the browser, never inside the overlay or in a new
+	// app window, which would get the preload API
+	const openInBrowser = (url: string) => {
+		const link = externalLink(url);
+		if (link) shell.openExternal(link);
+	};
 	mainWindow.webContents.on("will-navigate", (event, url) => {
-		// Check if the URL is outside our app
-		const currentHost = new URL(mainWindow.webContents.getURL()).host;
-		const requestedHost = new URL(url).host;
-
-		if (requestedHost && requestedHost !== currentHost) {
-			event.preventDefault(); // Prevent default navigation within the app
-			shell.openExternal(url); // Open in external browser
-		}
+		event.preventDefault();
+		openInBrowser(url);
+	});
+	mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+		openInBrowser(url);
+		return { action: "deny" };
 	});
 
 	if (isDev()) {
