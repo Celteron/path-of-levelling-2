@@ -261,6 +261,11 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 		return objectFactory.getZoneTracker().getZoneDataDto();
 	});
 
+	ipcMainHandle("saveNoteFromOverlay", async (_, note) => {
+		objectFactory.getZoneTracker().saveNote(note);
+		return objectFactory.getZoneTracker().getZoneDataDto();
+	});
+
 	ipcMainHandle("getLayoutImagePaths", async () => {
 		return objectFactory.getZoneTracker().zoneImageFilePaths;
 	});

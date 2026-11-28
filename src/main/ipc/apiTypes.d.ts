@@ -65,6 +65,7 @@ type channelReturnTypeMapping = {
 	getZoneState: ZoneDataDto;
 	postActSelected: ZoneDataDto;
 	postZoneSelected: ZoneDataDto;
+	saveNoteFromOverlay: ZoneDataDto;
 
 	zoneLayoutImageUpdates: string[];
 	getLayoutImagePaths: string[];
@@ -139,6 +140,7 @@ type channelRequestTypeMapping = {
 	// --- TRACKERS --- //
 	// Zone Tracker
 	postZoneSelected: ZoneSelectedRequest;
+	saveNoteFromOverlay: SaveNoteRequest;
 	postActSelected: string;
 
 	// Gem Tracker
@@ -221,6 +223,10 @@ type ZoneNotesSettingsDto = {
 };
 
 // --- Trackers --- //
+/** A note edited in the overlay, for the act or zone it was written for */
+type SaveNoteRequest =
+	{ kind: "act"; actName: string; notes: string } | { kind: "zone"; zoneCode: string; notes: string };
+
 type ZoneSelectedRequest = {
 	zoneSelected: string;
 	actSelected: string;

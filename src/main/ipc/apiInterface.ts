@@ -75,6 +75,7 @@ declare global {
 			getZoneState: () => Promise<ZoneDataDto>;
 			postActSelected: (actSelected: string) => Promise<ZoneDataDto>;
 			postZoneSelected: (zoneSelectedRequest: ZoneSelectedRequest) => Promise<ZoneDataDto>;
+			saveNoteFromOverlay: (note: SaveNoteRequest) => Promise<ZoneDataDto>;
 
 			/** Returns an unsubscribe function */
 			subscribeToZoneLayoutImageUpdates: (callback: (paths: string[]) => void) => () => void;
