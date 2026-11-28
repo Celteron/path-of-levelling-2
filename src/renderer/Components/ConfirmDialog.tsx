@@ -1,5 +1,6 @@
-import { ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { ReactNode, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { Confirm, ConfirmContext } from "./useConfirm";
+import { OverlayInteractiveContext } from "./overlayInteractive";
 
 type PendingQuestion = { message: string; confirmLabel: string; resolve: (confirmed: boolean) => void };
 
@@ -9,6 +10,16 @@ type PendingQuestion = { message: string; confirmLabel: string; resolve: (confir
  */
 export function ConfirmProvider({ children }: { children: ReactNode }) {
 	const [question, setQuestion] = useState<PendingQuestion | null>(null);
+	const interactive = useContext(OverlayInteractiveContext);
+
+	// Closing the settings takes the mouse from the overlay: a dialog left open would cover the game
+	useEffect(() => {
+		if (interactive) return;
+		setQuestion((pending) => {
+			pending?.resolve(false);
+			return null;
+		});
+	}, [interactive]);
 
 	const confirm = useCallback<Confirm>(
 		(message, confirmLabel = "OK") =>
