@@ -928,6 +928,21 @@ react-draggable {
 	white-space: pre-wrap;
 }
 
+/* Note edited in the overlay, in place of the note text */
+.PanelNoteEditor {
+	flex: 1;
+	min-height: 80px;
+	margin: 4px 10px;
+	padding: 4px 6px;
+	box-sizing: border-box;
+	font: inherit;
+	color: var(--panel-text);
+	background: var(--panel-control-bg);
+	border: 1px solid var(--panel-border);
+	border-radius: var(--panel-radius);
+	resize: none;
+}
+
 .RndResizeCircleHandle {
 	width: 16px;
 	height: 16px;

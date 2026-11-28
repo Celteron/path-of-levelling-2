@@ -191,6 +191,39 @@ export class ZoneTracker {
 		this.loadActNotes();
 	}
 
+	/**
+	 * Saves a note edited in the overlay for the current build. The note names its act or zone, so
+	 * it lands where it was written even when the player moved on meanwhile; unknown ones are ignored.
+	 */
+	saveNote(note: SaveNoteRequest) {
+		if (typeof note.notes !== "string") return;
+		const buildName = objectFactory.getSettingsService().getBuildName();
+		switch (note.kind) {
+			case "act":
+				if (!this.allActNotes.some((actNote) => actNote.actName === note.actName)) return;
+				this.saveActNotes(
+					buildName,
+					this.allActNotes.map((actNote) =>
+						actNote.actName === note.actName ? { ...actNote, notes: note.notes } : actNote,
+					),
+				);
+				return;
+			case "zone":
+				if (!this.allZoneNotes.some((zoneNote) => zoneNote.zoneCode === note.zoneCode)) return;
+				this.saveZoneNotes(
+					buildName,
+					this.allZoneNotes.map((zoneNote) =>
+						zoneNote.zoneCode === note.zoneCode ? { ...zoneNote, notes: note.notes } : zoneNote,
+					),
+				);
+				return;
+			default: {
+				const unhandled: never = note;
+				return unhandled;
+			}
+		}
+	}
+
 	CopyActNotesFromBuild(buildName: string, buildToCopyName: string) {
 		// A missing build has no notes to copy; copying [] would erase the notes of buildName
 		const buildToCopy = objectFactory.getStoreService().getBuild(buildToCopyName);

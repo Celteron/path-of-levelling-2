@@ -86,6 +86,7 @@ electron.contextBridge.exposeInMainWorld("electron", {
 	getZoneState: async () => ipcRendererInvokeGet("getZoneState"),
 	postActSelected: async (actSelected: string) => ipcRendererInvokePost("postActSelected", actSelected),
 	postZoneSelected: async (zoneSelectedRequest) => ipcRendererInvokePost("postZoneSelected", zoneSelectedRequest),
+	saveNoteFromOverlay: async (note) => ipcRendererInvokePost("saveNoteFromOverlay", note),
 
 	subscribeToZoneLayoutImageUpdates: (callback) => {
 		return ipcRendererOn("zoneLayoutImageUpdates", (_, args) => {

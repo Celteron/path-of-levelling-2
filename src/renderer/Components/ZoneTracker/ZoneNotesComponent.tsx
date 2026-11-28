@@ -3,6 +3,8 @@ import { TrackerPanel } from "../TrackerPanel";
 
 export function ZoneNotesComponent({ guideShown }: { guideShown: boolean }) {
 	const [zone, setZone] = useState<ZoneDataDto | null>(null);
+	// The note being edited in the overlay, bound to its act or zone when editing started
+	const [draft, setDraft] = useState<SaveNoteRequest | null>(null);
 
 	useEffect(() => {
 		// The panel remounts whenever it is toggled, so the listener must not outlive it
@@ -17,11 +19,57 @@ export function ZoneNotesComponent({ guideShown }: { guideShown: boolean }) {
 
 	const showZoneNotes = zone && !(guideShown && zone.zoneNotesCoveredByGuide);
 
+	const saveDraft = () =>
+		draft &&
+		window.electron.saveNoteFromOverlay(draft).then((updated) => {
+			setZone(updated);
+			setDraft(null);
+		});
+
+	const noteEditor = (note: SaveNoteRequest) => (
+		<textarea
+			className="PanelNoteEditor"
+			aria-label={`Note for ${note.kind === "act" ? note.actName : zone?.zone}`}
+			value={note.notes}
+			autoFocus
+			onChange={(event) => setDraft({ ...note, notes: event.target.value })}
+		/>
+	);
+
+	const toolbar = draft ? (
+		<>
+			<button className="PanelButton" onClick={saveDraft}>
+				Save note
+			</button>
+			<button className="PanelButton" onClick={() => setDraft(null)}>
+				Cancel
+			</button>
+		</>
+	) : (
+		zone && (
+			<>
+				<button
+					className="PanelButton"
+					onClick={() => setDraft({ kind: "act", actName: zone.act, notes: zone.actNotes })}
+				>
+					Edit act note
+				</button>
+				<button
+					className="PanelButton"
+					onClick={() => setDraft({ kind: "zone", zoneCode: zone.zoneCode, notes: zone.zoneNotes })}
+				>
+					Edit zone note
+				</button>
+			</>
+		)
+	);
+
 	return (
 		<TrackerPanel
 			label="Act and zone notes"
 			loadPosition={window.electron.getZoneOverlayPositionSettings}
 			savePosition={window.electron.saveZoneOverlayPositionSettings}
+			toolbar={toolbar}
 		>
 			{zone && (
 				<>
@@ -37,7 +85,7 @@ export function ZoneNotesComponent({ guideShown }: { guideShown: boolean }) {
 							</option>
 						))}
 					</select>
-					<p className="PanelNotes">{zone.actNotes}</p>
+					{draft?.kind === "act" ? noteEditor(draft) : <p className="PanelNotes">{zone.actNotes}</p>}
 					<select
 						className="PanelSelect"
 						aria-label="Zone"
@@ -50,7 +98,9 @@ export function ZoneNotesComponent({ guideShown }: { guideShown: boolean }) {
 							</option>
 						))}
 					</select>
-					{showZoneNotes && <p className="PanelNotes">{zone.zoneNotes}</p>}
+					{draft?.kind === "zone"
+						? noteEditor(draft)
+						: showZoneNotes && <p className="PanelNotes">{zone.zoneNotes}</p>}
 				</>
 			)}
 		</TrackerPanel>
