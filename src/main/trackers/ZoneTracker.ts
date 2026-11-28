@@ -196,7 +196,6 @@ export class ZoneTracker {
 	 * it lands where it was written even when the player moved on meanwhile; unknown ones are ignored.
 	 */
 	saveNote(note: SaveNoteRequest) {
-		if (typeof note.notes !== "string") return;
 		const buildName = objectFactory.getSettingsService().getBuildName();
 		switch (note.kind) {
 			case "act":

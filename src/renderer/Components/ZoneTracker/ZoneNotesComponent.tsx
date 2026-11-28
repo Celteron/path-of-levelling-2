@@ -2,6 +2,8 @@ import { useContext, useEffect, useState } from "react";
 import { TrackerPanel } from "../TrackerPanel";
 import { OverlayInteractiveContext } from "../overlayInteractive";
 
+type Draft = { request: SaveNoteRequest; label: string };
+
 /**
  * Act and zone notes. Inside the leveling guide they have no window of their own, and the guide
  * already gives the shipped zone tips; otherwise they are a window like the other trackers.
@@ -9,8 +11,10 @@ import { OverlayInteractiveContext } from "../overlayInteractive";
 export function ZoneNotesComponent({ inGuide }: { inGuide: boolean }) {
 	const interactive = useContext(OverlayInteractiveContext);
 	const [zone, setZone] = useState<ZoneDataDto | null>(null);
-	// The note being edited in the overlay, bound to its act or zone when editing started
-	const [draft, setDraft] = useState<SaveNoteRequest | null>(null);
+	// The note being edited in the overlay, bound to its act or zone (and its name) when editing started
+	const [draft, setDraft] = useState<Draft | null>(null);
+	// With the settings closed the saved note shows; the draft waits for the settings to reopen
+	const editing = interactive ? draft : null;
 
 	useEffect(() => {
 		// The panel remounts whenever it is toggled, so the listener must not outlive it
@@ -27,18 +31,18 @@ export function ZoneNotesComponent({ inGuide }: { inGuide: boolean }) {
 
 	const saveDraft = () =>
 		draft &&
-		window.electron.saveNoteFromOverlay(draft).then((updated) => {
+		window.electron.saveNoteFromOverlay(draft.request).then((updated) => {
 			setZone(updated);
 			setDraft(null);
 		});
 
-	const noteEditor = (note: SaveNoteRequest) => (
+	const noteEditor = (note: Draft) => (
 		<textarea
 			className="PanelNoteEditor"
-			aria-label={`Note for ${note.kind === "act" ? note.actName : zone?.zone}`}
-			value={note.notes}
+			aria-label={`Note for ${note.label}`}
+			value={note.request.notes}
 			autoFocus
-			onChange={(event) => setDraft({ ...note, notes: event.target.value })}
+			onChange={(event) => setDraft({ ...note, request: { ...note.request, notes: event.target.value } })}
 		/>
 	);
 
@@ -56,13 +60,20 @@ export function ZoneNotesComponent({ inGuide }: { inGuide: boolean }) {
 			<>
 				<button
 					className="PanelButton"
-					onClick={() => setDraft({ kind: "act", actName: zone.act, notes: zone.actNotes })}
+					onClick={() =>
+						setDraft({ request: { kind: "act", actName: zone.act, notes: zone.actNotes }, label: zone.act })
+					}
 				>
 					Edit act note
 				</button>
 				<button
 					className="PanelButton"
-					onClick={() => setDraft({ kind: "zone", zoneCode: zone.zoneCode, notes: zone.zoneNotes })}
+					onClick={() =>
+						setDraft({
+							request: { kind: "zone", zoneCode: zone.zoneCode, notes: zone.zoneNotes },
+							label: zone.zone,
+						})
+					}
 				>
 					Edit zone note
 				</button>
@@ -84,7 +95,7 @@ export function ZoneNotesComponent({ inGuide }: { inGuide: boolean }) {
 					</option>
 				))}
 			</select>
-			{draft?.kind === "act" ? noteEditor(draft) : <p className="PanelNotes">{zone.actNotes}</p>}
+			{editing?.request.kind === "act" ? noteEditor(editing) : <p className="PanelNotes">{zone.actNotes}</p>}
 			<select
 				className="PanelSelect"
 				aria-label="Zone"
@@ -97,8 +108,8 @@ export function ZoneNotesComponent({ inGuide }: { inGuide: boolean }) {
 					</option>
 				))}
 			</select>
-			{draft?.kind === "zone"
-				? noteEditor(draft)
+			{editing?.request.kind === "zone"
+				? noteEditor(editing)
 				: showZoneNotes && <p className="PanelNotes">{zone.zoneNotes}</p>}
 		</>
 	);

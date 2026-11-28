@@ -145,6 +145,24 @@ export function NotesSettingsPage<Note extends EditableNote>({
 	const updateNote = (id: string, update: (note: Note) => Note) =>
 		setEditableNotes((notes) => notes.map((note) => (noteId(note) === id ? update(note) : note)));
 
+	/** Notes edited in the overlay since this page loaded win, unless they were edited here too */
+	const handleSave = async () => {
+		const latest = await api.load();
+		const editedHere = (note: Note) => {
+			const saved = savedNotes.find((savedNote) => noteId(savedNote) === noteId(note));
+			return saved?.notes !== note.notes || saved.lockNoteOption !== note.lockNoteOption;
+		};
+		const notes =
+			latest.buildName === selectedBuild
+				? editableNotes.map((note) =>
+						editedHere(note)
+							? note
+							: (latest.notes.find((latestNote) => noteId(latestNote) === noteId(note)) ?? note),
+					)
+				: editableNotes;
+		api.save(selectedBuild, notes).then((state) => loadNotes(state.notes));
+	};
+
 	const handleReset = (id: string) => {
 		api.resetNote(id).then((defaultNote) => updateNote(id, () => defaultNote));
 	};
@@ -301,11 +319,7 @@ export function NotesSettingsPage<Note extends EditableNote>({
 			<div className="NotesSettingsBlocksContainer">{editableNotes.map(renderNoteBlock)}</div>
 
 			<div className="NotesSettingsBanner">
-				<button
-					type="button"
-					className="NotesSettingsSaveButton"
-					onClick={() => api.save(selectedBuild, editableNotes).then((state) => loadNotes(state.notes))}
-				>
+				<button type="button" className="NotesSettingsSaveButton" onClick={handleSave}>
 					Save
 				</button>
 			</div>

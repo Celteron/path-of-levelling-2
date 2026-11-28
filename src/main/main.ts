@@ -13,7 +13,7 @@ import { ipcMainHandle, ipcWebContentsSend } from "./ipc/ipcWrappers.js";
 import { toggleAllTrackers } from "./trackers/trackerVisibility.js";
 import { HotkeyAction, registerHotkeys } from "./hotkeys.js";
 import { importPob } from "./pob/pobImport.js";
-import { GuidePrefsZodSchema, OverlayOpacityZodSchema } from "./zodSchemas/schemas.js";
+import { GuidePrefsZodSchema, SaveNoteZodSchema, OverlayOpacityZodSchema } from "./zodSchemas/schemas.js";
 
 // Only allow one instance of the app
 if (!app.requestSingleInstanceLock()) {
@@ -262,7 +262,8 @@ function createIPCEventListeners(mainWindow: BrowserWindow, logWatcher: LogWatch
 	});
 
 	ipcMainHandle("saveNoteFromOverlay", async (_, note) => {
-		objectFactory.getZoneTracker().saveNote(note);
+		const validNote = SaveNoteZodSchema.safeParse(note);
+		if (validNote.success) objectFactory.getZoneTracker().saveNote(validNote.data);
 		return objectFactory.getZoneTracker().getZoneDataDto();
 	});
 
