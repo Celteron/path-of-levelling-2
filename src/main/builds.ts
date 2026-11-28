@@ -1,6 +1,7 @@
 import { WebContents } from "electron";
 import { objectFactory } from "./objectFactory.js";
 import { ipcWebContentsSend } from "./ipc/ipcWrappers.js";
+import { parseBuildName } from "./buildName.js";
 
 /** Makes buildName the current build and loads its gem setups and its act and zone notes */
 export function activateBuild(buildName: string) {
@@ -15,10 +16,12 @@ export function activateBuild(buildName: string) {
 	zoneTracker.loadZoneNotes();
 }
 
-/** Creates an empty build and makes it the current build */
-export function createBuild(buildName: string) {
-	objectFactory.getGemTracker().saveNewBuild(buildName);
-	activateBuild(buildName);
+/** Creates an empty build and makes it the current build; an invalid name changes nothing */
+export function createBuild(buildName: unknown) {
+	const name = parseBuildName(buildName);
+	if (name === undefined) return;
+	objectFactory.getGemTracker().saveNewBuild(name);
+	activateBuild(name);
 }
 
 /** Makes buildName the current build unless it already is, keeping a gem setup picked by hand */
