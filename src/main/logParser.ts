@@ -15,7 +15,7 @@ export interface LogChunkData {
 
 const newZoneRegex = /Generating level (\d+) area "(.*)" with seed/;
 const levelUpRegex = /is now level (\d+)/;
-// Same signals as Exile UI: the client connects to the login server when logging in and when
+// The client connects to the login server when logging in and when
 // returning to character select, and writes a "*****" banner when the game starts.
 const loginScreenRegex = /connected to .*\.login\.|\*\*\*\*\*/i;
 

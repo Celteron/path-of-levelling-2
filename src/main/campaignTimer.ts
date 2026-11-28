@@ -1,7 +1,7 @@
 import { StoredCampaignTimer, StoredCampaignTimerZodSchema } from "./zodSchemas/schemas.js";
 
 /**
- * Campaign timer like Exile UI's act tracker: total time and time per act. An act begins when
+ * Campaign timer: total time and time per act. An act begins when
  * one of its zones is entered for the first time; going back to an earlier act keeps counting on
  * the latest one. All times come from one clock (Date.now() in the caller).
  */
