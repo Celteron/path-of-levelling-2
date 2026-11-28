@@ -148,6 +148,14 @@ export function GuideTrackerComponent() {
 				</button>
 			</header>
 
+			{guide.zoneRewards.length > 0 && (
+				<ul className="GuideRewards" aria-label="Rewards in this zone">
+					{guide.zoneRewards.map((reward) => (
+						<li key={reward}>{reward}</li>
+					))}
+				</ul>
+			)}
+
 			<ol className="GuideSteps">
 				{guide.steps.map((guideStep, index) => (
 					<li key={index} className={guideStep.optional ? "GuideStep GuideStepOptional" : "GuideStep"}>

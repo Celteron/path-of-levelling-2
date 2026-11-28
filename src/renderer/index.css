@@ -1021,6 +1021,15 @@ react-draggable {
 	color: var(--panel-accent);
 }
 
+/* Permanent rewards of the current zone: worth a detour for every build */
+.GuideRewards {
+	margin: 0;
+	padding: 4px 10px;
+	list-style: none;
+	color: var(--panel-success);
+	border-bottom: 1px solid var(--panel-border);
+}
+
 .GuideSteps {
 	flex: 1;
 	margin: 0;

@@ -14,7 +14,11 @@ import {
 	restorePageIndex,
 	stepPage,
 } from "../levelingGuide.js";
+import { zoneRewards } from "../zoneRewards.js";
 import { LevelingGuide, OverlayPosition, RecommendedLevel } from "../zodSchemas/schemas.js";
+
+/** The guide page plus the permanent rewards of the zone the player is in */
+export type GuideDto = GuideView & { zoneRewards: readonly string[] };
 
 /** Holds the guide progress and persists it; the guide logic lives in levelingGuide.ts */
 export class GuideTracker {
@@ -51,19 +55,23 @@ export class GuideTracker {
 		return this.guide !== null;
 	}
 
-	getGuideView(): GuideView {
-		return guideView(this.guide, this.pageIndex, this.prefs);
+	getGuideView(): GuideDto {
+		return { ...guideView(this.guide, this.pageIndex, this.prefs), zoneRewards: zoneRewards(this.currentZoneCode) };
 	}
 
 	getRecommendedLevel(): RecommendedLevel | undefined {
 		return this.guide ? recommendationFor(this.guide, this.currentZoneCode) : undefined;
 	}
 
-	/** Returns true if the guide page changed */
+	/** Returns true if the guide page or the zone rewards changed */
 	onZoneEntered(zoneCode: string): boolean {
+		const rewardsChanged = zoneRewards(zoneCode) !== zoneRewards(this.currentZoneCode);
 		this.currentZoneCode = zoneCode;
 		if (!this.guide) return false;
-		return this.setPage(advanceOnZoneEntered(this.guide, this.pageIndex, zoneCode, this.prefs.leagueStart));
+		const pageChanged = this.setPage(
+			advanceOnZoneEntered(this.guide, this.pageIndex, zoneCode, this.prefs.leagueStart),
+		);
+		return pageChanged || rewardsChanged;
 	}
 
 	step(delta: 1 | -1) {
